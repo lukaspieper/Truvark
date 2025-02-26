@@ -27,8 +27,8 @@ Compared to many other popular alternatives, Truvark...
 As you can see, there are already plenty of reasons to give Truvark a try today!
 
 <p align="center">
-<a href='https://play.google.com/store/apps/details?id=de.lukaspieper.truvark'>
-<img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width="250px"/>
+<a href='https://github.com/lukaspieper/Truvark/releases/latest'>
+<img alt='Get it on GitHub' src='https://raw.githubusercontent.com/flocke/andOTP/6c54b8811f950375c774b2eefebcf1f9fa13d433/assets/badges/get-it-on-github.png' width="250px"/>
 </a>
 </p>
 
