@@ -24,7 +24,8 @@ fun LabeledSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    switchColors: SwitchColors = SwitchDefaults.colors()
+    switchColors: SwitchColors = SwitchDefaults.colors(),
+    enabled: Boolean = true
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -39,7 +40,8 @@ fun LabeledSwitch(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = switchColors
+            colors = switchColors,
+            enabled = enabled
         )
     }
 }

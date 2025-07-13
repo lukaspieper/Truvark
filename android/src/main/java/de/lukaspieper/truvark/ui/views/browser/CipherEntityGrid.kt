@@ -63,10 +63,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
-import coil.ImageLoader
-import coil.compose.SubcomposeAsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
+import coil3.ImageLoader
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import de.lukaspieper.truvark.common.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.common.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider

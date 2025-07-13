@@ -6,15 +6,14 @@
 
 package de.lukaspieper.truvark.domain.crypto.decryption.coil
 
-import android.content.Context
 import android.net.Uri
-import coil.ImageLoader
-import coil.decode.DataSource
-import coil.decode.ImageSource
-import coil.fetch.FetchResult
-import coil.fetch.Fetcher
-import coil.fetch.SourceResult
-import coil.request.Options
+import coil3.ImageLoader
+import coil3.decode.DataSource
+import coil3.decode.ImageSource
+import coil3.fetch.FetchResult
+import coil3.fetch.Fetcher
+import coil3.fetch.SourceFetchResult
+import coil3.request.Options
 import de.lukaspieper.truvark.common.data.io.FileInfo
 import de.lukaspieper.truvark.common.domain.vault.Vault
 import de.lukaspieper.truvark.domain.crypto.decryption.DecryptingFileHandle
@@ -22,8 +21,8 @@ import okio.buffer
 
 class CipherFileFetcher(
     private val fileInfo: FileInfo,
-    private val context: Context,
-    private val vault: Vault
+    private val options: Options,
+    private val vault: Vault,
 ) : Fetcher {
 
     override suspend fun fetch(): FetchResult {
@@ -31,23 +30,20 @@ class CipherFileFetcher(
         //  returning a FileHandle
         require(fileInfo.uri is Uri)
 
-        val decryptingFileHandle = DecryptingFileHandle(context.contentResolver, vault, fileInfo.uri as Uri)
-        val imageSource = ImageSource(decryptingFileHandle.singleSource().buffer(), context)
+        val decryptingFileHandle = DecryptingFileHandle(options.context.contentResolver, vault, fileInfo.uri as Uri)
+        val imageSource = ImageSource(decryptingFileHandle.singleSource().buffer(), options.fileSystem)
 
-        return SourceResult(
+        return SourceFetchResult(
             source = imageSource,
             mimeType = decryptingFileHandle.header.mimeType,
             dataSource = DataSource.DISK
         )
     }
 
-    class Factory(
-        private val context: Context,
-        private val vault: Vault
-    ) : Fetcher.Factory<FileInfo> {
+    class Factory(private val vault: Vault) : Fetcher.Factory<FileInfo> {
 
         override fun create(data: FileInfo, options: Options, imageLoader: ImageLoader): Fetcher {
-            return CipherFileFetcher(data, context, vault)
+            return CipherFileFetcher(data, options, vault)
         }
     }
 }

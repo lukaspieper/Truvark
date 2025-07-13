@@ -24,9 +24,9 @@ android {
 
     defaultConfig {
         minSdk = 29
-        targetSdk = 34
-        versionCode = 15
-        versionName = "1.0.1"
+        targetSdk = 35
+        versionCode = 16
+        versionName = "1.1.0"
 
         ndk {
             // Tink does not support 32-bit architectures (https://developers.google.com/tink/faq/support_for_32bit)

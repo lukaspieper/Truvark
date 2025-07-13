@@ -131,21 +131,21 @@ internal class FileDecryption(
         originalFileMetadata: OriginalFileMetadata?,
         fallbackFileName: String
     ): FileInfo {
-        return when {
-            cipherFileEntity?.name?.isNotBlank() == true -> {
+        val fileName = when {
+            cipherFileEntity?.fullName()?.isNotBlank() == true -> {
                 logcat(DEBUG) { "Using database entry for decryption file name." }
-                fileSystem.createFile(destinationDir, cipherFileEntity.name, cipherFileEntity.mimeType)
+                cipherFileEntity.fullName()
             }
-
-            originalFileMetadata?.name?.isNotBlank() == true -> {
+            originalFileMetadata?.fullName()?.isNotBlank() == true -> {
                 logcat(DEBUG) { "Using encrypted file header for decryption file name." }
-                fileSystem.createFile(destinationDir, originalFileMetadata.name, originalFileMetadata.mimeType)
+                originalFileMetadata.fullName()
             }
-
             else -> {
                 logcat(WARN) { "Neither database entry nor encrypted file header could be used! Using fallback name." }
-                fileSystem.createFile(destinationDir, fallbackFileName)
+                fallbackFileName
             }
         }
+
+        return fileSystem.findOrCreateFile(destinationDir, fileName)
     }
 }

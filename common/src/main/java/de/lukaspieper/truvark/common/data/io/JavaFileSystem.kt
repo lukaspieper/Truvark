@@ -53,6 +53,13 @@ public class JavaFileSystem : FileSystem() {
         return findDirectoryOrNull(directoryInfo, name) ?: createDirectory(directoryInfo, name)
     }
 
+    private fun createDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
+        val newDirectory = (directoryInfo.uri as File).resolve(name)
+        check(newDirectory.mkdir()) { "Could not create directory" }
+
+        return directoryInfo(newDirectory)
+    }
+
     override fun listFiles(directoryInfo: DirectoryInfo): List<FileInfo> {
         return (directoryInfo.uri as File).listFiles()
             ?.filter { it.isFile }
@@ -92,30 +99,4 @@ public class JavaFileSystem : FileSystem() {
     override fun openOutputStream(fileInfo: FileInfo): OutputStream {
         return (fileInfo.uri as File).outputStream()
     }
-
-    //region Additional methods (used by tests primarily)
-
-    internal fun createDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
-        val newDirectory = (directoryInfo.uri as File).resolve(name)
-        check(newDirectory.mkdir()) { "Could not create directory" }
-
-        return directoryInfo(newDirectory)
-    }
-
-    internal fun exists(fileInfo: FileInfo): Boolean {
-        return (fileInfo.uri as File).exists()
-    }
-
-    internal fun writeBytes(fileInfo: FileInfo, bytes: ByteArray): FileInfo {
-        (fileInfo.uri as File).writeBytes(bytes)
-
-        // Refresh the file info because the size has changed
-        return fileInfo(fileInfo.uri)
-    }
-
-    internal fun readBytes(fileInfo: FileInfo): ByteArray {
-        return (fileInfo.uri as File).readBytes()
-    }
-
-    //endregion
 }

@@ -90,7 +90,8 @@ fun BrowserPage(
         isListLayoutState = viewModel.isListLayout,
         createFolder = viewModel::createCipherFolderEntity,
         renameFolder = viewModel::renameCipherFolderEntity,
-        encryptUris = viewModel::encryptUris,
+        encryptFiles = viewModel::encryptFiles,
+        encryptDirectory = viewModel::encryptDirectory,
         decryptSelectedCipherEntities = viewModel::decryptSelectedCipherEntities,
         deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
@@ -118,7 +119,8 @@ private fun BrowserView(
     isListLayoutState: Flow<Boolean>,
     createFolder: suspend (String) -> Boolean,
     renameFolder: suspend (String) -> Boolean,
-    encryptUris: (List<Uri>, Boolean) -> Unit,
+    encryptFiles: (List<Uri>, Boolean) -> Unit,
+    encryptDirectory: (Uri, Boolean) -> Unit,
     decryptSelectedCipherEntities: () -> Unit,
     deleteSelectedCipherEntities: () -> Unit,
     relocateSelectedCipherEntities: () -> Unit,
@@ -171,7 +173,6 @@ private fun BrowserView(
             when (selectionState.mode) {
                 SelectionState.SelectionMode.NONE -> {
                     FloatingActionsButtons(
-                        isEncryptionAllowed = isRootLevel.not(),
                         showEncryptFilesDialog = { visibleDialog = BrowserDialogs.ENCRYPT },
                         showNewFolderDialog = { visibleDialog = BrowserDialogs.NEW_FOLDER }
                     )
@@ -243,7 +244,9 @@ private fun BrowserView(
 
         BrowserDialogs.ENCRYPT -> EncryptFilesDialog(
             hideDialog = { visibleDialog = BrowserDialogs.NONE },
-            encryptUris = encryptUris
+            encryptFiles = encryptFiles,
+            encryptDirectory = encryptDirectory,
+            forceDirectoryEncryption = isRootLevel
         )
 
         BrowserDialogs.DELETE_SELECTION -> DeleteSelectionDialog(
@@ -255,7 +258,6 @@ private fun BrowserView(
 
 @Composable
 private fun FloatingActionsButtons(
-    isEncryptionAllowed: Boolean,
     showEncryptFilesDialog: () -> Unit,
     showNewFolderDialog: () -> Unit,
     modifier: Modifier = Modifier
@@ -265,12 +267,10 @@ private fun FloatingActionsButtons(
         horizontalAlignment = Alignment.End,
         modifier = modifier,
     ) {
-        if (isEncryptionAllowed) {
-            FloatingActionButton(
-                onClick = showEncryptFilesDialog,
-                content = { Icon(Icons.Outlined.FileOpen, null) }
-            )
-        }
+        FloatingActionButton(
+            onClick = showEncryptFilesDialog,
+            content = { Icon(Icons.Outlined.FileOpen, null) }
+        )
 
         FloatingActionButton(
             onClick = showNewFolderDialog,
@@ -406,7 +406,8 @@ private fun NonRootFolderPreview(
         isListLayoutState = flowOf(isListLayout),
         createFolder = { false },
         renameFolder = { false },
-        encryptUris = { _, _ -> },
+        encryptFiles = { _, _ -> },
+        encryptDirectory = { _, _ -> },
         decryptSelectedCipherEntities = {},
         deleteSelectedCipherEntities = {},
         relocateSelectedCipherEntities = {},

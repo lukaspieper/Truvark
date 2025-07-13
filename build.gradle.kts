@@ -45,7 +45,3 @@ tasks.detektBaseline {
     parallel = true
     setSource(files("android", "desktop", "common"))
 }
-
-tasks.register("clean", Delete::class) {
-    delete(rootProject.layout.buildDirectory)
-}

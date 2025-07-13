@@ -12,10 +12,8 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.ImageLoader
-import coil.decode.GifDecoder
-import coil.decode.SvgDecoder
-import coil.request.CachePolicy
+import coil3.ImageLoader
+import coil3.request.CachePolicy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -46,10 +44,7 @@ class PresenterViewModel @AssistedInject constructor(
     private val imageLoader by lazy {
         ImageLoader.Builder(appContext)
             .components {
-                add(CipherFileFetcher.Factory(appContext, vault))
-
-                add(SvgDecoder.Factory())
-                add(GifDecoder.Factory())
+                add(CipherFileFetcher.Factory(vault))
             }
             .diskCachePolicy(CachePolicy.DISABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
@@ -76,7 +71,7 @@ class PresenterViewModel @AssistedInject constructor(
     }
 
     internal fun createCipherZoomableImageSource(fileInfo: FileInfo, mimeType: String): CipherZoomableImageSource {
-        return CipherZoomableImageSource(fileInfo, mimeType, vault, appContext.contentResolver, imageLoader)
+        return CipherZoomableImageSource(fileInfo, imageLoader, mimeType, vault, appContext.contentResolver)
     }
 
     internal fun createMediaDataSource(fileInfo: FileInfo): MediaDataSource {

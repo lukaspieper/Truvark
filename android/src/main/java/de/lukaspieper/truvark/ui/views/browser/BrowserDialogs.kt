@@ -180,15 +180,29 @@ private fun RenameFolderDialogPreview() = PreviewHost {
 @Composable
 fun EncryptFilesDialog(
     hideDialog: () -> Unit,
-    encryptUris: (List<Uri>, Boolean) -> Unit,
+    encryptFiles: (List<Uri>, Boolean) -> Unit,
+    encryptDirectory: (Uri, Boolean) -> Unit,
+    forceDirectoryEncryption: Boolean,
     modifier: Modifier = Modifier
 ) {
     var deleteSourceFiles by rememberSaveable { mutableStateOf(false) }
-    val openDocumentTreeLauncher = rememberLauncherForActivityResult(
+    var selectDirectory by rememberSaveable { mutableStateOf(forceDirectoryEncryption) }
+
+    val selectFilesLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocumentsWithFlags(),
         onResult = { uris ->
             hideDialog()
-            encryptUris(uris, deleteSourceFiles)
+            encryptFiles(uris, deleteSourceFiles)
+        }
+    )
+    val selectDirectoryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTreeWithFlags(),
+        onResult = { uri ->
+            hideDialog()
+
+            if (uri != null) {
+                encryptDirectory(uri, deleteSourceFiles)
+            }
         }
     )
 
@@ -198,7 +212,13 @@ fun EncryptFilesDialog(
         title = R.string.encrypt_files,
         confirmButton = {
             Button(
-                onClick = { openDocumentTreeLauncher.launch(emptyArray()) },
+                onClick = {
+                    if (selectDirectory) {
+                        selectDirectoryLauncher.launch(null)
+                    } else {
+                        selectFilesLauncher.launch(emptyArray())
+                    }
+                },
                 content = { Text(stringResource(R.string.select)) }
             )
         },
@@ -209,6 +229,13 @@ fun EncryptFilesDialog(
             )
         }
     ) {
+        LabeledSwitch(
+            text = stringResource(R.string.select_directory),
+            checked = selectDirectory,
+            onCheckedChange = { selectDirectory = it },
+            enabled = forceDirectoryEncryption.not()
+        )
+
         LabeledSwitch(
             text = stringResource(R.string.delete_source_files),
             checked = deleteSourceFiles,
@@ -226,7 +253,9 @@ fun EncryptFilesDialog(
 private fun EncryptFilesDialogPreview() = PreviewHost {
     EncryptFilesDialog(
         hideDialog = {},
-        encryptUris = { _, _ -> }
+        encryptFiles = { _, _ -> },
+        encryptDirectory = { _, _ -> },
+        forceDirectoryEncryption = false
     )
 }
 

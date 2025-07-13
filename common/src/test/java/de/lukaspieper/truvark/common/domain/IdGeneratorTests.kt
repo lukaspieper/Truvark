@@ -6,15 +6,18 @@
 
 package de.lukaspieper.truvark.common.domain
 
-import org.junit.jupiter.api.Assertions.*
+import de.lukaspieper.truvark.common.test.data.AmountProvider
+import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.jupiter.params.provider.ArgumentsSource
 
 class IdGeneratorTests {
 
     @ParameterizedTest
-    @ValueSource(ints = [0, 1, 2, 5, 10, 20])
+    @ArgumentsSource(AmountProvider::class) // amount of characters = length
     fun `createStringId returns valid id`(length: Int) {
         // Act
         val id = IdGenerator.Default.createStringId(length)
@@ -30,14 +33,15 @@ class IdGeneratorTests {
     fun `createStringId returns different ids`() {
         // Arrange
         val length = 20
-        val list = ArrayList<String>()
+        val amount = 100_000
+        val set = HashSet<String>(amount)
 
         // Act
-        repeat(100000) {
-            list.add(IdGenerator.Default.createStringId(length))
+        repeat(amount) {
+            set.add(IdGenerator.Default.createStringId(length))
         }
 
         // Assert
-        assertIterableEquals(list.distinct(), list)
+        assertEquals(amount, set.size)
     }
 }

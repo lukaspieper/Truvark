@@ -19,7 +19,6 @@ sealed interface SettingsMenuItem {
         VAULT,
         APP,
         OSS_LICENSES,
-        PRIVACY_POLICY,
         SOURCE_CODE,
     }
 

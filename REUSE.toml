@@ -8,7 +8,9 @@ version = 1
 path = [
     "android/src/main/**/ic_launcher*.png",
     ".idea/**",
-    ".detekt/detekt-baseline.xml"
+    ".detekt/detekt-baseline.xml",
+    ".github/ISSUE_TEMPLATE/**",
+    "gradle/wrapper/gradle-wrapper.properties"
 ]
 SPDX-FileCopyrightText = "2022 Lukas Pieper"
 SPDX-License-Identifier = "GPL-3.0-or-later"

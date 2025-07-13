@@ -10,6 +10,7 @@ import de.lukaspieper.truvark.common.constants.FixedValues
 import de.lukaspieper.truvark.common.domain.IdGenerator
 import de.lukaspieper.truvark.common.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.common.domain.entities.RealmCipherFolderEntity
+import de.lukaspieper.truvark.common.domain.findCipherFolderEntity
 import de.lukaspieper.truvark.common.logging.LogPriority
 import de.lukaspieper.truvark.common.logging.asLog
 import de.lukaspieper.truvark.common.logging.logcat
@@ -26,7 +27,9 @@ internal class CipherFolderEntityCreator(
      * [CipherFolderEntity] will be a child of the parent.
      */
     @Throws(IllegalArgumentException::class, NoSuchElementException::class)
-    suspend fun createFolder(displayName: String, parentCipherFolderEntity: CipherFolderEntity) {
+    suspend fun createFolder(displayName: String, parentCipherFolderEntity: CipherFolderEntity): CipherFolderEntity {
+        var directoryName = ""
+
         realm.write {
             val parentFolderEntity = when (parentCipherFolderEntity) {
                 is RealmCipherFolderEntity -> findLatest(parentCipherFolderEntity)
@@ -37,7 +40,7 @@ internal class CipherFolderEntityCreator(
             do {
                 repeat = false
 
-                val directoryName = idGenerator.createStringId(FixedValues.FILENAME_LENGTH)
+                directoryName = idGenerator.createStringId(FixedValues.FILENAME_LENGTH)
 
                 val cipherFolderEntity = RealmCipherFolderEntity().apply {
                     id = directoryName
@@ -53,5 +56,7 @@ internal class CipherFolderEntityCreator(
                 }
             } while (repeat)
         }
+
+        return realm.findCipherFolderEntity(directoryName)
     }
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-package de.lukaspieper.truvark.common.test.helpers
+package de.lukaspieper.truvark.common.test.doubles
 
 import de.lukaspieper.truvark.common.crypto.Argon2
 import de.mkammerer.argon2.Argon2Factory

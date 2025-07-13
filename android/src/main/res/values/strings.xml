@@ -41,7 +41,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="delete_warning">You are about to delete the selected files and folders. This cannot be undone!</string>
     <string name="confirm_deletion">Confirm deletion</string>
     <string name="encrypted_file_not_found">Encrypted file not found!</string>
-    <string name="privacy_policy">Privacy policy</string>
     <string name="notification_permission_description">Notifications are required to encrypt and decrypt files in the background and show progress. Please grant permission to use this application. Only non intrusive notifications are used. You can even hide them in the application settings, but please keep the notification permission granted.</string>
     <string name="grant_permission">Grant permission</string>
     <string name="open_app_settings">Open app settings</string>
@@ -66,4 +65,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="encrypt_files">Encrypt files</string>
     <string name="select">Select</string>
     <string name="source_code">Source code</string>
+    <string name="select_directory">Select directory</string>
 </resources>

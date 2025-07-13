@@ -185,13 +185,25 @@ class BrowserViewModel @Inject constructor(
         return true
     }
 
-    fun encryptUris(uris: List<Uri>, deleteSourceFiles: Boolean) {
-        vault.scheduleEncryption(
+    fun encryptFiles(uris: List<Uri>, deleteSourceFiles: Boolean) {
+        vault.scheduleFileEncryption(
             metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.encrypting_files),
             destination = currentFolderHierarchyLevel.folder,
             sources = uris.reversed().map { { fileSystem.fileInfo(it) } },
             deleteSources = deleteSourceFiles
         )
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun encryptDirectory(uri: Uri, deleteSourceFiles: Boolean) {
+        GlobalScope.launch {
+            vault.scheduleDirectoryEncryption(
+                metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.encrypting_files),
+                destination = currentFolderHierarchyLevel.folder,
+                source = fileSystem.directoryInfo(uri),
+                deleteSources = deleteSourceFiles
+            )
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)

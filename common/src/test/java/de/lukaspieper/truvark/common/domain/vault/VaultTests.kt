@@ -8,283 +8,227 @@ package de.lukaspieper.truvark.common.domain.vault
 
 import de.lukaspieper.truvark.common.constants.FileNames
 import de.lukaspieper.truvark.common.constants.FixedValues.MAX_VAULT_NAME_LENGTH
-import de.lukaspieper.truvark.common.test.helpers.VaultBase
+import de.lukaspieper.truvark.common.test.TestContext
+import de.lukaspieper.truvark.common.test.data.AmountProvider
+import de.lukaspieper.truvark.common.test.data.BlankStringProvider
+import de.lukaspieper.truvark.common.test.data.DisplayNameProvider
+import de.lukaspieper.truvark.common.test.data.FileDataProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class VaultTests : VaultBase() {
+class VaultTests : TestContext() {
 
-    @Test
-    fun `writeEncryptedDatabaseCopyTo without existing file creates encrypted Copy`() {
-        // Arrange
-        val destinationFile = tempDir.resolve("anyFile.copy")
+    /**
+     * - Using [TestContext.internalDirectory] because it is the only exposed [java.io.File] directory.
+     * - Using [FileDataProvider] because [FileNames.INDEX_REALM] would cause a conflict. A subdirectory could be used
+     *   instead.
+     */
+    @Nested
+    inner class WriteEncryptedDatabaseCopyTo {
 
-        // Act
-        vault.writeEncryptedDatabaseCopyTo(destinationFile)
+        @ParameterizedTest
+        @ArgumentsSource(FileDataProvider::class)
+        fun `writeEncryptedDatabaseCopyTo without existing file creates encrypted Copy`(fileName: String) {
+            // Arrange
+            val destinationFile = internalDirectory.resolve(fileName)
 
-        // Assert
-        assertTrue(destinationFile.length() > 0)
-    }
+            // Act
+            vault.writeEncryptedDatabaseCopyTo(destinationFile)
 
-    @Test
-    fun `writeEncryptedDatabaseCopyTo with existing file overwrites existing file`() {
-        // Arrange
-        val destinationFile = tempDir.resolve("anyFile.copy")
-        destinationFile.createNewFile()
-
-        // Act
-        vault.writeEncryptedDatabaseCopyTo(destinationFile)
-
-        // Assert
-        assertTrue(destinationFile.length() > 0)
-    }
-
-    @Test
-    fun `findCipherFileEntitySubFolders without root folders return empty list`() {
-        // Act
-        val rootFolders = runBlocking {
-            vault.findCipherFileEntitySubFolders("").first()
+            // Assert
+            assertTrue(destinationFile.length() > 0)
         }
 
-        // Assert
-        assertTrue(rootFolders.isEmpty())
-    }
+        @ParameterizedTest
+        @ArgumentsSource(FileDataProvider::class)
+        fun `writeEncryptedDatabaseCopyTo with existing file overwrites existing file`(fileName: String) {
+            // Arrange
+            val destinationFile = internalDirectory.resolve(fileName)
+            destinationFile.createNewFile()
 
-    @ParameterizedTest
-    @ValueSource(strings = ["any_folder_id", "ZWJDI5432"])
-    fun `findCipherFileEntitySubFolders with one root folder return list with one folder`(folderId: String) {
-        // Arrange
-        insertCipherFolderEntity(folderId)
+            // Act
+            vault.writeEncryptedDatabaseCopyTo(destinationFile)
 
-        // Act
-        val rootFolders = runBlocking {
-            vault.findCipherFileEntitySubFolders("").first()
-        }
-
-        // Assert
-        assertEquals(folderId, rootFolders.single().id)
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = [2, 5, 10, 100])
-    fun `findCipherFileEntitySubFolders with multiple root folders return matching list`(amountOfFolders: Int) {
-        // Arrange
-        repeat(amountOfFolders) { index ->
-            insertCipherFolderEntity(index.toString())
-        }
-
-        // Act
-        val rootFolders = runBlocking {
-            vault.findCipherFileEntitySubFolders("").first()
-        }
-
-        // Assert
-        assertEquals(amountOfFolders, rootFolders.size)
-    }
-
-    @Test
-    fun `findCipherFileEntitySubFolders without subfolder return empty list`() {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-
-        // Act
-        val subfolders = runBlocking {
-            vault.findCipherFileEntitySubFolders(rootFolderId).first()
-        }
-
-        // Assert
-        assertTrue(subfolders.isEmpty())
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["any_folder_id", "ZWJDI5432"])
-    fun `findCipherFileEntitySubFolders with one subfolder return list with one folder`(subfolderId: String) {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-        insertCipherFolderEntity(subfolderId, rootFolderId)
-
-        // Act
-        val subfolders = runBlocking {
-            vault.findCipherFileEntitySubFolders(rootFolderId).first()
-        }
-
-        // Assert
-        assertEquals(subfolderId, subfolders.single().id)
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = [2, 5, 10, 100])
-    fun `findCipherFileEntitySubFolders with multiple subfolders return matching list`(amountOfSubfolders: Int) {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-        repeat(amountOfSubfolders) { index ->
-            insertCipherFolderEntity(index.toString(), rootFolderId)
-        }
-
-        // Act
-        val subfolders = runBlocking {
-            vault.findCipherFileEntitySubFolders(rootFolderId).first()
-        }
-
-        // Assert
-        assertEquals(amountOfSubfolders, subfolders.size)
-    }
-
-    @Test
-    fun `findCipherFileEntitiesForFolder without fileEntities return empty list`() {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-
-        // Act
-        val fileEntities = runBlocking {
-            vault.findCipherFileEntitiesForFolder(rootFolderId).first()
-        }
-
-        // Assert
-        assertTrue(fileEntities.isEmpty())
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["any_file_id", "ZWJDI5432"])
-    fun `findCipherFileEntitiesForFolder with one fileEntity return list with one entity`(fileEntityId: String) {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-        insertCipherFileEntity(fileEntityId, rootFolderId)
-
-        // Act
-        val fileEntities = runBlocking {
-            vault.findCipherFileEntitiesForFolder(rootFolderId).first()
-        }
-
-        // Assert
-        assertEquals(fileEntityId, fileEntities.single().id)
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = [2, 5, 10, 100])
-    fun `findCipherFileEntitiesForFolder with multiple fileEntities return matching list`(amountOfFileEntities: Int) {
-        // Arrange
-        val rootFolderId = "root_folder"
-        insertCipherFolderEntity(rootFolderId)
-        repeat(amountOfFileEntities) { index ->
-            insertCipherFileEntity(index.toString(), rootFolderId)
-        }
-
-        // Act
-        val fileEntities = runBlocking {
-            vault.findCipherFileEntitiesForFolder(rootFolderId).first()
-        }
-
-        // Assert
-        assertEquals(amountOfFileEntities, fileEntities.size)
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["new display name", "!§$%&/()=?`*+'#-_.:,;<>|"])
-    fun `updateDisplayName updates vault name successfully`(newDisplayName: String) {
-        // Act
-        vault.updateDisplayName(newDisplayName)
-
-        // Assert
-        // Close vault and reopen it to check if the vault config is not corrupted
-        vault.realm.close()
-        vault = vaultFactory.decryptVault(
-            vaultDirectory = tempDirectory,
-            password = anyPassword.toByteArray(),
-            databaseFile = tempDir.resolve(FileNames.INDEX_DATABASE)
-        )
-        assertEquals(newDisplayName, vault.displayName)
-    }
-
-    @Test
-    fun `updateDisplayName with unchanged vault name does not fail`() {
-        // Act
-        vault.updateDisplayName(vault.displayName)
-
-        // Assert
-        // Close vault and reopen it to check if the vault config is not corrupted
-        vault.realm.close()
-        vault = vaultFactory.decryptVault(
-            vaultDirectory = tempDirectory,
-            password = anyPassword.toByteArray(),
-            databaseFile = tempDir.resolve(FileNames.INDEX_DATABASE)
-        )
-        assertEquals(vault.displayName, vault.displayName)
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["", " ", "   "])
-    fun `updateDisplayName with invalid vault name throws IllegalArgumentException`(invalidVaultName: String) {
-        // Act, Assert
-        assertThrows<IllegalArgumentException> {
-            vault.updateDisplayName(invalidVaultName)
+            // Assert
+            assertTrue(destinationFile.length() > 0)
         }
     }
 
-    @Test
-    fun `updateDisplayName with too long vault name throws IllegalArgumentException`() {
-        // Arrange
-        val invalidVaultName = "1".repeat(MAX_VAULT_NAME_LENGTH + 1)
+    @Nested
+    inner class FindCipherFileEntitySubFolders {
 
-        // Act, Assert
-        assertThrows<IllegalArgumentException> {
-            vault.updateDisplayName(invalidVaultName)
+        @ParameterizedTest
+        @ArgumentsSource(AmountProvider::class)
+        fun `findCipherFileEntitySubFolders with given root level folders return same amount`(amountOfFolders: Int) {
+            // Arrange
+            repeat(amountOfFolders) {
+                vault.realm.createRandomCipherFolderEntity()
+            }
+
+            // Act
+            val rootFolders = runBlocking {
+                vault.findCipherFileEntitySubFolders("").first()
+            }
+
+            // Assert
+            assertEquals(amountOfFolders, rootFolders.size)
+        }
+
+        @ParameterizedTest
+        @ArgumentsSource(AmountProvider::class)
+        fun `findCipherFileEntitySubFolders with given subfolders return same amount`(amountOfSubfolders: Int) {
+            // Arrange
+            val parentFolder = vault.realm.createRandomCipherFolderEntity()
+
+            repeat(amountOfSubfolders) {
+                vault.realm.createRandomCipherFolderEntity(parentFolder.id)
+            }
+
+            // Act
+            val subfolders = runBlocking {
+                vault.findCipherFileEntitySubFolders(parentFolder.id).first()
+            }
+
+            // Assert
+            assertEquals(amountOfSubfolders, subfolders.size)
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["new folder name", "!§$%&/()=?`*+'#-_.:,;<>|", "ZWJDI5432"])
-    fun `renameFolder updates folder name successfully`(newFolderName: String) {
-        // Arrange
-        val folder = insertCipherFolderEntity("folder")
+    @Nested
+    inner class FindCipherFileEntitiesForFolder {
 
-        // Act
-        runBlocking {
-            vault.renameFolder(folder, newFolderName)
-        }
+        @ParameterizedTest
+        @ArgumentsSource(AmountProvider::class)
+        fun `findCipherFileEntitiesForFolder with given fileEntities return same amount`(
+            amountOfFileEntities: Int
+        ) {
+            // Arrange
+            val parentFolder = vault.realm.createRandomCipherFolderEntity()
 
-        // Assert
-        val updatedFolder = runBlocking {
-            vault.findCipherFolderEntity(folder.id)
+            repeat(amountOfFileEntities) {
+                vault.realm.createRandomCipherFileEntity(parentFolder)
+            }
+
+            // Act
+            val fileEntities = runBlocking {
+                vault.findCipherFileEntitiesForFolder(parentFolder.id).first()
+            }
+
+            // Assert
+            assertEquals(amountOfFileEntities, fileEntities.size)
         }
-        assertEquals(newFolderName, updatedFolder.displayName)
     }
 
-    @Test
-    fun `renameFolder with unchanged folder name does not fail`() {
-        // Arrange
-        val folder = insertCipherFolderEntity("folder")
+    @Nested
+    inner class UpdateDisplayName {
 
-        // Act, Assert
-        assertDoesNotThrow {
-            runBlocking {
-                vault.renameFolder(folder, folder.displayName)
+        @ParameterizedTest
+        @ArgumentsSource(DisplayNameProvider::class)
+        fun `updateDisplayName updates vault name successfully`(newDisplayName: String) {
+            // Act
+            vault.updateDisplayName(newDisplayName)
+
+            // Assert
+            // Close vault and reopen it to check if the vault config is not corrupted
+            vault.realm.close()
+            val updatedVault = vaultFactory.decryptVault(
+                vaultDirectory = vaultDirectoryInfo,
+                password = vaultPassword,
+                databaseFile = internalDatabaseFile
+            )
+            assertEquals(newDisplayName, updatedVault.displayName)
+        }
+
+        @Test
+        fun `updateDisplayName with unchanged vault name does not fail`() {
+            // Act
+            vault.updateDisplayName(vault.displayName)
+
+            // Assert
+            // Close vault and reopen it to check if the vault config is not corrupted
+            vault.realm.close()
+            val updatedVault = vaultFactory.decryptVault(
+                vaultDirectory = vaultDirectoryInfo,
+                password = vaultPassword,
+                databaseFile = internalDatabaseFile
+            )
+            assertEquals(vault.displayName, updatedVault.displayName)
+        }
+
+        @ParameterizedTest
+        @ArgumentsSource(BlankStringProvider::class)
+        fun `updateDisplayName with invalid vault name throws IllegalArgumentException`(invalidVaultName: String) {
+            // Act, Assert
+            assertThrows<IllegalArgumentException> {
+                vault.updateDisplayName(invalidVaultName)
+            }
+        }
+
+        @Test
+        fun `updateDisplayName with too long vault name throws IllegalArgumentException`() {
+            // Arrange
+            val invalidVaultName = "1".repeat(MAX_VAULT_NAME_LENGTH + 1)
+
+            // Act, Assert
+            assertThrows<IllegalArgumentException> {
+                vault.updateDisplayName(invalidVaultName)
             }
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["", " ", "   "])
-    fun `renameFolder with invalid folder name throws IllegalArgumentException`(invalidFolderName: String) {
-        // Arrange
-        val folder = insertCipherFolderEntity("folder")
+    @Nested
+    inner class RenameFolder {
 
-        // Act, Assert
-        assertThrows<IllegalArgumentException> {
+        @ParameterizedTest
+        @ArgumentsSource(DisplayNameProvider::class)
+        fun `renameFolder updates folder name successfully`(newFolderName: String) {
+            // Arrange
+            val folder = vault.realm.createRandomCipherFolderEntity()
+
+            // Act
             runBlocking {
-                vault.renameFolder(folder, invalidFolderName)
+                vault.renameFolder(folder, newFolderName)
+            }
+
+            // Assert
+            val updatedFolder = runBlocking {
+                vault.findCipherFolderEntity(folder.id)
+            }
+            assertEquals(newFolderName, updatedFolder.displayName)
+        }
+
+        @Test
+        fun `renameFolder with unchanged folder name does not fail`() {
+            // Arrange
+            val folder = vault.realm.createRandomCipherFolderEntity()
+
+            // Act, Assert
+            assertDoesNotThrow {
+                runBlocking {
+                    vault.renameFolder(folder, folder.displayName)
+                }
+            }
+        }
+
+        @ParameterizedTest
+        @ArgumentsSource(BlankStringProvider::class)
+        fun `renameFolder with invalid folder name throws IllegalArgumentException`(invalidFolderName: String) {
+            // Arrange
+            val folder = vault.realm.createRandomCipherFolderEntity()
+
+            // Act, Assert
+            assertThrows<IllegalArgumentException> {
+                runBlocking {
+                    vault.renameFolder(folder, invalidFolderName)
+                }
             }
         }
     }

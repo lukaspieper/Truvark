@@ -43,7 +43,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="confirm_deletion">Löschen bestätigen</string>
     <string name="delete_warning">Du bist dabei die ausgewählten Dateien und Ordner zu löschen. Dies kann nicht rückgängig gemacht werden!</string>
     <string name="encrypted_file_not_found">Verschlüsselte Datei nicht gefunden!</string>
-    <string name="privacy_policy">Datenschutzerklärung</string>
     <string name="notification_permission_description">Benachrichtigungen werden benötigt, um im Hintergrund zu ver- und entschlüsseln, sowie den Fortschritt anzuzeigen. Bitte lass die Berechtigung zu, um diese App zu verwenden. Es werden nur Benachrichtigungen mit niedriger Priorität verwendet.</string>
     <string name="grant_permission">Berechtigung zulassen</string>
     <string name="open_app_settings">App-Einstellungen öffnen</string>
@@ -68,4 +67,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="encrypt_files">Dateien verschlüsseln</string>
     <string name="select">Auswählen</string>
     <string name="source_code">Quellcode</string>
+    <string name="select_directory">Verzeichnis auswählen</string>
 </resources>

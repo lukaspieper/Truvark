@@ -32,8 +32,9 @@ dependencies {
     implementation(libs.realm.kotlin)
     implementation(compose.runtime)
 
-    testImplementation(libs.argon2.jvm)
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.argon2.jvm)
     testImplementation(libs.json)
 }
 

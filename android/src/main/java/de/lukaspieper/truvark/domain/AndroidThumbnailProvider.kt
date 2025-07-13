@@ -8,15 +8,15 @@ package de.lukaspieper.truvark.domain
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import coil.ImageLoader
-import coil.decode.SvgDecoder
-import coil.decode.VideoFrameDecoder
-import coil.request.CachePolicy
-import coil.request.ErrorResult
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import coil.request.videoFramePercent
+import coil3.ImageLoader
+import coil3.imageDecoderEnabled
+import coil3.request.CachePolicy
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowConversionToBitmap
+import coil3.toBitmap
+import coil3.video.videoFramePercent
 import de.lukaspieper.truvark.common.data.io.FileInfo
 import de.lukaspieper.truvark.common.domain.ThumbnailProvider
 import de.lukaspieper.truvark.common.logging.LogPriority
@@ -32,12 +32,11 @@ class AndroidThumbnailProvider(private val context: Context) : ThumbnailProvider
     }
 
     private val imageLoader = ImageLoader.Builder(context)
-        .components {
-            add(SvgDecoder.Factory())
-            add(VideoFrameDecoder.Factory())
-        }
         .diskCachePolicy(CachePolicy.DISABLED)
         .memoryCachePolicy(CachePolicy.DISABLED)
+        // https://github.com/coil-kt/coil/issues/2808
+        // for some reason the quality decreases is only noticeable for thumbnail generation (not AsyncImage).
+        .imageDecoderEnabled(false)
         .build()
 
     override suspend fun createThumbnail(file: FileInfo): ByteArray? {
@@ -61,7 +60,7 @@ class AndroidThumbnailProvider(private val context: Context) : ThumbnailProvider
 
         val result = imageLoader.execute(request)
         when (result) {
-            is SuccessResult -> return (result.drawable as BitmapDrawable).bitmap
+            is SuccessResult -> return result.image.toBitmap()
             is ErrorResult -> throw result.throwable
         }
     }

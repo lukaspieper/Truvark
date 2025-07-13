@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.AppSettingsAlt
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Copyright
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -77,12 +76,6 @@ fun SettingsHomePage(
         ),
         SettingsMenuItem.Key.SOURCE_CODE to SettingsMenuItem.External(
             Icons.Default.Code, R.string.source_code, null, Uri.parse("https://github.com/lukaspieper/Truvark")
-        ),
-        SettingsMenuItem.Key.PRIVACY_POLICY to SettingsMenuItem.External(
-            Icons.Default.PrivacyTip,
-            R.string.privacy_policy,
-            null,
-            Uri.parse("https://truvark.lukaspieper.de/en/privacy.html")
         )
     )
 

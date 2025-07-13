@@ -280,17 +280,17 @@ class AndroidFileSystem(private val context: Context) : FileSystem() {
      * A simple wrapper around [ContentResolver.query] that automatically closes the cursor. Note that `selection` is
      * not available because [Android's FileSystemProvider does not support it](https://stackoverflow.com/a/61214849).
      */
-    inline fun <R> ContentResolver.query(uri: Uri, projection: Array<String>, block: (Cursor?) -> R): R {
+    private inline fun <R> ContentResolver.query(uri: Uri, projection: Array<String>, block: (Cursor?) -> R): R {
         return query(uri, projection, null, null, null).use(block)
     }
 
     @Throws(IllegalArgumentException::class)
-    fun Cursor.getString(columnName: String): String {
+    private fun Cursor.getString(columnName: String): String {
         return getString(getColumnIndexOrThrow(columnName))
     }
 
     @Throws(IllegalArgumentException::class)
-    fun Cursor.getLong(columnName: String): Long {
+    private fun Cursor.getLong(columnName: String): Long {
         return getLong(getColumnIndexOrThrow(columnName))
     }
 

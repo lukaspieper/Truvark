@@ -36,6 +36,10 @@ public interface OriginalFileMetadata {
         }
     }
 
+    public fun fullName(): String {
+        return if (fileExtension.isBlank()) name else "$name.$fileExtension"
+    }
+
     /**
      * Serializes only the properties defined in [OriginalFileMetadata] and ignores every other property or method.
      */

@@ -11,12 +11,4 @@ public interface CipherFileEntity : OriginalFileMetadata {
     public val thumbnail: ByteArray?
     public val folder: CipherFolderEntity?
     public val mediaDurationSeconds: Long?
-
-    public fun fullName(): String {
-        if (fileExtension.isBlank()) {
-            return name
-        }
-
-        return "$name.$fileExtension"
-    }
 }

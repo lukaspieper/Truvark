@@ -7,52 +7,48 @@
 package de.lukaspieper.truvark.domain.crypto.decryption.coil
 
 import android.content.ContentResolver
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.RememberObserver
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import coil.ImageLoader
-import coil.request.ImageRequest
-import coil.request.ImageResult
-import coil.request.SuccessResult
-import coil.size.Dimension
-import com.google.accompanist.drawablepainter.DrawablePainter
+import coil3.ImageLoader
+import coil3.compose.asPainter
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.ImageResult
+import coil3.request.SuccessResult
+import coil3.request.maxBitmapSize
+import coil3.size.Dimension
+import coil3.toBitmap
 import de.lukaspieper.truvark.common.data.io.FileInfo
 import de.lukaspieper.truvark.common.domain.vault.Vault
 import de.lukaspieper.truvark.domain.crypto.decryption.DecryptingFileHandle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.copy
 import kotlin.math.roundToInt
-import kotlin.time.Duration
-import coil.size.Size as CoilSize
+import coil3.size.Size as CoilSize
 
 /**
  * A [ZoomableImageSource] for Telephoto to load encrypted images with support for subsampling while keeping fallback to
  * Coil for other image types like GIFs, SVGs, etc.
  */
+@Immutable
 internal class CipherZoomableImageSource(
     private val model: FileInfo,
+    private val imageLoader: ImageLoader,
     private val mimeType: String,
     private val vault: Vault,
     private val contentResolver: ContentResolver,
-    private val imageLoader: ImageLoader,
 ) : ZoomableImageSource {
 
     @Composable
@@ -63,9 +59,11 @@ internal class CipherZoomableImageSource(
                 request = ImageRequest.Builder(context)
                     .data(model)
                     .size { canvasSize.first().toCoilSize() }
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .maxBitmapSize(CoilSize.ORIGINAL)
                     .build(),
-                mimeType = mimeType,
                 imageLoader = imageLoader,
+                mimeType = mimeType,
                 vault = vault,
                 contentResolver = contentResolver
             )
@@ -81,12 +79,11 @@ internal class CipherZoomableImageSource(
 
 private class Resolver(
     private val request: ImageRequest,
-    private val mimeType: String,
     private val imageLoader: ImageLoader,
+    private val mimeType: String,
     private val vault: Vault,
     private val contentResolver: ContentResolver,
-) : RememberObserver {
-    private var scope: CoroutineScope? = null
+) : RememberWorker() {
     private val subSamplingMimeTypes = listOf(
         "image/jpeg",
         "image/png",
@@ -99,7 +96,7 @@ private class Resolver(
         ResolveResult(delegate = null)
     )
 
-    private suspend fun work() {
+    override suspend fun work() {
         val result = imageLoader.execute(request)
         val imageSource = result.toSubSamplingImageSource()
 
@@ -107,11 +104,11 @@ private class Resolver(
             delegate = if (result is SuccessResult && imageSource != null) {
                 ZoomableImageSource.SubSamplingDelegate(
                     source = imageSource,
-                    imageOptions = ImageBitmapOptions(from = (result.drawable as BitmapDrawable).bitmap)
+                    imageOptions = ImageBitmapOptions(from = result.image.toBitmap())
                 )
             } else {
                 ZoomableImageSource.PainterDelegate(
-                    painter = result.drawable?.asPainter()
+                    painter = result.image?.asPainter(request.context)
                 )
             }
         )
@@ -132,35 +129,4 @@ private class Resolver(
 
         return null
     }
-
-    private fun Drawable.asPainter(): Painter {
-        return DrawablePainter(mutate())
-    }
-
-    //region RememberWorker and extension
-
-    override fun onRemembered() {
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        scope!!.launch { work() }
-    }
-
-    override fun onAbandoned() {
-        scope?.cancel()
-    }
-
-    override fun onForgotten() {
-        scope?.cancel()
-    }
-
-    private fun ResolveResult.copy(
-        delegate: ZoomableImageSource.ImageDelegate? = this.delegate,
-        crossfadeDuration: Duration = this.crossfadeDuration,
-        placeholder: Painter? = this.placeholder,
-    ) = ResolveResult(
-        delegate = delegate,
-        crossfadeDuration = crossfadeDuration,
-        placeholder = placeholder,
-    )
-
-    //endregion
 }

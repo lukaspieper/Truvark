@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-package de.lukaspieper.truvark.common.test.fakes
+package de.lukaspieper.truvark.common.test.doubles
 
 import de.lukaspieper.truvark.common.domain.IdGenerator
 

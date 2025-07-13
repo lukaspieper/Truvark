@@ -8,6 +8,7 @@ package de.lukaspieper.truvark.common.domain.vault
 
 import com.google.crypto.tink.StreamingAead
 import de.lukaspieper.truvark.common.constants.FixedValues.MAX_VAULT_NAME_LENGTH
+import de.lukaspieper.truvark.common.data.io.DirectoryInfo
 import de.lukaspieper.truvark.common.data.io.FileInfo
 import de.lukaspieper.truvark.common.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.common.domain.entities.CipherFolderEntity
@@ -132,7 +133,7 @@ public data class Vault internal constructor(
      * file and writes an encrypted copy to it. The [sources] will not be modified or deleted.
      */
     @Throws(IllegalArgumentException::class)
-    public fun scheduleEncryption(
+    public fun scheduleFileEncryption(
         metadata: Scheduler.SchedulerMetadata,
         sources: List<() -> FileInfo>,
         destination: CipherFolderEntity,
@@ -151,6 +152,33 @@ public data class Vault internal constructor(
             ),
             metadata = metadata
         )
+    }
+
+    @Throws(IllegalArgumentException::class)
+    public suspend fun scheduleDirectoryEncryption(
+        metadata: Scheduler.SchedulerMetadata,
+        source: DirectoryInfo,
+        destination: CipherFolderEntity,
+        deleteSources: Boolean = false
+    ) {
+        // Not using Vault.createFolder here to avoid additional vault changed events.
+        val folder = folderCreator.createFolder(source.name, destination)
+
+        scheduleFileEncryption(
+            metadata = metadata,
+            sources = fileSystem.listFiles(source).map { file -> { file } },
+            destination = folder,
+            deleteSources = deleteSources
+        )
+
+        fileSystem.listDirectories(source).forEach { sourceDirectory ->
+            scheduleDirectoryEncryption(
+                metadata = metadata,
+                source = sourceDirectory,
+                destination = folder,
+                deleteSources = deleteSources
+            )
+        }
     }
 
     /**
