@@ -6,50 +6,56 @@
 
 package de.lukaspieper.truvark.ui.views.presenter
 
-import android.content.Context
-import android.media.MediaDataSource
 import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import coil3.ImageLoader
-import coil3.request.CachePolicy
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
-import de.lukaspieper.truvark.domain.crypto.decryption.DecryptingFileHandle
-import de.lukaspieper.truvark.domain.crypto.decryption.FileHandleMediaDataSource
-import de.lukaspieper.truvark.domain.crypto.decryption.coil.CipherFileFetcher
-import de.lukaspieper.truvark.domain.crypto.decryption.coil.CipherZoomableImageSource
+import de.lukaspieper.truvark.domain.crypto.decryption.media3.DecryptingDataSource
+import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.vault.Vault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
 
+@OptIn(UnstableApi::class)
 @HiltViewModel(assistedFactory = PresenterViewModel.Factory::class)
 public class PresenterViewModel @AssistedInject constructor(
     private val preferences: PersistentPreferences,
     private val vault: Vault,
-    @ApplicationContext private val appContext: Context,
-    @Assisted private val folderId: String,
+    private val fileSystem: AndroidFileSystem,
+    private val imageLoader: ImageLoader,
+    @Assisted private val folderId: Uuid,
 ) : ViewModel() {
 
-    private val imageLoader by lazy {
-        ImageLoader.Builder(appContext)
-            .components {
-                add(CipherFileFetcher.Factory(vault))
-            }
-            .diskCachePolicy(CachePolicy.DISABLED)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .build()
+    private val mediaSourceFactory by lazy {
+        val decryptingDataSourceFactory = DecryptingDataSource.Factory(vault)
+
+        val resolvingDataSourceFactory = ResolvingDataSource.Factory(decryptingDataSourceFactory) { dataSpec ->
+            val file = itemsData.value.physicalFilesByUri[dataSpec.uri]
+            return@Factory dataSpec.buildUpon().setCustomData(file).build()
+        }
+
+        ProgressiveMediaSource.Factory(resolvingDataSourceFactory)
     }
 
     public val itemsData: MutableStateFlow<ItemsData> = MutableStateFlow(ItemsData())
@@ -59,38 +65,41 @@ public class PresenterViewModel @AssistedInject constructor(
     init {
         // TODO: Should the flow be collected here? How to update the data without interrupting the user?
         viewModelScope.launch(Dispatchers.IO) {
-            val cipherFileEntities = vault.findCipherFileEntitiesForFolder(folderId).first()
+            val folder = vault.findCipherFolderEntity(folderId)
+            val cipherFileEntities = vault.findCipherFileEntitiesForFolder(folder).first()
             itemsData.update { it.copy(cipherFileEntities = cipherFileEntities) }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val physicalFilesById = vault.fileSystem.fetchFilesFromCipherDirectory(folderId)
-                .associateBy { it.fullName }
+            val physicalFiles = vault.fileSystem.listFilesInCipherDirectory(folderId).toList()
 
-            itemsData.update { it.copy(physicalFiles = physicalFilesById) }
+            itemsData.update { data ->
+                data.copy(
+                    physicalFilesById = physicalFiles.associateBy { Uuid.parseHex(it.fullName) },
+                    physicalFilesByUri = physicalFiles.associateBy { it.uri }
+                )
+            }
         }
     }
 
     internal fun createCipherZoomableImageSource(fileInfo: FileInfo, mimeType: String): CipherZoomableImageSource {
-        return CipherZoomableImageSource(fileInfo, imageLoader, mimeType, vault, appContext.contentResolver)
+        return CipherZoomableImageSource(fileInfo, imageLoader, mimeType, vault)
     }
 
-    internal fun createMediaDataSource(fileInfo: FileInfo): MediaDataSource {
-        return FileHandleMediaDataSource(
-            // TODO: Make this FileSystem-agnostic, e.g. by splitting file access and decryption and adding a method
-            //  returning a FileHandle
-            DecryptingFileHandle(appContext.contentResolver, vault, fileInfo.uri as Uri)
-        )
+    internal fun createMediaSource(fileInfo: FileInfo): MediaSource {
+        val mediaItem = MediaItem.fromUri(fileInfo.uri as Uri)
+        return mediaSourceFactory.createMediaSource(mediaItem)
     }
 
     @Immutable
     public data class ItemsData(
         val cipherFileEntities: List<CipherFileEntity> = emptyList(),
-        val physicalFiles: Map<String, FileInfo>? = null
+        val physicalFilesById: Map<Uuid, FileInfo>? = null,
+        val physicalFilesByUri: Map<Any, FileInfo> = emptyMap()
     )
 
     @AssistedFactory
     public interface Factory {
-        public fun create(folderId: String): PresenterViewModel
+        public fun create(folderId: Uuid): PresenterViewModel
     }
 }

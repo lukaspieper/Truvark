@@ -9,7 +9,6 @@ package de.lukaspieper.truvark.ui.views.presenter.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -17,10 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
-import de.lukaspieper.truvark.ui.theme.DarkColorScheme
 
 @Composable
 public fun NotSupportedContentView(
@@ -36,14 +36,13 @@ public fun NotSupportedContentView(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.Default.ImageNotSupported,
             contentDescription = null,
-            tint = DarkColorScheme.onBackground,
             modifier = Modifier
                 .requiredSize(100.dp)
                 .padding(bottom = 16.dp)
@@ -52,19 +51,20 @@ public fun NotSupportedContentView(
         Text(
             stringResource(R.string.file_not_supported_info),
             textAlign = TextAlign.Center,
-            color = DarkColorScheme.onBackground,
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
             text = fileName,
             fontStyle = FontStyle.Italic,
-            color = DarkColorScheme.onBackground,
         )
     }
 }
 
 @ElementPreviews
 @Composable
-private fun NotSupportedContentViewPreview() = PreviewHost(backgroundColor = Color.Black) {
+private fun NotSupportedContentViewPreview() = PreviewHost(
+    backgroundColor = Color.Black,
+    contentColor = dynamicDarkColorScheme(LocalContext.current).onBackground
+) {
     NotSupportedContentView("example.jpg")
 }

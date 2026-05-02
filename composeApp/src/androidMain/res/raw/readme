@@ -1,5 +1,5 @@
 SPDX-FileCopyrightText: 2025 Lukas Pieper
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: MIT OR BSD-3-Clause
 
 This file exists to list all remaining licenses in the header that are not already in use elsewhere. These can be Maven
 libraries, for example. Based on the listing in the header, REUSE (download --all) will store the texts of the licenses

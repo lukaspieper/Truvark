@@ -19,13 +19,15 @@ import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.COLUMN_SIZE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -126,7 +128,7 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
     }
 
     @Throws(Exception::class)
-    override fun createFile(directoryInfo: DirectoryInfo, name: String, mimeType: String): FileInfo {
+    override suspend fun createFile(directoryInfo: DirectoryInfo, name: String, mimeType: String): FileInfo {
         val uri = directoryInfo.uri as Uri
         if (findFileOrNull(directoryInfo, name) != null) throw IOException("File already exists")
 
@@ -137,12 +139,7 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
     }
 
     @Throws(Exception::class)
-    override fun findOrCreateDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
-        return findDirectoryOrNull(directoryInfo, name) ?: createDirectory(directoryInfo, name)
-    }
-
-    @Throws(Exception::class)
-    private fun createDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
+    override fun createDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
         val uri = directoryInfo.uri as Uri
 
         val directoryUri = DocumentsContract.createDocument(
@@ -157,72 +154,53 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
         return DirectoryInfo(directoryUri, name)
     }
 
-    override fun listFiles(directoryInfo: DirectoryInfo): List<FileInfo> {
+    override fun listFiles(directoryInfo: DirectoryInfo): Flow<FileInfo> = flow {
         val uri = directoryInfo.uri as Uri
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getDocumentId(uri))
 
         context.contentResolver.query(
             childrenUri,
-            arrayOf(
-                COLUMN_DOCUMENT_ID,
-                COLUMN_DISPLAY_NAME,
-                COLUMN_SIZE,
-                COLUMN_MIME_TYPE
-            ),
+            arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME, COLUMN_SIZE, COLUMN_MIME_TYPE),
         ) { cursor ->
-            if (cursor == null) return emptyList()
+            while (cursor?.moveToNext() == true) {
+                val documentType = cursor.getString(COLUMN_MIME_TYPE)
+                if (documentType == MIME_TYPE_DIR) continue
 
-            // cursor also contains directories, however overhead should be small enough to use it for initialization.
-            return ArrayList<FileInfo>(cursor.count).apply {
-                while (cursor.moveToNext()) {
-                    val documentType = cursor.getString(COLUMN_MIME_TYPE)
-
-                    if (documentType != MIME_TYPE_DIR) {
-                        add(
-                            FileInfo(
-                                uri = DocumentsContract.buildDocumentUriUsingTree(
-                                    uri,
-                                    cursor.getString(COLUMN_DOCUMENT_ID)
-                                ),
-                                fullName = cursor.getString(COLUMN_DISPLAY_NAME),
-                                size = cursor.getLong(COLUMN_SIZE),
-                                mimeType = documentType
-                            )
-                        )
-                    }
-                }
+                emit(
+                    FileInfo(
+                        uri = DocumentsContract.buildDocumentUriUsingTree(
+                            uri,
+                            cursor.getString(COLUMN_DOCUMENT_ID)
+                        ),
+                        fullName = cursor.getString(COLUMN_DISPLAY_NAME),
+                        size = cursor.getLong(COLUMN_SIZE),
+                        mimeType = documentType
+                    )
+                )
             }
         }
     }
 
-    override fun listDirectories(directoryInfo: DirectoryInfo): List<DirectoryInfo> {
+    override fun listDirectories(directoryInfo: DirectoryInfo): Flow<DirectoryInfo> = flow {
         val uri = directoryInfo.uri as Uri
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getDocumentId(uri))
 
         context.contentResolver.query(
             childrenUri,
-            arrayOf(
-                COLUMN_DOCUMENT_ID,
-                COLUMN_DISPLAY_NAME,
-                COLUMN_MIME_TYPE
-            )
+            arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME, COLUMN_MIME_TYPE)
         ) { cursor ->
-            // Not initializing the ArrayList with the cursor count, because we expect the number of directories to be
-            // much smaller than the number of files.
-            return ArrayList<DirectoryInfo>().apply {
-                while (cursor?.moveToNext() == true) {
-                    if (cursor.getString(COLUMN_MIME_TYPE) == MIME_TYPE_DIR) {
-                        add(
-                            DirectoryInfo(
-                                uri = DocumentsContract.buildDocumentUriUsingTree(
-                                    uri,
-                                    cursor.getString(COLUMN_DOCUMENT_ID)
-                                ),
-                                name = cursor.getString(COLUMN_DISPLAY_NAME)
-                            )
-                        )
-                    }
-                }
+            while (cursor?.moveToNext() == true) {
+                if (cursor.getString(COLUMN_MIME_TYPE) != MIME_TYPE_DIR) continue
+
+                emit(
+                    DirectoryInfo(
+                        uri = DocumentsContract.buildDocumentUriUsingTree(
+                            uri,
+                            cursor.getString(COLUMN_DOCUMENT_ID)
+                        ),
+                        name = cursor.getString(COLUMN_DISPLAY_NAME)
+                    )
+                )
             }
         }
     }
@@ -264,9 +242,9 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
     }
 
     @Throws(FileNotFoundException::class)
-    override fun openInputStream(fileInfo: FileInfo): InputStream {
+    override fun openInputStream(fileInfo: FileInfo): FileInputStream {
         val uri = fileInfo.uri as Uri
-        return context.contentResolver.openInputStream(uri) ?: throw FileNotFoundException()
+        return context.contentResolver.openInputStream(uri) as? FileInputStream ?: throw FileNotFoundException()
     }
 
     @Throws(FileNotFoundException::class)

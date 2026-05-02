@@ -50,12 +50,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.ImageLoader
 import de.lukaspieper.truvark.Page
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
@@ -68,6 +70,7 @@ import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
@@ -100,14 +103,15 @@ public fun BrowserPage(
         navigateToFilePresenter = { cipherFileEntity ->
             navigate(
                 Page.Presenter(
-                    viewModel.currentFolderHierarchyLevel.folder.id,
-                    cipherFileEntity.id
+                    viewModel.currentFolderHierarchyLevel.folder.id.toHexString(),
+                    cipherFileEntity.id.toHexString()
                 )
             )
         },
         navigateToFolder = viewModel::navigateToFolder,
         navigateToParentFolder = viewModel::navigateToParentFolder,
-        modifier = modifier
+        imageLoader = viewModel.imageLoader,
+        modifier = modifier,
     )
 }
 
@@ -127,8 +131,9 @@ private fun BrowserView(
     updateIsListLayout: (Boolean) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToFilePresenter: (CipherFileEntity) -> Unit,
-    navigateToFolder: (String, CipherFolderEntity) -> Unit,
+    navigateToFolder: (Uuid, CipherFolderEntity) -> Unit,
     navigateToParentFolder: () -> Unit,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
     val isListLayout by isListLayoutState.collectAsStateWithLifecycle(false)
@@ -179,18 +184,14 @@ private fun BrowserView(
                 }
 
                 SelectionState.SelectionMode.SELECTION -> {
-                    val numberOfCipherEntities = remember(folderHierarchyLevel) {
-                        folderHierarchyLevel.folders.size + folderHierarchyLevel.files.size
-                    }
-
                     SelectionModeBar(
                         numberOfSelections = selectionState.numberOfSelections,
-                        numberOfCipherEntities = numberOfCipherEntities,
+                        numberOfCipherEntities = folderHierarchyLevel.entitySize,
                         disableSelectionMode = selectionState::disableSelectionMode,
                         enableRelocationMode = { selectionState.enableRelocationMode(folderHierarchyLevel.folder) },
                         selectAll = {
-                            selectionState.selectFolders(folderHierarchyLevel.folderIds)
-                            selectionState.selectFiles(folderHierarchyLevel.fileIds)
+                            selectionState.selectFolders(folderHierarchyLevel.folders)
+                            selectionState.selectFiles(folderHierarchyLevel.files)
                         },
                         showDeleteSelectionDialog = { visibleDialog = BrowserDialogs.DELETE_SELECTION },
                         decryptSelectedCipherEntities = decryptSelectedCipherEntities
@@ -202,12 +203,12 @@ private fun BrowserView(
                     // files to the root of the vault. The root only supports folders.
                     val isRelocationAllowed = remember(isRootLevel, selectionState, folderHierarchyLevel) {
                         folderHierarchyLevel.folder != selectionState.relocationSourceFolder &&
-                                (!isRootLevel || selectionState.selectedFileIds.isEmpty())
+                                (!isRootLevel || selectionState.selectedFiles.isEmpty())
                     }
 
                     RelocationModeBar(
-                        numberOfSelectedFolders = selectionState.selectedFolderIds.size,
-                        numberOfSelectedFiles = selectionState.selectedFileIds.size,
+                        numberOfSelectedFolders = selectionState.selectedFolders.size,
+                        numberOfSelectedFiles = selectionState.selectedFiles.size,
                         isRelocationAllowed = isRelocationAllowed,
                         disableSelectionMode = selectionState::disableSelectionMode,
                         relocateSelectedCipherEntities = relocateSelectedCipherEntities
@@ -222,7 +223,8 @@ private fun BrowserView(
             isListLayout = isListLayout,
             onFileClick = navigateToFilePresenter,
             onFolderClick = navigateToFolder,
-            contentPadding = paddingValues
+            contentPadding = paddingValues,
+            imageLoader = imageLoader
         )
     }
 
@@ -415,6 +417,7 @@ private fun NonRootFolderPreview(
         navigateToSettings = {},
         navigateToFilePresenter = {},
         navigateToFolder = { _, _ -> },
-        navigateToParentFolder = {}
+        navigateToParentFolder = {},
+        imageLoader = ImageLoader(LocalContext.current)
     )
 }

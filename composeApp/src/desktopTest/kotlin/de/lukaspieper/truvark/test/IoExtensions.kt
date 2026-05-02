@@ -19,7 +19,7 @@ internal interface IoExtensions {
         (uri as File).writeBytes(bytes)
 
         // Refresh the file info because the size has changed
-        return fileSystem.fileInfo(uri as File)
+        return fileSystem.fileInfo(uri)
     }
 
     fun FileInfo.readBytes(): ByteArray? {

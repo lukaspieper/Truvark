@@ -9,14 +9,16 @@ package de.lukaspieper.truvark.ui.views.browser
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.ImageLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
+import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
@@ -28,134 +30,135 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 import javax.inject.Inject
+import kotlin.uuid.Uuid
 
 @HiltViewModel
 public class BrowserViewModel @Inject constructor(
     private val vault: Vault,
     private val fileSystem: AndroidFileSystem,
-    private val preferences: PersistentPreferences
+    private val preferences: PersistentPreferences,
+    public val imageLoader: ImageLoader,
 ) : ViewModel() {
-    private val stack = ArrayDeque<FolderHierarchyLevel>()
+    private val backstack = mutableStateListOf(FolderHierarchyLevel(vault.rootFolder))
     private var updateFolderHierarchyLevelJob: Job
 
-    public var currentFolderHierarchyLevel: FolderHierarchyLevel by mutableStateOf(
-        runBlocking { FolderHierarchyLevel(vault.findCipherFolderEntity("")) }
-    )
-        private set
+    public val currentFolderHierarchyLevel: FolderHierarchyLevel by derivedStateOf { backstack.last() }
+    public val isRootLevel: Boolean by derivedStateOf { currentFolderHierarchyLevel.folder.id == vault.rootFolder.id }
+    public val isListLayout: Flow<Boolean> = preferences.isListLayout
 
     public val selectionState: SelectionState = SelectionState()
 
-    public var isRootLevel: Boolean by mutableStateOf(true)
-        private set
-
-    public val isListLayout: Flow<Boolean> = preferences.isListLayout
-
     init {
-        stack.addLast(currentFolderHierarchyLevel)
         updateFolderHierarchyLevelJob = updateFolderHierarchyLevel()
     }
 
-    public fun navigateToFolder(currentFolderId: String, folder: CipherFolderEntity) {
-        synchronized(stack) {
+    public fun navigateToFolder(currentFolderId: Uuid, folder: CipherFolderEntity) {
+        synchronized(backstack) {
             // Prevent parallel folders from being added to the navigation stack, happens with Multi-Touch.
             if (currentFolderId != currentFolderHierarchyLevel.folder.id) {
                 return
             }
 
             updateFolderHierarchyLevelJob.cancel()
-
-            val folderHierarchyLevel = FolderHierarchyLevel(folder)
-            stack.addLast(folderHierarchyLevel)
-            currentFolderHierarchyLevel = folderHierarchyLevel
-            isRootLevel = false
+            backstack.add(FolderHierarchyLevel(folder))
         }
 
         updateFolderHierarchyLevelJob = updateFolderHierarchyLevel()
     }
 
     public fun navigateToParentFolder() {
-        if (stack.size > 1) {
-            synchronized(stack) {
-                updateFolderHierarchyLevelJob.cancel()
-                if (selectionState.mode != SelectionState.SelectionMode.RELOCATION) {
-                    selectionState.disableSelectionMode()
-                }
+        if (backstack.size <= 1) {
+            return
+        }
 
-                stack.removeLast()
-                currentFolderHierarchyLevel = stack.last()
-                isRootLevel = (stack.size == 1)
+        synchronized(backstack) {
+            updateFolderHierarchyLevelJob.cancel()
+            if (selectionState.mode != SelectionState.SelectionMode.RELOCATION) {
+                selectionState.disableSelectionMode()
             }
 
-            updateFolderHierarchyLevelJob = updateFolderHierarchyLevel()
+            backstack.removeAt(backstack.lastIndex)
         }
+
+        updateFolderHierarchyLevelJob = updateFolderHierarchyLevel()
     }
 
     @OptIn(FlowPreview::class)
     private fun updateFolderHierarchyLevel(): Job {
-        return viewModelScope.launch {
-            launch {
-                vault.findCipherFolderEntitySubfolders(currentFolderHierarchyLevel.folder.id)
-                    .debounce(250)
-                    .collect { folders ->
-                        val folderIds = folders.map { it.id }.toSet()
+        // TODO: Optimize loading data for the grid/list view.
+        // - debounce is needed to prevent updates before animations are finished.
+        // - debounce also affects initial loading time negatively.
+        // - loading the physical files may still be to slow.
 
+        val currentFolder = currentFolderHierarchyLevel.folder
+        return viewModelScope.launch(Dispatchers.IO) {
+            launch {
+                vault.findCipherFolderEntitySubfolders(currentFolder)
+                    .debounce(100)
+                    .collect { folders ->
                         withContext(Dispatchers.Main) {
                             updatePeekOfStack {
-                                currentFolderHierarchyLevel.copy(
-                                    folders = folders,
-                                    folderIds = folderIds
-                                )
+                                currentFolderHierarchyLevel.copy(folders = folders)
                             }
                         }
                     }
             }
 
-            launch {
-                vault.findCipherFileEntitiesForFolder(currentFolderHierarchyLevel.folder.id)
-                    .debounce(250)
-                    .collect { files ->
-                        val fileIds = files.map { it.id }.toSet()
+            val sharedFilesFlow = vault.findCipherFileEntitiesForFolder(currentFolder)
+                .debounce(100)
+                .shareIn(this, SharingStarted.Eagerly, replay = 1)
 
-                        withContext(Dispatchers.Main) {
-                            updatePeekOfStack {
-                                currentFolderHierarchyLevel.copy(
-                                    files = files,
-                                    fileIds = fileIds
-                                )
-                            }
+            launch {
+                sharedFilesFlow.collect { files ->
+                    withContext(Dispatchers.Main) {
+                        updatePeekOfStack {
+                            currentFolderHierarchyLevel.copy(files = files)
                         }
                     }
+                }
+            }
+
+            launch {
+                sharedFilesFlow.collect { files ->
+                    if (files.isEmpty()) {
+                        return@collect
+                    }
+
+                    val physicalFilesById = vault.fileSystem.listFilesInCipherDirectory(currentFolder.id)
+                        .toList()
+                        .associateBy { Uuid.parseHex(it.fullName) }
+
+                    withContext(Dispatchers.Main) {
+                        updatePeekOfStack {
+                            currentFolderHierarchyLevel.copy(physicalFilesById = physicalFilesById)
+                        }
+                    }
+                }
             }
         }
     }
 
     public fun checkForVaultNameUpdates() {
-        if (isRootLevel && currentFolderHierarchyLevel.folder.displayName != vault.displayName) {
+        if (isRootLevel && currentFolderHierarchyLevel.folder.displayName != vault.name) {
             updatePeekOfStack {
-                currentFolderHierarchyLevel.copy(
-                    folder = runBlocking { vault.findCipherFolderEntity("") }
-                )
+                currentFolderHierarchyLevel.copy(folder = vault.rootFolder)
             }
         }
     }
 
     private fun updatePeekOfStack(updatePeek: () -> FolderHierarchyLevel) {
-        synchronized(stack) {
-            val folderHierarchyLevel = updatePeek()
-
-            // Update peek of stack
-            stack.removeLast()
-            stack.addLast(folderHierarchyLevel)
-            currentFolderHierarchyLevel = folderHierarchyLevel
-
+        synchronized(backstack) {
+            backstack[backstack.lastIndex] = updatePeek()
             // No need to update the job, because the parent folder id is the same.
         }
     }
@@ -180,7 +183,7 @@ public class BrowserViewModel @Inject constructor(
 
         updatePeekOfStack {
             currentFolderHierarchyLevel.copy(
-                folder = runBlocking { vault.findCipherFolderEntity(currentFolderHierarchyLevel.folder.id) }
+                folder = vault.findCipherFolderEntity(currentFolderHierarchyLevel.folder.id)
             )
         }
         return true
@@ -188,7 +191,7 @@ public class BrowserViewModel @Inject constructor(
 
     public fun encryptFiles(uris: List<Uri>, deleteSourceFiles: Boolean) {
         vault.scheduleFileEncryption(
-            metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.encrypting_files),
+            properties = WorkScheduler.NotificationProperties(R.string.encrypting_files),
             destination = currentFolderHierarchyLevel.folder,
             sources = uris.reversed().map { { fileSystem.fileInfo(it) } },
             deleteSources = deleteSourceFiles
@@ -199,7 +202,7 @@ public class BrowserViewModel @Inject constructor(
     public fun encryptDirectory(uri: Uri, deleteSourceFiles: Boolean) {
         GlobalScope.launch {
             vault.scheduleDirectoryEncryption(
-                metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.encrypting_files),
+                properties = WorkScheduler.NotificationProperties(R.string.encrypting_files),
                 destination = currentFolderHierarchyLevel.folder,
                 source = fileSystem.directoryInfo(uri),
                 deleteSources = deleteSourceFiles
@@ -211,15 +214,14 @@ public class BrowserViewModel @Inject constructor(
     public fun decryptSelectedCipherEntities() {
         GlobalScope.launch {
             vault.scheduleDecryption(
-                metadata = WorkScheduler.AndroidSchedulerMetadata(
+                properties = WorkScheduler.NotificationProperties(
                     notificationTitle = R.string.decrypting_files,
                     notificationFinishTitle = R.string.decrypted_files,
                     notificationActionText = R.string.open_directory,
                     notificationAction = Intent(Intent.ACTION_VIEW, vault.fileSystem.decryptionRootDirectory.uri as Uri)
                 ),
-                parentFolder = currentFolderHierarchyLevel.folder,
-                files = selectionState.selectedFileIds.map { vault.findCipherFileEntity(it) },
-                folders = selectionState.selectedFolderIds.map { vault.findCipherFolderEntity(it) }
+                files = selectionState.selectedFiles,
+                folders = selectionState.selectedFolders
             )
 
             selectionState.disableSelectionMode()
@@ -230,9 +232,9 @@ public class BrowserViewModel @Inject constructor(
     public fun deleteSelectedCipherEntities() {
         GlobalScope.launch {
             vault.scheduleDeletion(
-                metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.deleting_files),
-                files = selectionState.selectedFileIds.map { vault.findCipherFileEntity(it) },
-                folders = selectionState.selectedFolderIds.map { vault.findCipherFolderEntity(it) }
+                properties = WorkScheduler.NotificationProperties(R.string.deleting_files),
+                files = selectionState.selectedFiles,
+                folders = selectionState.selectedFolders
             )
 
             selectionState.disableSelectionMode()
@@ -243,10 +245,10 @@ public class BrowserViewModel @Inject constructor(
     public fun relocateSelectedCipherEntities() {
         GlobalScope.launch {
             vault.scheduleRelocation(
-                metadata = WorkScheduler.AndroidSchedulerMetadata(R.string.relocating_files),
+                properties = WorkScheduler.NotificationProperties(R.string.relocating_files),
                 destination = currentFolderHierarchyLevel.folder,
-                files = selectionState.selectedFileIds.map { vault.findCipherFileEntity(it) },
-                folders = selectionState.selectedFolderIds.map { vault.findCipherFolderEntity(it) }
+                files = selectionState.selectedFiles,
+                folders = selectionState.selectedFolders
             )
 
             selectionState.disableSelectionMode()
@@ -263,8 +265,9 @@ public class BrowserViewModel @Inject constructor(
     public data class FolderHierarchyLevel(
         val folder: CipherFolderEntity,
         val folders: List<CipherFolderEntity> = emptyList(),
-        val folderIds: Set<String> = emptySet(),
         val files: List<CipherFileEntity> = emptyList(),
-        val fileIds: Set<String> = emptySet()
-    )
+        val physicalFilesById: Map<Uuid, FileInfo> = emptyMap()
+    ) {
+        val entitySize: Int = folders.size + files.size
+    }
 }

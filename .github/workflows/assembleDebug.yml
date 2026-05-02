@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
           submodules: 'true'
 
@@ -28,13 +28,13 @@ jobs:
         java-version: 17
 
     - name: Run Gradle
-      uses: gradle/actions/setup-gradle@v4
+      uses: gradle/actions/setup-gradle@v5
 
     - name: Assemble Debug
       run: ./gradlew assembleDebug
 
     - name: Upload Assembly
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: inputs.assembly_path != ''
       with:
         name: Assembly

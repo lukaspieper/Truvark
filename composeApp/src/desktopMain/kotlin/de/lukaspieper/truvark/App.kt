@@ -6,6 +6,12 @@
 
 package de.lukaspieper.truvark
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.shapes
+import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -15,10 +21,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
 import de.lukaspieper.truvark.crypto.JvmArgon2
 import de.lukaspieper.truvark.data.io.JavaFileSystem
-import de.lukaspieper.truvark.domain.IdGenerator
-import de.lukaspieper.truvark.domain.JvmThumbnailProvider
 import de.lukaspieper.truvark.domain.vault.VaultFactory
-import de.lukaspieper.truvark.ui.AppTheme
 import de.lukaspieper.truvark.ui.MainView
 import de.lukaspieper.truvark.ui.MainViewModel
 import de.lukaspieper.truvark.work.JvmScheduler
@@ -38,8 +41,6 @@ public fun main() {
         vaultFactory = VaultFactory(
             argon2 = JvmArgon2(),
             fileSystem = fileSystem,
-            idGenerator = IdGenerator.Default,
-            thumbnailProvider = JvmThumbnailProvider(),
             scheduler = JvmScheduler()
         )
     )
@@ -50,7 +51,11 @@ public fun main() {
             title = "Truvark",
             state = rememberWindowState(width = 1100.dp, height = 650.dp, position = WindowPosition(Alignment.Center))
         ) {
-            AppTheme {
+            MaterialTheme(
+                colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
+                typography = typography,
+                shapes = shapes
+            ) {
                 MainView(viewModel)
             }
         }

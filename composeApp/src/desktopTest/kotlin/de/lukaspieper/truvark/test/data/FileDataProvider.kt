@@ -20,8 +20,8 @@ import kotlin.uuid.Uuid
 class FileDataProvider : ArgumentsProvider {
 
     override fun provideArguments(
-        parameters: ParameterDeclarations?,
-        context: ExtensionContext?
+        parameters: ParameterDeclarations,
+        context: ExtensionContext
     ): Stream<out Arguments> {
         val uuid = Uuid.random().toHexString()
 

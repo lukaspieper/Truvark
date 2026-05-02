@@ -15,9 +15,9 @@ import java.util.stream.Stream
 class AmountProvider : ArgumentsProvider {
 
     override fun provideArguments(
-        parameters: ParameterDeclarations?,
-        context: ExtensionContext?
+        parameters: ParameterDeclarations,
+        context: ExtensionContext
     ): Stream<out Arguments> {
-        return intArrayOf(0, 1, 2, 5, 10, 100).map { Arguments.of(it) }.stream()
+        return intArrayOf(0, 1, 2, 50, 300).map { Arguments.of(it) }.stream()
     }
 }

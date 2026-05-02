@@ -9,38 +9,46 @@ package de.lukaspieper.truvark.ui.preview
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.views.browser.BrowserViewModel
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
+// Files and folders cannot use the same indices because the selection logic requires unique Uuids for all items.
 public object PreviewSampleData {
 
-    private val cipherFolderEntities: List<CipherFolderEntity> = List(5) {
-        object : CipherFolderEntity {
-            override val id: String = "folder$it"
-            override val displayName: String = "Personal Folder $it"
-        }
+    public fun Int.toPreviewUuid(): Uuid {
+        return Uuid.fromLongs(this.toLong(), 0L)
     }
 
-    public val cipherFileEntities: List<CipherFileEntity> = List(30) {
-        object : CipherFileEntity {
-            override val id: String = "file$it"
-            override val thumbnail: ByteArray? = null
-            override val folder: CipherFolderEntity? = null
-            override var name: String = "Top Secret File $it"
-            override var fileExtension: String = "file"
-            override var mimeType: String = "application/octet-stream"
-            override var fileSize: Long = 0L
-            override val mediaDurationSeconds: Long? = if (it % 7 == 0) 62L else null
-        }
-    }
-
-    public val folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel
-        get() = BrowserViewModel.FolderHierarchyLevel(
-            folder = object : CipherFolderEntity {
-                override val id: String = "" // This is the root folder id, usually contains only folders, no files.
-                override val displayName: String = "Vault"
-            },
-            folders = cipherFolderEntities,
-            folderIds = cipherFolderEntities.map { it.id }.toSet(),
-            files = cipherFileEntities,
-            fileIds = cipherFileEntities.map { it.id }.toSet()
+    public val cipherFolderEntities: List<CipherFolderEntity> = (100..<105).map { index ->
+        CipherFolderEntity(
+            id = index.toPreviewUuid(),
+            displayName = "Personal Folder $index",
+            parentFolderId = Uuid.NIL,
+            creationTimestamp = Clock.System.now()
         )
+    }
+
+    public val cipherFileEntities: List<CipherFileEntity> = (1..<30).map { index ->
+        CipherFileEntity(
+            id = index.toPreviewUuid(),
+            fullName = "Top Secret File $index.file",
+            mimeType = "application/octet-stream",
+            fileSize = 0L,
+            mediaDuration = if (index % 7 == 0) 62.seconds else null,
+            creationTimestamp = Clock.System.now(),
+            folderId = Uuid.NIL // Usually files cannot be in the root folder.
+        )
+    }
+
+    public val folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel = BrowserViewModel.FolderHierarchyLevel(
+        folder = CipherFolderEntity(
+            id = Uuid.NIL, // Root folder.
+            displayName = "Vault",
+            parentFolderId = Uuid.NIL,
+            creationTimestamp = Clock.System.now()
+        ),
+        folders = cipherFolderEntities,
+        files = cipherFileEntities
+    )
 }

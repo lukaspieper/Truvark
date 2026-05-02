@@ -7,7 +7,7 @@
 package de.lukaspieper.truvark.data.io
 
 /**
- * Information about a directory. These information are like a snapshot and may get outdated.
+ * Represents information about a directory at a certain point in time (like a snapshot).
  */
 public data class DirectoryInfo(
     public val uri: Any,

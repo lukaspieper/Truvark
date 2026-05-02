@@ -6,6 +6,7 @@
 
 package de.lukaspieper.truvark.ui.views.browser
 
+import android.media.MediaMetadataRetriever
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -56,6 +59,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,9 +68,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
 import coil3.ImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.SubcomposeAsyncImage
-import coil3.request.CachePolicy
+import coil3.compose.useExistingImageAsPlaceholder
 import coil3.request.ImageRequest
+import coil3.request.allowConversionToBitmap
+import coil3.video.preferVideoFrameEmbeddedThumbnailKey
+import coil3.video.videoFrameMillis
+import coil3.video.videoFrameOption
+import de.lukaspieper.truvark.data.io.FileInfo
+import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor
+import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor.Companion.useThumbnailCache
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
@@ -77,16 +89,22 @@ import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.browser.SelectionState.SelectionMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlin.math.roundToLong
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 public fun CipherEntityGrid(
     folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel,
     selectionState: SelectionState,
     isListLayout: Boolean,
     onFileClick: (CipherFileEntity) -> Unit,
-    onFolderClick: (String, CipherFolderEntity) -> Unit,
+    onFolderClick: (Uuid, CipherFolderEntity) -> Unit,
     contentPadding: PaddingValues,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
@@ -95,12 +113,6 @@ public fun CipherEntityGrid(
     }
 
     val context = LocalContext.current
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .diskCachePolicy(CachePolicy.DISABLED)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .build()
-    }
 
     var isDragging by remember { mutableStateOf(false) }
     val autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() }
@@ -114,14 +126,26 @@ public fun CipherEntityGrid(
         }
     }
 
+    // The cipherEntityGridDragHandler only considers vertical padding. Applying horizontal padding separately.
+    val verticalContentPadding = PaddingValues(
+        top = contentPadding.calculateTopPadding(),
+        bottom = contentPadding.calculateBottomPadding()
+    )
+    val layoutDirection = LocalLayoutDirection.current
+    val horizontalPaddingModifier = Modifier.padding(
+        start = contentPadding.calculateStartPadding(layoutDirection),
+        end = contentPadding.calculateEndPadding(layoutDirection)
+    )
+
     LazyVerticalGrid(
         state = gridState,
         columns = gridCells,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-        contentPadding = contentPadding,
+        contentPadding = verticalContentPadding,
         modifier = modifier
             .fillMaxSize()
+            .then(horizontalPaddingModifier)
             .cipherEntityGridDragHandler(
                 lazyGridState = gridState,
                 folderHierarchyLevel = folderHierarchyLevel,
@@ -132,8 +156,8 @@ public fun CipherEntityGrid(
             )
     ) {
         items(folderHierarchyLevel.folders, key = { it.id }) { cipherFolderEntity ->
-            val isSelected by remember(selectionState.selectedFolderIds) {
-                derivedStateOf { selectionState.selectedFolderIds.contains(cipherFolderEntity.id) }
+            val isSelected by remember(selectionState.selectedFolders) {
+                derivedStateOf { selectionState.selectedFolders.contains(cipherFolderEntity) }
             }
 
             // cipherFolderEntity may got updated (e.g. renamed)
@@ -144,7 +168,7 @@ public fun CipherEntityGrid(
 
                 Modifier.clickable {
                     when (selectionState.mode) {
-                        SelectionMode.SELECTION -> selectionState.switchFolderSelection(cipherFolderEntity.id)
+                        SelectionMode.SELECTION -> selectionState.switchFolderSelection(cipherFolderEntity)
                         else -> onFolderClick(folderHierarchyLevel.folder.id, cipherFolderEntity)
                     }
                 }
@@ -193,8 +217,8 @@ public fun CipherEntityGrid(
         }
 
         items(folderHierarchyLevel.files, key = { it.id }) { cipherFileEntity ->
-            val isSelected by remember(selectionState.selectedFileIds) {
-                derivedStateOf { selectionState.selectedFileIds.contains(cipherFileEntity.id) }
+            val isSelected by remember(selectionState.selectedFiles) {
+                derivedStateOf { selectionState.selectedFiles.contains(cipherFileEntity) }
             }
 
             val clickableModifier = remember(selectionState.mode, isDragging) {
@@ -203,17 +227,33 @@ public fun CipherEntityGrid(
                 when (selectionState.mode) {
                     SelectionMode.NONE -> Modifier.clickable { onFileClick(cipherFileEntity) }
                     SelectionMode.SELECTION -> Modifier.clickable {
-                        selectionState.switchFileSelection(cipherFileEntity.id)
+                        selectionState.switchFileSelection(cipherFileEntity)
                     }
 
                     SelectionMode.RELOCATION -> Modifier
                 }
             }
 
-            val thumbnail = remember {
+            val thumbnail = remember(folderHierarchyLevel.physicalFilesById) {
+                val imageData = folderHierarchyLevel.physicalFilesById.getOrElse(cipherFileEntity.id) {
+                    // When physicalFilesById is not populated yet, Coil would get a null request and won't check its
+                    // cache. To give the cache a chance to have a hit, creating a fake FileInfo from cipherFileEntity.
+                    FileInfo(
+                        ThumbnailCacheInterceptor.ThumbnailCacheUri,
+                        cipherFileEntity.id.toHexString(),
+                        cipherFileEntity.fileSize,
+                        "application/octet-stream"
+                    )
+                }
+
                 ImageRequest.Builder(context)
-                    .data(cipherFileEntity.thumbnail)
-                    .memoryCacheKey(cipherFileEntity.id)
+                    .data(imageData)
+                    .allowConversionToBitmap(true)
+                    .useThumbnailCache(true)
+                    .videoFrameMillis(1_000) // Arbitrary value, but not too early to avoid black frames.
+                    .videoFrameOption(MediaMetadataRetriever.OPTION_CLOSEST)
+                    .preferVideoFrameEmbeddedThumbnailKey(true)
+                    .useExistingImageAsPlaceholder(true)
                     .build()
             }
 
@@ -262,7 +302,7 @@ public fun CipherEntityGrid(
 
                         Column {
                             Text(
-                                text = cipherFileEntity.fullName(),
+                                text = cipherFileEntity.fullName,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -276,9 +316,9 @@ public fun CipherEntityGrid(
                                     fontSize = MaterialTheme.typography.bodyMedium.fontSize
                                 )
 
-                                cipherFileEntity.mediaDurationSeconds?.let { mediaDurationSeconds ->
+                                cipherFileEntity.mediaDuration?.let { mediaDuration ->
                                     Text(
-                                        text = mediaDurationSeconds.seconds.toString(),
+                                        text = mediaDuration.roundToSeconds().toString(),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         fontStyle = FontStyle.Italic,
@@ -312,7 +352,7 @@ public fun CipherEntityGrid(
                                     Spacer(modifier = Modifier.size(MaterialTheme.paddings.medium))
 
                                     Text(
-                                        text = cipherFileEntity.fullName(),
+                                        text = cipherFileEntity.fullName,
                                         maxLines = 3,
                                         overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center
@@ -342,7 +382,7 @@ public fun CipherEntityGrid(
                             }
                         }
 
-                        cipherFileEntity.mediaDurationSeconds?.let { mediaDurationSeconds ->
+                        cipherFileEntity.mediaDuration?.let { mediaDuration ->
                             Card(
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -355,7 +395,7 @@ public fun CipherEntityGrid(
                                     )
                             ) {
                                 Text(
-                                    text = mediaDurationSeconds.seconds.toString(),
+                                    text = mediaDuration.roundToSeconds().toString(),
                                     modifier = Modifier.padding(MaterialTheme.paddings.extraSmall)
                                 )
                             }
@@ -367,6 +407,7 @@ public fun CipherEntityGrid(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 private fun Modifier.cipherEntityGridDragHandler(
     lazyGridState: LazyGridState,
     folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel,
@@ -379,19 +420,15 @@ private fun Modifier.cipherEntityGridDragHandler(
 
     return this.pointerInput(folderHierarchyLevel, selectionState) {
         fun LazyGridState.gridItemKeyAtPosition(hitPoint: Offset): LazyGridItemInfo? {
-            val paddingAwareHitPoint = hitPoint.copy(
-                y = hitPoint.y + lazyGridState.layoutInfo.viewportStartOffset
-            )
-
             return layoutInfo.visibleItemsInfo.find { itemInfo ->
+                val paddingAwareHitPoint = hitPoint.copy(y = hitPoint.y + layoutInfo.viewportStartOffset)
                 itemInfo.size.toIntRect().contains(paddingAwareHitPoint.round() - itemInfo.offset)
             }
         }
 
-        val cipherEntitiesSize = folderHierarchyLevel.folders.size + folderHierarchyLevel.files.size
-        val allGridEntitiesIds = folderHierarchyLevel.folderIds.toList()
-            .plus(List(lazyGridState.layoutInfo.totalItemsCount - cipherEntitiesSize) { null })
-            .plus(folderHierarchyLevel.fileIds)
+        val allGridEntities = folderHierarchyLevel.folders
+            .plus(List(lazyGridState.layoutInfo.totalItemsCount - folderHierarchyLevel.entitySize) { null })
+            .plus(folderHierarchyLevel.files)
 
         var initial: LazyGridItemInfo? = null
         var previous: LazyGridItemInfo? = null
@@ -403,10 +440,9 @@ private fun Modifier.cipherEntityGridDragHandler(
                     previous = current
                     updateIsDragging(true)
 
-                    val id = current.key as? String
-                    when {
-                        folderHierarchyLevel.folderIds.contains(id) -> selectionState.selectFolders(setOf(id!!))
-                        folderHierarchyLevel.fileIds.contains(id) -> selectionState.selectFiles(setOf(id!!))
+                    when (val entity = allGridEntities.getOrNull(current.index)) {
+                        is CipherFolderEntity -> selectionState.selectFolders(setOf(entity))
+                        is CipherFileEntity -> selectionState.selectFiles(setOf(entity))
                     }
                 }
             },
@@ -442,31 +478,27 @@ private fun Modifier.cipherEntityGridDragHandler(
                                 else -> previous!!.index..initial!!.index
                             }
 
-                            val folderIds = HashSet<String>()
-                            val fileIds = HashSet<String>()
+                            val entitiesToSelect = (currentIndices - previousIndices)
+                                .mapNotNull { allGridEntities.getOrNull(it) }
+                                .groupBy { entity -> entity::class }
 
-                            // Items to select
-                            (currentIndices - previousIndices).mapNotNull { allGridEntitiesIds.getOrNull(it) }.forEach {
-                                when {
-                                    folderHierarchyLevel.folderIds.contains(it) -> folderIds.add(it)
-                                    folderHierarchyLevel.fileIds.contains(it) -> fileIds.add(it)
-                                }
-                            }
-                            selectionState.selectFolders(folderIds)
-                            selectionState.selectFiles(fileIds)
+                            selectionState.selectFolders(
+                                entitiesToSelect[CipherFolderEntity::class].orEmpty() as List<CipherFolderEntity>
+                            )
+                            selectionState.selectFiles(
+                                entitiesToSelect[CipherFileEntity::class].orEmpty() as List<CipherFileEntity>
+                            )
 
-                            folderIds.clear()
-                            fileIds.clear()
+                            val entitiesToDeselect = (previousIndices - currentIndices)
+                                .mapNotNull { allGridEntities.getOrNull(it) }
+                                .groupBy { entity -> entity::class }
 
-                            // Items to deselect
-                            (previousIndices - currentIndices).mapNotNull { allGridEntitiesIds.getOrNull(it) }.forEach {
-                                when {
-                                    folderHierarchyLevel.folderIds.contains(it) -> folderIds.add(it)
-                                    folderHierarchyLevel.fileIds.contains(it) -> fileIds.add(it)
-                                }
-                            }
-                            selectionState.deselectFolders(folderIds)
-                            selectionState.deselectFiles(fileIds)
+                            selectionState.deselectFolders(
+                                entitiesToDeselect[CipherFolderEntity::class].orEmpty() as List<CipherFolderEntity>
+                            )
+                            selectionState.deselectFiles(
+                                entitiesToDeselect[CipherFileEntity::class].orEmpty() as List<CipherFileEntity>
+                            )
 
                             previous = current
                         }
@@ -477,21 +509,28 @@ private fun Modifier.cipherEntityGridDragHandler(
     }
 }
 
+private fun Duration.roundToSeconds(): Duration {
+    return toDouble(DurationUnit.SECONDS).roundToLong().seconds
+}
+
 @ElementPreviews
 @Composable
 private fun CipherEntityGridSelectionPreviews(
     @PreviewParameter(BooleanPreviewParameterProvider::class) isListLayout: Boolean
 ) = PreviewHost {
-    CipherEntityGrid(
-        folderHierarchyLevel = PreviewSampleData.folderHierarchyLevel,
-        selectionState = SelectionState(
-            initialSelectedFolderIds = setOf("folder1", "folder3", "folder4"),
-            initialSelectedFileIds = setOf("file0", "file3", "file4", "file6", "file11", "file18", "file21")
-        ),
-        isListLayout = isListLayout,
-        onFileClick = {},
-        onFolderClick = { _, _ -> },
-        contentPadding = PaddingValues(MaterialTheme.paddings.large),
-        modifier = Modifier
-    )
+    with(PreviewSampleData) {
+        CipherEntityGrid(
+            folderHierarchyLevel = folderHierarchyLevel,
+            selectionState = SelectionState(
+                initialSelectedFolders = setOf(cipherFolderEntities[2], cipherFolderEntities[4]),
+                initialSelectedFiles = setOf(cipherFileEntities[2], cipherFileEntities[5], cipherFileEntities[6]),
+            ),
+            isListLayout = isListLayout,
+            onFileClick = {},
+            onFolderClick = { _, _ -> },
+            contentPadding = PaddingValues(MaterialTheme.paddings.large),
+            imageLoader = ImageLoader(LocalContext.current),
+            modifier = Modifier
+        )
+    }
 }

@@ -6,7 +6,6 @@
 
 package de.lukaspieper.truvark.test.doubles
 
-import de.lukaspieper.truvark.domain.vault.Vault
 import de.lukaspieper.truvark.work.Scheduler
 import de.lukaspieper.truvark.work.WorkBundle
 import kotlinx.coroutines.runBlocking
@@ -14,8 +13,9 @@ import kotlinx.coroutines.runBlocking
 /**
  * A fake implementation of [Scheduler] that processes all [WorkBundle] units synchronously (blocking).
  */
-class SchedulerFake : Scheduler() {
-    override fun schedule(workBundle: WorkBundle, metadata: SchedulerMetadata) {
+class SchedulerFake : Scheduler {
+
+    override fun schedule(workBundle: WorkBundle) {
         runBlocking {
             for (i in 0 until workBundle.size) {
                 workBundle.processUnit()
@@ -23,9 +23,5 @@ class SchedulerFake : Scheduler() {
         }
     }
 
-    override fun onVaultChanged(vault: Vault) {
-        // Intentionally empty.
-    }
-
-    object MetadataFake : SchedulerMetadata
+    object EmptyProperties : WorkBundle.Properties
 }

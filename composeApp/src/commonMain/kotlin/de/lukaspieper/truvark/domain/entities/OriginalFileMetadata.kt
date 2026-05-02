@@ -6,69 +6,39 @@
 
 package de.lukaspieper.truvark.domain.entities
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import logcat.LogPriority
-import logcat.asLog
-import logcat.logcat
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.protobuf.ProtoNumber
 
 /***
  * Bundle of information about the original file.
  */
-public interface OriginalFileMetadata {
-    public var name: String
-    public var fileExtension: String
-    public var mimeType: String
-    public var fileSize: Long
+@Serializable
+public data class OriginalFileMetadata(
+    @ProtoNumber(1)
+    public val fullName: String,
 
+    @ProtoNumber(2)
+    public val mimeType: String,
+
+    @ProtoNumber(3)
+    public val fileSize: Long
+) {
     public companion object {
-
-        public fun fromJsonOrNull(jsonText: String): OriginalFileMetadata? {
-            try {
-                val cleanedJsonText = jsonText.replace(0.toChar().toString(), "")
-                return Json.decodeFromString(OriginalFileMetadataImpl.serializer(), cleanedJsonText)
-            } catch (e: Exception) {
-                logcat(LogPriority.WARN) { e.asLog() }
-            }
-
-            return null
+        @Throws(Exception::class)
+        public fun fromByteArray(bytes: ByteArray): OriginalFileMetadata {
+            return ProtoBuf.decodeFromByteArray(serializer(), bytes)
         }
     }
 
-    public fun fullName(): String {
-        return if (fileExtension.isBlank()) name else "$name.$fileExtension"
+    init {
+        require(fullName.isNotBlank())
+        require(mimeType.isNotBlank())
+        require(fileSize >= 0L)
     }
 
-    /**
-     * Serializes only the properties defined in [OriginalFileMetadata] and ignores every other property or method.
-     */
-    public fun toJson(): String {
-        val minimalImplementation = OriginalFileMetadataImpl().also {
-            it.name = name
-            it.fileExtension = fileExtension
-            it.mimeType = mimeType
-            it.fileSize = fileSize
-        }
-
-        return Json.encodeToString(OriginalFileMetadataImpl.serializer(), minimalImplementation)
-    }
-
-    /**
-     * Minimal implementation of [OriginalFileMetadata] used for (de-)serialization.
-     */
-    @Serializable
-    private class OriginalFileMetadataImpl : OriginalFileMetadata {
-        @SerialName("OriginalName")
-        override var name: String = ""
-
-        @SerialName("FileExtension")
-        override var fileExtension = ""
-
-        @SerialName("MimeType")
-        override var mimeType: String = ""
-
-        @SerialName("FileSize")
-        override var fileSize: Long = 0
+    @Throws(Exception::class)
+    internal fun toByteArray(): ByteArray {
+        return ProtoBuf.encodeToByteArray(serializer(), this)
     }
 }

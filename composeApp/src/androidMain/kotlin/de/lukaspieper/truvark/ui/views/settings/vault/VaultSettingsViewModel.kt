@@ -35,13 +35,13 @@ public class VaultSettingsViewModel @Inject constructor(
     public val isVaultUsingBiometricUnlocking: Flow<Boolean> =
         preferences.biometricConfig.map { it?.vaultId == vault.id }
 
-    public var vaultName: String by mutableStateOf(vault.displayName)
+    public var vaultName: String by mutableStateOf(vault.name)
         private set
 
     public fun updateVaultName(name: String): Boolean {
         try {
-            vault.updateDisplayName(name)
-            vaultName = vault.displayName
+            vault.updateName(name)
+            vaultName = vault.name
             return true
         } catch (_: Exception) {
             // Not logging here because serious errors are already logged at this time.

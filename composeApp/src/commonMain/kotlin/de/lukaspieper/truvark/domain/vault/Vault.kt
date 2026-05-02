@@ -7,173 +7,161 @@
 package de.lukaspieper.truvark.domain.vault
 
 import com.google.crypto.tink.StreamingAead
-import de.lukaspieper.truvark.constants.FixedValues.MAX_VAULT_NAME_LENGTH
+import com.google.crypto.tink.prf.PrfSet
+import de.lukaspieper.truvark.crypto.DecryptingFileHandle
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.io.FileInfo
+import de.lukaspieper.truvark.domain.IndexHandler
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
-import de.lukaspieper.truvark.domain.entities.RealmCipherFileEntity
-import de.lukaspieper.truvark.domain.entities.RealmCipherFolderEntity
-import de.lukaspieper.truvark.domain.entities.RootCipherFolderEntity
-import de.lukaspieper.truvark.domain.findCipherFileEntityOrNull
-import de.lukaspieper.truvark.domain.findCipherFolderEntity
-import de.lukaspieper.truvark.domain.vault.internal.CipherFolderEntityCreator
-import de.lukaspieper.truvark.domain.vault.internal.FileDecryption
-import de.lukaspieper.truvark.domain.vault.internal.FileDeletion
-import de.lukaspieper.truvark.domain.vault.internal.FileEncryption
-import de.lukaspieper.truvark.domain.vault.internal.FileRelocation
+import de.lukaspieper.truvark.work.DecryptingWorkBundle
+import de.lukaspieper.truvark.work.DeletingWorkBundle
+import de.lukaspieper.truvark.work.EncryptingWorkBundle
+import de.lukaspieper.truvark.work.RelocatingWorkBundle
 import de.lukaspieper.truvark.work.Scheduler
 import de.lukaspieper.truvark.work.WorkBundle
-import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.ext.query
-import io.realm.kotlin.query.Sort
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
-import java.io.File
-import java.nio.channels.FileChannel
-import java.nio.channels.SeekableByteChannel
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
-public data class Vault internal constructor(
+public class Vault internal constructor(
+    internal var config: VaultConfig,
+    internal val streamingAead: StreamingAead,
+    internal val prfSet: PrfSet,
     public val fileSystem: VaultFileSystem,
-    internal val realm: Realm,
-    private var vaultConfig: VaultConfig,
-    private val streamingAead: StreamingAead,
-    private val scheduler: Scheduler,
-    private val fileEncryption: FileEncryption,
-    private val folderCreator: CipherFolderEntityCreator
+    private val scheduler: Scheduler
 ) {
-    private val fileDecryption = FileDecryption(fileSystem, streamingAead)
-    private val fileDeletion = FileDeletion(this)
-    private val fileRelocation = FileRelocation(this)
+    private val folderIndexHandler = IndexHandler.FolderIndexHandler(streamingAead, fileSystem, config)
 
-    val id: String
-        get() = vaultConfig.id
+    private val fileIndexHandlers = mutableMapOf<Uuid, IndexHandler.FileIndexHandler>()
 
-    val displayName: String
-        get() = vaultConfig.displayName
+    public val id: Uuid
+        get() = config.id
 
-    internal val encryptedKeyset: String
-        get() = vaultConfig.encryptedKeyset
+    public val name: String
+        get() = config.name
 
-    @Throws(NoSuchElementException::class, IllegalArgumentException::class)
-    public suspend fun findCipherFolderEntity(folderId: String): CipherFolderEntity {
-        return when {
-            folderId.isBlank() -> RootCipherFolderEntity(displayName)
-            else -> realm.findCipherFolderEntity(folderId)
+    public val rootFolder: CipherFolderEntity
+        get() = CipherFolderEntity(
+            id = Uuid.NIL,
+            displayName = name,
+            parentFolderId = Uuid.NIL,
+            creationTimestamp = Instant.DISTANT_PAST
+        )
+
+    @Throws(NoSuchElementException::class)
+    public fun findCipherFolderEntity(folderId: Uuid): CipherFolderEntity {
+        return when (folderId) {
+            Uuid.NIL -> rootFolder
+            else -> folderIndexHandler.items.value.firstOrNull { it.id == folderId }
+                ?: throw NoSuchElementException("Folder with ID $folderId not found")
         }
-    }
-
-    @Throws(NoSuchElementException::class, IllegalArgumentException::class)
-    public suspend fun findCipherFileEntity(fileId: String): CipherFileEntity {
-        return realm.findCipherFileEntityOrNull(fileId) ?: throw NoSuchElementException()
     }
 
     /**
-     * Returns a flow containing the subfolders of the given [folderId]. A blank [folderId] will return the root
-     * folders.
+     * Returns a flow containing the subfolders of the given [folder]. Use [rootFolder] to get the root level folders.
      */
-    public fun findCipherFolderEntitySubfolders(folderId: String): Flow<List<CipherFolderEntity>> {
-        if (folderId.isBlank()) {
-            return realm.query<RealmCipherFolderEntity>(
-                "${RealmCipherFolderEntity.REALM_FIELD_PARENT_FOLDER} == $0",
-                null
-            ).asFlow().map { it.list }
+    public fun findCipherFolderEntitySubfolders(folder: CipherFolderEntity): Flow<List<CipherFolderEntity>> {
+        return folderIndexHandler.items.map { list ->
+            list.filter { folderEntity -> folderEntity.parentFolderId == folder.id }
+                .sortedBy { folderEntity -> folderEntity.displayName }
+        }
+    }
+
+    public fun findCipherFileEntitiesForFolder(folder: CipherFolderEntity): Flow<List<CipherFileEntity>> {
+        if (folder.id == Uuid.NIL) {
+            return emptyFlow()
         }
 
-        return realm.query<RealmCipherFolderEntity>(
-            "${RealmCipherFolderEntity.REALM_FIELD_PARENT_FOLDER}.${RealmCipherFolderEntity.REALM_FIELD_ID} == $0",
-            folderId
-        ).asFlow().map { it.list }
+        val indexHandler = fileIndexHandlers.getOrCreate(folder.id)
+        return indexHandler.items.map { list ->
+            list.sortedByDescending { fileEntity -> fileEntity.creationTimestamp }
+        }
     }
 
-    public fun findCipherFileEntitiesForFolder(folderId: String): Flow<List<CipherFileEntity>> {
-        val filesQuery = "${RealmCipherFileEntity.REALM_FIELD_FOLDER}.${RealmCipherFolderEntity.REALM_FIELD_ID} == $0"
-        return realm.query<RealmCipherFileEntity>(filesQuery, folderId)
-            .sort(RealmCipherFileEntity.REALM_FIELD_CREATION_DATE, Sort.DESCENDING)
-            .asFlow()
-            .map { it.list }
-    }
+    // No directory is created here to avoid IO. So this has no effect on VaultFileSystem's directory cache.
+    public suspend fun createFolder(displayName: String, parentFolder: CipherFolderEntity): CipherFolderEntity {
+        val newFolder = CipherFolderEntity(
+            id = Uuid.random(),
+            displayName = displayName,
+            parentFolderId = parentFolder.id,
+            creationTimestamp = Clock.System.now()
+        )
 
-    public suspend fun createFolder(name: String, parentFolder: CipherFolderEntity) {
-        require(name.isNotBlank())
+        folderIndexHandler.addItems(newFolder)
+        logcat(LogPriority.INFO) { "Folder (${newFolder.id}) created" }
 
-        // No physical folder is created here. So no need to update VaultFileSystem's directory cache.
-        folderCreator.createFolder(name, parentFolder)
-
-        // Creating and updating folder are the only operation changing the database outside the control of the
-        // scheduler. To keep the database consistent, the scheduler is informed about the change.
-        scheduler.onVaultChanged(this)
+        return newFolder
     }
 
     @Throws(IllegalArgumentException::class)
-    public suspend fun renameFolder(folder: CipherFolderEntity, newDisplayName: String) {
-        if (folder.displayName == newDisplayName) return
-        require(folder is RealmCipherFolderEntity)
-        require(newDisplayName.isNotBlank())
+    public suspend fun renameFolder(folder: CipherFolderEntity, displayName: String) {
+        if (folder.displayName == displayName) return
 
-        realm.write {
-            val mutableFolder = findLatest(folder)!!
-            mutableFolder.displayName = newDisplayName
-        }
+        val updatedFolder = folder.copy(displayName = displayName)
+        folderIndexHandler.updateItem(folder, updatedFolder)
 
-        // Creating and updating folder are the only operation changing the database outside the control of the
-        // scheduler. To keep the database consistent, the scheduler is informed about the change.
-        scheduler.onVaultChanged(this)
+        logcat(LogPriority.INFO) { "Folder (${updatedFolder.id}) updated" }
     }
 
     /**
-     * Schedules the encryption of the given [sources] to the given [destination] folder. The [Scheduler] might
-     * **require** some [metadata] to properly function on the platform.
+     * Schedules the encryption of the given [sources] to the given [destination] folder. If [deleteSources] is true,
+     * the source files will be deleted after successful encryption.
      *
-     * The encryption process will create a new file with a generated name in the given [destination] folder for each
-     * file and writes an encrypted copy to it. The [sources] will not be modified or deleted.
+     * The [Scheduler] might **require** some [properties] depending on the platform.
      */
     @Throws(IllegalArgumentException::class)
     public fun scheduleFileEncryption(
-        metadata: Scheduler.SchedulerMetadata,
+        properties: WorkBundle.Properties,
         sources: List<() -> FileInfo>,
         destination: CipherFolderEntity,
         deleteSources: Boolean = false
     ) {
         if (sources.isEmpty()) return
-        require(destination is RealmCipherFolderEntity)
 
+        val timestamp = Clock.System.now()
         scheduler.schedule(
-            workBundle = WorkBundle.EncryptingWorkBundle(
-                fileEncryption = fileEncryption,
-                fileSystem = fileSystem,
-                sources = sources,
+            workBundle = EncryptingWorkBundle(
+                properties = properties,
+                streamingAead = streamingAead,
+                vault = this,
+                // Utilizing the index ensures unique timestamps and thereby the same order as the source list.
+                sources = sources.mapIndexed { index, source -> Pair(source, timestamp + index.milliseconds) },
                 destination = destination,
+                destinationIndexHandler = fileIndexHandlers.getOrCreate(destination.id),
                 deleteSources = deleteSources
-            ),
-            metadata = metadata
+            )
         )
     }
 
+    // TODO: This approach leads to multiple notifications for a single user action.
     @Throws(IllegalArgumentException::class)
     public suspend fun scheduleDirectoryEncryption(
-        metadata: Scheduler.SchedulerMetadata,
+        properties: WorkBundle.Properties,
         source: DirectoryInfo,
         destination: CipherFolderEntity,
         deleteSources: Boolean = false
     ) {
-        // Not using Vault.createFolder here to avoid additional vault changed events.
-        val folder = folderCreator.createFolder(source.name, destination)
+        val folder = createFolder(source.name, destination)
 
         scheduleFileEncryption(
-            metadata = metadata,
-            sources = fileSystem.listFiles(source).map { file -> { file } },
+            properties = properties,
+            sources = fileSystem.listFiles(source).map { file -> { file } }.toList(),
             destination = folder,
             deleteSources = deleteSources
         )
 
-        fileSystem.listDirectories(source).forEach { sourceDirectory ->
+        fileSystem.listDirectories(source).collect { sourceDirectory ->
             scheduleDirectoryEncryption(
-                metadata = metadata,
+                properties = properties,
                 source = sourceDirectory,
                 destination = folder,
                 deleteSources = deleteSources
@@ -182,140 +170,144 @@ public data class Vault internal constructor(
     }
 
     /**
-     * Schedules the decryption of the given [folders] and [files] from the vault. The [Scheduler] might
-     * **require** some [metadata] to properly function on the platform.
+     * Schedules the decryption of the given [folders] and [files]. Writes decrypted copies to a matching directory
+     * inside [VaultFileSystem.decryptionRootDirectory]. All [folders] and [files] **must** have the same parent
+     * folder and will not be modified or deleted.
      *
-     * Writes decrypted copies of all folders and files to a matching directory inside
-     * [VaultFileSystem.decryptionRootDirectory]. The source folders and files will not be modified or deleted.
+     * The [Scheduler] might **require** some [properties] depending on the platform.
      */
     @Throws(IllegalArgumentException::class)
-    @Suppress("UNCHECKED_CAST")
     public fun scheduleDecryption(
-        metadata: Scheduler.SchedulerMetadata,
-        parentFolder: CipherFolderEntity,
-        files: List<CipherFileEntity>,
-        folders: List<CipherFolderEntity>
+        properties: WorkBundle.Properties,
+        files: Set<CipherFileEntity>,
+        folders: Set<CipherFolderEntity>
     ) {
-        require(files.isNotEmpty() || folders.isNotEmpty())
+        val parentFolderId = buildSet {
+            files.mapTo(this) { it.folderId }
+            folders.mapTo(this) { it.parentFolderId }
+        }.singleOrNull() ?: throw IllegalArgumentException("All files and folders must have the same parent folder")
 
         scheduler.schedule(
-            workBundle = WorkBundle.DecryptingWorkBundle(
-                fileDecryption,
-                parentFolder,
-                files as? List<RealmCipherFileEntity> ?: throw IllegalArgumentException("Invalid files"),
-                folders as? List<RealmCipherFolderEntity> ?: throw IllegalArgumentException("Invalid folders")
-            ),
-            metadata = metadata
+            workBundle = DecryptingWorkBundle(
+                properties = properties,
+                vault = this,
+                parentFolder = findCipherFolderEntity(parentFolderId),
+                files = files.toList(),
+                folders = folders.toList(),
+            )
         )
     }
 
     /**
-     * Schedules the deletion the given [folders] and [files] from the vault. The [Scheduler] might
-     * **require** some [metadata] to properly function on the platform.
+     * Schedules the deletion of the given [folders] and [files]. Removes the physical files and folders as well as
+     * updates the index files. All [folders] and [files] **must** have the same parent folder.
      *
-     * The physical files and folders and the database entries will be deleted.
+     * The [Scheduler] might **require** some [properties] depending on the platform.
      */
     @Throws(IllegalArgumentException::class)
-    @Suppress("UNCHECKED_CAST")
     public fun scheduleDeletion(
-        metadata: Scheduler.SchedulerMetadata,
-        files: List<CipherFileEntity>,
-        folders: List<CipherFolderEntity>
+        properties: WorkBundle.Properties,
+        files: Set<CipherFileEntity>,
+        folders: Set<CipherFolderEntity>
     ) {
-        require(files.isNotEmpty() || folders.isNotEmpty())
+        val parentFolderId = buildSet {
+            files.mapTo(this) { it.folderId }
+            folders.mapTo(this) { it.parentFolderId }
+        }.singleOrNull() ?: throw IllegalArgumentException("All files and folders must have the same parent folder")
 
         scheduler.schedule(
-            workBundle = WorkBundle.DeletingWorkBundle(
-                fileDeletion,
-                files as? List<RealmCipherFileEntity> ?: throw IllegalArgumentException("Invalid files"),
-                folders as? List<RealmCipherFolderEntity> ?: throw IllegalArgumentException("Invalid folders")
-            ),
-            metadata = metadata
+            workBundle = DeletingWorkBundle(
+                properties = properties,
+                vault = this,
+                folderIndexHandler = folderIndexHandler,
+                fileIndexHandler = fileIndexHandlers.getOrCreate(parentFolderId),
+                files = files.toList(),
+                folders = folders.toList()
+            )
         )
     }
 
     /**
-     * Schedules the relocation of the given [folders] and [files] to the given [destination] folder. The [Scheduler]
-     * might **require** some [metadata] to properly function on the platform.
+     * Schedules the relocation of the given [folders] and [files] to the given [destination] folder.
      *
-     * Only relocating files will lead to IO operations. Relocating folders will only change the database entries.
-     * During the relocation process, the files and folders will NOT be decrypted and encrypted.
+     * Only relocating files will lead to heavy IO operations. Relocating folders will only change the index files.
+     * During the relocation process, the files and folders will **not** be decrypted and re-encrypted.
+     *
+     * The [Scheduler] might **require** some [properties] depending on the platform.
      */
     @Throws(IllegalArgumentException::class)
-    @Suppress("UNCHECKED_CAST")
     public fun scheduleRelocation(
-        metadata: Scheduler.SchedulerMetadata,
+        properties: WorkBundle.Properties,
         destination: CipherFolderEntity,
-        files: List<CipherFileEntity>,
-        folders: List<CipherFolderEntity>
+        files: Set<CipherFileEntity>,
+        folders: Set<CipherFolderEntity>
     ) {
-        require(files.isNotEmpty() || folders.isNotEmpty())
+        val parentFolderId = buildSet {
+            files.mapTo(this) { it.folderId }
+            folders.mapTo(this) { it.parentFolderId }
+        }.singleOrNull() ?: throw IllegalArgumentException("All files and folders must have the same parent folder")
 
         scheduler.schedule(
-            workBundle = WorkBundle.RelocatingWorkBundle(
-                fileRelocation,
-                destination,
-                files as? List<RealmCipherFileEntity> ?: throw IllegalArgumentException("Invalid files"),
-                folders as? List<RealmCipherFolderEntity> ?: throw IllegalArgumentException("Invalid folders")
-            ),
-            metadata = metadata
+            workBundle = RelocatingWorkBundle(
+                properties = properties,
+                fileSystem = fileSystem,
+                folderIndexHandler = folderIndexHandler,
+                sourceFileIndexHandler = fileIndexHandlers.getOrCreate(parentFolderId),
+                destinationFileIndexHandler = fileIndexHandlers.getOrCreate(destination.id),
+                destination = destination,
+                files = files.toList(),
+                folders = folders.toList()
+            )
         )
     }
 
-    public fun newSeekableDecryptingChannel(channel: FileChannel): SeekableByteChannel {
-        return streamingAead.newSeekableDecryptingChannel(channel, emptyAssociatedData)
-    }
-
-    public fun writeEncryptedDatabaseCopyTo(file: File) {
-        // Realm requires a not existing destination file.
-        if (file.exists()) {
-            file.delete()
-        }
-
-        val exportConfiguration = RealmConfiguration.Builder(realmSchema)
-            .schemaVersion(realmSchemaVersion)
-            .directory(file.parent)
-            .name(file.name)
-            .encryptionKey(streamingAead.decryptByteArray(vaultConfig.encryptedDatabaseKey))
-            .build()
-
-        realm.writeCopyTo(exportConfiguration)
+    public fun createDecryptingFileHandle(file: FileInfo): DecryptingFileHandle {
+        return DecryptingFileHandle(
+            fileSystem = fileSystem,
+            streamingAead = streamingAead,
+            file = file,
+            associatedData = id.toByteArray() + Uuid.parseHex(file.fullName).toByteArray()
+        )
     }
 
     @Throws(Exception::class)
-    public fun updateDisplayName(newDisplayName: String) {
-        if (displayName == newDisplayName) return
-        require(newDisplayName.isNotBlank())
-        require(newDisplayName.length in 1..MAX_VAULT_NAME_LENGTH)
+    public fun updateName(updatedName: String) {
+        if (name == updatedName) return
+        val updatedConfig = config.copy(name = updatedName)
 
         try {
-            val updatedVaultConfig = vaultConfig.copy(displayName = newDisplayName)
-            updatedVaultConfig.encryptedDatabaseKey = vaultConfig.encryptedDatabaseKey
-
             fileSystem.openOutputStream(fileSystem.vaultFile).use { outputStream ->
-                outputStream.write(updatedVaultConfig.toByteArray())
+                outputStream.write(updatedConfig.toByteArray())
             }
 
-            // Check if the update was successful.
+            // Verify write
             fileSystem.openInputStream(fileSystem.vaultFile).use { inputStream ->
-                val controlVaultConfig = VaultConfig.fromByteArray(inputStream.readBytes())
-                check(controlVaultConfig.displayName == newDisplayName)
-                vaultConfig = controlVaultConfig
+                val readVaultConfig = VaultConfig.fromByteArray(inputStream.readBytes())
+                check(readVaultConfig.name == updatedName)
+                config = readVaultConfig
             }
         } catch (e: Exception) {
             logcat(LogPriority.ERROR) { e.asLog() }
 
             logcat { "Trying to restore previous vault config." }
             fileSystem.openOutputStream(fileSystem.vaultFile).use { outputStream ->
-                outputStream.write(vaultConfig.toByteArray())
+                outputStream.write(config.toByteArray())
             }
 
             throw e
         }
     }
 
-    public companion object {
-        internal val realmSchema = setOf(RealmCipherFileEntity::class, RealmCipherFolderEntity::class)
-        internal val realmSchemaVersion = 2L
+    private fun MutableMap<Uuid, IndexHandler.FileIndexHandler>.getOrCreate(
+        folderId: Uuid
+    ): IndexHandler.FileIndexHandler {
+        return this.getOrPut(folderId) {
+            IndexHandler.FileIndexHandler(
+                streamingAead = streamingAead,
+                vaultFileSystem = fileSystem,
+                vaultConfig = config,
+                folder = findCipherFolderEntity(folderId)
+            )
+        }
     }
 }

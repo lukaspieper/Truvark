@@ -33,11 +33,13 @@ import de.lukaspieper.truvark.ui.theme.paddings
 public fun PreviewHost(
     modifier: Modifier = Modifier.fillMaxSize(),
     backgroundColor: Color? = null,
+    contentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
     AppTheme {
         Surface(
             color = backgroundColor ?: MaterialTheme.colorScheme.surface,
+            contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface,
             modifier = modifier
         ) {
             content()

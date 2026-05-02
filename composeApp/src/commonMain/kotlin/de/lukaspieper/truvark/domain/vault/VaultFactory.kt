@@ -6,125 +6,97 @@
 
 package de.lukaspieper.truvark.domain.vault
 
-import com.google.crypto.tink.BinaryKeysetReader
-import com.google.crypto.tink.BinaryKeysetWriter
-import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
-import com.google.crypto.tink.LegacyKeysetSerialization
 import com.google.crypto.tink.RegistryConfiguration
 import com.google.crypto.tink.StreamingAead
+import com.google.crypto.tink.TinkProtoKeysetFormat
+import com.google.crypto.tink.prf.PredefinedPrfParameters
+import com.google.crypto.tink.prf.PrfSet
+import com.google.crypto.tink.streamingaead.PredefinedStreamingAeadParameters
 import com.google.crypto.tink.subtle.AesGcmJce
-import com.google.crypto.tink.subtle.Base64
-import com.google.crypto.tink.subtle.Random
-import de.lukaspieper.truvark.constants.FileNames
-import de.lukaspieper.truvark.constants.FixedValues.VAULT_ID_LENGTH
 import de.lukaspieper.truvark.crypto.Argon2
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.io.FileSystem
-import de.lukaspieper.truvark.domain.IdGenerator
-import de.lukaspieper.truvark.domain.ThumbnailProvider
-import de.lukaspieper.truvark.domain.vault.internal.CipherFolderEntityCreator
-import de.lukaspieper.truvark.domain.vault.internal.FileEncryption
-import de.lukaspieper.truvark.logging.RealmLoggerAdapter
 import de.lukaspieper.truvark.work.Scheduler
-import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
-import java.io.ByteArrayOutputStream
-import java.io.File
+import kotlin.uuid.Uuid
 
 public class VaultFactory(
     private val argon2: Argon2,
     private val fileSystem: FileSystem,
-    private val idGenerator: IdGenerator,
-    private val thumbnailProvider: ThumbnailProvider,
     private val scheduler: Scheduler
 ) {
-    private val base64Flags = Base64.NO_PADDING or Base64.NO_WRAP
-
-    init {
-        logcat(LogPriority.INFO) { "Redirecting the Realm log..." }
-        RealmLog.removeAll()
-        // Log everything because the app internal logger handles the log level filtering.
-        RealmLog.setLevel(LogLevel.ALL)
-        RealmLog.add(RealmLoggerAdapter())
+    internal companion object {
+        internal val StreamingAeadAssociatedDataSuffix = "StreamingAead".encodeToByteArray()
+        private val PrfAssociatedDataSuffix = "Prf".encodeToByteArray()
     }
 
     public fun tryReadVaultConfig(file: FileInfo): VaultConfig? {
         try {
+            require(file.fullName == VaultConfig.FILENAME)
+
             return fileSystem.openInputStream(file).use { inputStream ->
                 VaultConfig.fromByteArray(inputStream.readBytes())
             }
         } catch (e: Exception) {
-            logcat(LogPriority.DEBUG) { e.asLog() }
+            logcat(LogPriority.WARN) { e.asLog() }
         }
 
         return null
     }
 
     @Throws(Exception::class)
-    public fun createVault(
-        vaultDirectory: DirectoryInfo,
-        password: ByteArray,
-        databaseFile: File,
-        vaultId: String = idGenerator.createStringId(VAULT_ID_LENGTH),
-    ): Vault {
+    public suspend fun createVault(vaultDirectory: DirectoryInfo, password: ByteArray): Vault {
         require(password.isNotEmpty()) { "password must not be empty" }
-        require(!databaseFile.exists()) { "databaseFile must not exist" }
-        require(vaultId.length == VAULT_ID_LENGTH) { "vaultId must be $VAULT_ID_LENGTH characters long" }
 
         logcat(LogPriority.INFO) { "Creating new vault..." }
-        val vaultFile = fileSystem.findOrCreateFile(vaultDirectory, FileNames.VAULT)
+        val vaultConfig = generateVaultConfig(vaultDirectory.name, password)
 
-        val vaultConfig = VaultConfig(
-            id = vaultId,
-            displayName = vaultDirectory.name,
-            encryptedKeyset = generatePasswordEncryptedKeyset(password),
-        )
+        // Decrypting the keyset before writing the config for a little bit of extra safety.
+        val (streamingAead, prfSet) = decryptKeysets(password, vaultConfig)
 
-        val databaseKey = Random.randBytes(Realm.ENCRYPTION_KEY_LENGTH)
-        val realm = openRealm(databaseKey, databaseFile)
-
-        val keyset = decryptKeyset(vaultConfig.encryptedKeyset, password)
-        val streamingAead = keyset.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
-        vaultConfig.encryptedDatabaseKey = streamingAead.encryptByteArray(databaseKey)
-
+        val vaultFile = fileSystem.createFile(vaultDirectory, VaultConfig.FILENAME)
         fileSystem.openOutputStream(vaultFile).use { outputStream ->
             outputStream.write(vaultConfig.toByteArray())
         }
         logcat(LogPriority.INFO) { "VaultConfig written to file. Creation finished." }
 
-        return assembleVault(
-            vaultConfig = vaultConfig,
-            realm = realm,
-            streamingAead = streamingAead,
-            vaultDirectory = vaultDirectory,
-        )
+        val vaultFileSystem = VaultFileSystem.create(fileSystem, vaultDirectory, vaultFile)
+        return Vault(vaultConfig, streamingAead, prfSet, vaultFileSystem, scheduler)
     }
 
-    private fun generatePasswordEncryptedKeyset(password: ByteArray): String {
+    private fun generateVaultConfig(name: String, password: ByteArray): VaultConfig {
+        val vaultId = Uuid.random()
         val hash = argon2.hashPassword(password)
         val passwordBasedKey = AesGcmJce(hash.toRaw())
 
-        val aesKeyTemplate = KeyTemplates.get("AES256_GCM_HKDF_4KB")
-        val keysetHandle = KeysetHandle.generateNew(aesKeyTemplate)
+        val encryptedStreamingAeadKeyset = TinkProtoKeysetFormat.serializeEncryptedKeyset(
+            KeysetHandle.generateNew(PredefinedStreamingAeadParameters.AES256_GCM_HKDF_1MB),
+            passwordBasedKey,
+            vaultId.toByteArray() + StreamingAeadAssociatedDataSuffix
+        )
 
-        val outputStream = ByteArrayOutputStream()
-        val binaryWriter = BinaryKeysetWriter.withOutputStream(outputStream)
-        LegacyKeysetSerialization.serializeEncryptedKeyset(keysetHandle, binaryWriter, passwordBasedKey, ByteArray(0))
-        val encryptedKeyData = outputStream.toByteArray()
+        val encryptedPrfKeyset = TinkProtoKeysetFormat.serializeEncryptedKeyset(
+            KeysetHandle.generateNew(PredefinedPrfParameters.HMAC_SHA256_PRF),
+            passwordBasedKey,
+            vaultId.toByteArray() + PrfAssociatedDataSuffix
+        )
 
-        return Base64.encodeToString(encryptedKeyData, base64Flags) + hash.toEncodedConfigAndSalt()
+        return VaultConfig(
+            id = vaultId,
+            name = name,
+            argon2Config = hash.toEncodedConfigAndSalt(),
+            encryptedStreamingAeadKeyset = encryptedStreamingAeadKeyset,
+            encryptedPrfKeyset = encryptedPrfKeyset
+        )
     }
 
     public fun validatePassword(vault: Vault, password: ByteArray): Boolean {
         try {
-            decryptKeyset(vault.encryptedKeyset, password)
+            decryptKeysets(password, vault.config)
             return true
         } catch (e: Exception) {
             logcat(LogPriority.WARN) { e.asLog() }
@@ -134,79 +106,38 @@ public class VaultFactory(
     }
 
     @Throws(Exception::class)
-    public fun decryptVault(vaultDirectory: DirectoryInfo, password: ByteArray, databaseFile: File): Vault {
-        require(databaseFile.isFile) { "databaseFile must be a file" }
+    public suspend fun decryptVault(vaultDirectory: DirectoryInfo, password: ByteArray): Vault {
+        val vaultFile = fileSystem.findFileOrNull(vaultDirectory, VaultConfig.FILENAME)
+            ?: throw IllegalStateException("Vault file not found in directory.")
 
-        val vaultFile = fileSystem.findOrCreateFile(vaultDirectory, FileNames.VAULT)
-        val vaultConfig = fileSystem.openInputStream(vaultFile).use { inputStream ->
-            VaultConfig.fromByteArray(inputStream.readBytes())
-        }
+        val vaultConfig = tryReadVaultConfig(vaultFile)
+        check(vaultConfig != null) { "Could not decode VaultConfig from file." }
 
-        val keyset = decryptKeyset(vaultConfig.encryptedKeyset, password)
-        val streamingAead = keyset.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
+        val (streamingAead, prfSet) = decryptKeysets(password, vaultConfig)
 
-        // TODO: Missing or corrupt database key does not prevent decryption of the actual files and the database
-        //  could be recreated. User should be asked if he has a backup.
-        val databaseKey = streamingAead.decryptByteArray(vaultConfig.encryptedDatabaseKey)
-        val realm = openRealm(databaseKey, databaseFile)
-
-        return assembleVault(
-            vaultConfig = vaultConfig,
-            realm = realm,
-            streamingAead = streamingAead,
-            vaultDirectory = vaultDirectory,
-        )
+        val vaultFileSystem = VaultFileSystem.create(fileSystem, vaultDirectory, vaultFile)
+        return Vault(vaultConfig, streamingAead, prfSet, vaultFileSystem, scheduler)
     }
 
-    private fun openRealm(databaseKey: ByteArray, databaseFile: File): Realm {
-        val config = RealmConfiguration.Builder(Vault.realmSchema)
-            .schemaVersion(Vault.realmSchemaVersion)
-            .directory(databaseFile.parent)
-            .name(databaseFile.name)
-            .encryptionKey(databaseKey)
-            .build()
-
-        return Realm.open(config)
-    }
-
-    private fun decryptKeyset(encryptedKeyset: String, password: ByteArray): KeysetHandle {
-        val delimiterIndex = encryptedKeyset.indexOf('$')
-        require(delimiterIndex > 0) { "Invalid encryptedKeyset format" }
-
-        val encodedConfigAndSalt = encryptedKeyset.substring(delimiterIndex)
-        val hash = argon2.hashPassword(password, encodedConfigAndSalt)
+    private fun decryptKeysets(password: ByteArray, vaultConfig: VaultConfig): Pair<StreamingAead, PrfSet> {
+        val hash = argon2.hashPassword(password, vaultConfig.argon2Config)
         val passwordBasedKey = AesGcmJce(hash.toRaw())
 
-        val encryptedKeyData = Base64.decode(encryptedKeyset.take(delimiterIndex), base64Flags)
-        val keysetReader = BinaryKeysetReader.withBytes(encryptedKeyData)
-        return LegacyKeysetSerialization.parseEncryptedKeyset(keysetReader, passwordBasedKey, ByteArray(0))
-    }
+        val streamingAeadKeyset = TinkProtoKeysetFormat.parseEncryptedKeyset(
+            vaultConfig.encryptedStreamingAeadKeyset,
+            passwordBasedKey,
+            vaultConfig.id.toByteArray() + StreamingAeadAssociatedDataSuffix
+        )
 
-    private fun assembleVault(
-        vaultConfig: VaultConfig,
-        realm: Realm,
-        streamingAead: StreamingAead,
-        vaultDirectory: DirectoryInfo,
-    ): Vault {
-        val vaultFileSystem = VaultFileSystem(fileSystem, vaultDirectory)
+        val prfKeyset = TinkProtoKeysetFormat.parseEncryptedKeyset(
+            vaultConfig.encryptedPrfKeyset,
+            passwordBasedKey,
+            vaultConfig.id.toByteArray() + PrfAssociatedDataSuffix
+        )
 
-        return Vault(
-            vaultConfig = vaultConfig,
-            fileSystem = vaultFileSystem,
-            streamingAead = streamingAead,
-            realm = realm,
-            scheduler = scheduler,
-            fileEncryption = FileEncryption(
-                streamingAead = streamingAead,
-                realm = realm,
-                fileSystem = vaultFileSystem,
-                thumbnailProvider = thumbnailProvider,
-                idGenerator = idGenerator,
-            ),
-            folderCreator = CipherFolderEntityCreator(
-                realm = realm,
-                idGenerator = idGenerator,
-            ),
+        return Pair(
+            streamingAeadKeyset.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java),
+            prfKeyset.getPrimitive(RegistryConfiguration.get(), PrfSet::class.java)
         )
     }
 }

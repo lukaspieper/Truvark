@@ -10,22 +10,23 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 
 public class SelectionState(
-    initialSelectedFolderIds: Set<String> = emptySet(),
-    initialSelectedFileIds: Set<String> = emptySet(),
+    initialSelectedFolders: Set<CipherFolderEntity> = emptySet(),
+    initialSelectedFiles: Set<CipherFileEntity> = emptySet(),
 ) {
     public var relocationSourceFolder: CipherFolderEntity? by mutableStateOf(null)
         private set
 
-    public var selectedFolderIds: Set<String> by mutableStateOf(initialSelectedFolderIds)
+    public var selectedFolders: Set<CipherFolderEntity> by mutableStateOf(initialSelectedFolders)
         private set
 
-    public var selectedFileIds: Set<String> by mutableStateOf(initialSelectedFileIds)
+    public var selectedFiles: Set<CipherFileEntity> by mutableStateOf(initialSelectedFiles)
         private set
 
-    public val numberOfSelections: Int by derivedStateOf { selectedFolderIds.size + selectedFileIds.size }
+    public val numberOfSelections: Int by derivedStateOf { selectedFolders.size + selectedFiles.size }
 
     public val mode: SelectionMode by derivedStateOf {
         when {
@@ -39,8 +40,8 @@ public class SelectionState(
      * Switches the selection mode to [SelectionMode.NONE].
      */
     public fun disableSelectionMode() {
-        selectedFolderIds = emptySet()
-        selectedFileIds = emptySet()
+        selectedFolders = emptySet()
+        selectedFiles = emptySet()
         relocationSourceFolder = null
     }
 
@@ -48,37 +49,37 @@ public class SelectionState(
         relocationSourceFolder = sourceFolder
     }
 
-    public fun selectFolders(folderIds: Set<String>) {
-        if (folderIds.isEmpty()) return
-        selectedFolderIds = selectedFolderIds + folderIds
+    public fun selectFolders(folders: Collection<CipherFolderEntity>) {
+        if (folders.isEmpty()) return
+        selectedFolders = selectedFolders + folders
     }
 
-    public fun deselectFolders(folderIds: Set<String>) {
-        if (folderIds.isEmpty()) return
-        selectedFolderIds = selectedFolderIds - folderIds
+    public fun deselectFolders(folders: Collection<CipherFolderEntity>) {
+        if (folders.isEmpty()) return
+        selectedFolders = selectedFolders - folders.toSet()
     }
 
-    public fun selectFiles(fileIds: Set<String>) {
-        if (fileIds.isEmpty()) return
-        selectedFileIds = selectedFileIds + fileIds
+    public fun selectFiles(files: Collection<CipherFileEntity>) {
+        if (files.isEmpty()) return
+        selectedFiles = selectedFiles + files
     }
 
-    public fun deselectFiles(fileIds: Set<String>) {
-        if (fileIds.isEmpty()) return
-        selectedFileIds = selectedFileIds - fileIds
+    public fun deselectFiles(files: Collection<CipherFileEntity>) {
+        if (files.isEmpty()) return
+        selectedFiles = selectedFiles - files.toSet()
     }
 
-    public fun switchFolderSelection(folderId: String) {
-        selectedFolderIds = when {
-            selectedFolderIds.contains(folderId) -> selectedFolderIds - folderId
-            else -> selectedFolderIds + folderId
+    public fun switchFolderSelection(folder: CipherFolderEntity) {
+        selectedFolders = when {
+            selectedFolders.contains(folder) -> selectedFolders - folder
+            else -> selectedFolders + folder
         }
     }
 
-    public fun switchFileSelection(fileId: String) {
-        selectedFileIds = when {
-            selectedFileIds.contains(fileId) -> selectedFileIds - fileId
-            else -> selectedFileIds + fileId
+    public fun switchFileSelection(file: CipherFileEntity) {
+        selectedFiles = when {
+            selectedFiles.contains(file) -> selectedFiles - file
+            else -> selectedFiles + file
         }
     }
 

@@ -3,25 +3,28 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>Indentation:BrowserPage.kt$ </ID>
-    <ID>MagicNumber:AndroidThumbnailProvider.kt$AndroidThumbnailProvider$0.07</ID>
     <ID>MagicNumber:Argon2.kt$Argon2$3</ID>
     <ID>MagicNumber:Argon2.kt$Argon2$4</ID>
-    <ID>MagicNumber:DatabaseFileSynchronization.kt$DatabaseFileSynchronization$2000</ID>
-    <ID>MagicNumber:Extensions.kt$0xFF</ID>
-    <ID>MagicNumber:Extensions.kt$16</ID>
     <ID>MagicNumber:JvmArgon2.kt$JvmArgon2$0x10</ID>
     <ID>MagicNumber:JvmArgon2.kt$JvmArgon2$0x13</ID>
+    <ID>MagicNumber:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$32</ID>
+    <ID>MagicNumber:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$80</ID>
     <ID>MaxLineLength:CipherEntityGrid.kt$if (isSelected) Icons.Default.CheckCircle else Icons.AutoMirrored.Default.InsertDriveFile</ID>
+    <ID>MaxLineLength:CipherFileEntity.kt$CipherFileEntity$return "CipherFileEntity(id=$id, fullName='$fullName', mimeType='$mimeType', fileSize=$fileSize, mediaDuration=$mediaDuration, creationTimestamp=$creationTimestamp, sha256Digest=${sha256Digest.contentToString()}, folderId=$folderId)"</ID>
     <ID>MaximumLineLength:CipherEntityGrid.kt$ </ID>
-    <ID>MayBeConst:Vault.kt$Vault.Companion$internal val realmSchemaVersion = 2L</ID>
+    <ID>MaximumLineLength:CipherFileEntity.kt$CipherFileEntity$ </ID>
     <ID>ModifierMissing:MainView.kt$DirectorySelection</ID>
     <ID>ModifierMissing:MainView.kt$MainView</ID>
     <ID>ModifierMissing:MainView.kt$PasswordField</ID>
     <ID>ModifierMissing:MainView.kt$VaultCreation</ID>
     <ID>ModifierMissing:MainView.kt$VaultUnlocking</ID>
-    <ID>ModifierNotUsedAtRoot:VideoContentView.kt$modifier = modifier</ID>
-    <ID>ParameterNaming:PasswordField.kt$onKeyboardDone</ID>
+    <ID>ModifierReused:MediaView.kt$PlayPauseButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
+    <ID>ModifierReused:MediaView.kt$SeekBackButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
+    <ID>ModifierReused:MediaView.kt$SeekForwardButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
+    <ID>NestedBlockDepth:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$private fun readFromDiskCache(cacheKey: ByteArray): Bitmap?</ID>
+    <ID>UnstableCollections:OpenSourceLicensePage.kt$List&lt;LicensedItem&gt;</ID>
     <ID>UnusedPrivateProperty:SchedulerFake.kt$SchedulerFake$i</ID>
+    <ID>UseCheckOrError:VaultFactory.kt$VaultFactory$throw IllegalStateException("Vault file not found in directory.")</ID>
     <ID>ViewModelForwarding:MainView.kt$DirectorySelection(viewModel)</ID>
     <ID>ViewModelForwarding:MainView.kt$VaultCreation(viewModel)</ID>
     <ID>ViewModelForwarding:MainView.kt$VaultUnlocking(viewModel)</ID>

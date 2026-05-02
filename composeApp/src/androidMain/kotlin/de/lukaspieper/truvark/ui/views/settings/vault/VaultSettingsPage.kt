@@ -44,7 +44,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.constants.FixedValues.MAX_VAULT_NAME_LENGTH
+import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
 import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.theme.paddings

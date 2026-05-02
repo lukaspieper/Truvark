@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fingerprint
@@ -49,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -111,7 +113,7 @@ public fun LauncherPage(
         notificationPermissionState = notificationPermissionState,
         state = viewModel.state,
         updateState = { viewModel.state = it },
-        vaultDisplayName = viewModel.vaultConfig?.displayName ?: "",
+        vaultDisplayName = viewModel.vaultConfig?.name ?: "",
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
@@ -348,13 +350,12 @@ private fun PasswordUnlockView(
         modifier = Modifier.fillMaxWidth()
     ) {
         val keyboardController = LocalSoftwareKeyboardController.current
-        var password by rememberSaveable { mutableStateOf("") }
+        val passwordState = remember { TextFieldState() }
         PasswordField(
-            value = password,
-            onValueChange = { password = it },
+            state = passwordState,
             onKeyboardDone = {
                 keyboardController?.hide()
-                unlockWithPassword(password.toByteArray())
+                unlockWithPassword(passwordState.text.toString().toByteArray())
             },
             passwordIsIncorrect = errorMessageResource == R.string.incorrect_password,
             modifier = Modifier.weight(1f)
@@ -363,7 +364,7 @@ private fun PasswordUnlockView(
         Button(
             onClick = {
                 keyboardController?.hide()
-                unlockWithPassword(password.toByteArray())
+                unlockWithPassword(passwordState.text.toString().toByteArray())
             },
             modifier = Modifier
                 .align(Alignment.CenterVertically)

@@ -6,12 +6,6 @@
 
 package de.lukaspieper.truvark.work
 
-import de.lukaspieper.truvark.domain.vault.Vault
-
-public abstract class Scheduler {
-    public abstract fun schedule(workBundle: WorkBundle, metadata: SchedulerMetadata)
-    public abstract fun onVaultChanged(vault: Vault)
-
-    // `Metadata` is already used by Kotlin as annotation
-    public interface SchedulerMetadata
+public interface Scheduler {
+    public fun schedule(workBundle: WorkBundle)
 }

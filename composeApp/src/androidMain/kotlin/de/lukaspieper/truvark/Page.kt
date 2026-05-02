@@ -16,6 +16,7 @@ public sealed interface Page {
     @Serializable
     public data object Browser : Page
 
+    // Navigation does not support Uuid, using String here.
     @Serializable
     public data class Presenter(val folderId: String, val fileId: String) : Page
 

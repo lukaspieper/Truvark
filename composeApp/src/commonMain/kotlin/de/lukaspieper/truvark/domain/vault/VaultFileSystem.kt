@@ -6,114 +6,92 @@
 
 package de.lukaspieper.truvark.domain.vault
 
-import de.lukaspieper.truvark.constants.FileNames
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.io.FileSystem
-import java.io.InputStream
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+import java.io.FileInputStream
 import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.uuid.Uuid
 
 /**
- * A **caching** [FileSystem] that is providing additional functionality special to a vault. The [FileSystem] methods
- * are forwarded to the underlying [fileSystem] implementation.
+ * A "fileSystem" that provies special-purpose functions for common vault operations and speeds up access through
+ * caching.
  */
-public class VaultFileSystem internal constructor(
+public class VaultFileSystem private constructor(
     private val fileSystem: FileSystem,
-    private val rootDirectory: DirectoryInfo
-) : FileSystem() {
-
-    // This map is used to cache cipher directories. It is used to avoid unnecessary IO calls because
-    // especially the Android file system is very slow (SAF).
-    private val cipherDirectoryInfoCache = ConcurrentHashMap<String, DirectoryInfo>()
-
-    private val cipherFilesRootDirectory: DirectoryInfo by lazy {
-        fileSystem.findOrCreateDirectory(rootDirectory, CIPHER_FILES_DIRECTORY_NAME)
-    }
-
+    private val rootDirectory: DirectoryInfo,
+    private val cipherFilesRootDirectory: DirectoryInfo,
+    public val vaultFile: FileInfo,
+    public val folderIndexFile: FileInfo,
+    /** Map caching the directories inside [cipherFilesRootDirectory]. */
+    private val cipherDirectoryInfoCache: ConcurrentHashMap<Uuid, DirectoryInfo>
+) {
     public val decryptionRootDirectory: DirectoryInfo
-        get() = fileSystem.findOrCreateDirectory(rootDirectory, DECRYPTION_DIRECTORY_NAME)
+        get() = runBlocking { fileSystem.findOrCreateDirectory(rootDirectory, DECRYPTION_DIRECTORY_NAME) }
 
-    public val vaultFile: FileInfo
-        get() = fileSystem.findFileOrNull(rootDirectory, FileNames.VAULT)!!
+    public suspend fun findFileIndexFileOrNull(folderId: Uuid): FileInfo? {
+        return fileSystem.findFileOrNull(cipherFilesRootDirectory, "${folderId.toHexString()}.index")
+    }
 
-    public val databaseFile: FileInfo by lazy { fileSystem.findOrCreateFile(rootDirectory, FileNames.INDEX_DATABASE) }
+    public suspend fun findOrCreateFileIndexFile(folderId: Uuid): FileInfo {
+        return fileSystem.findOrCreateFile(cipherFilesRootDirectory, "${folderId.toHexString()}.index")
+    }
 
-    public fun fetchFilesFromCipherDirectory(name: String): List<FileInfo> {
-        val cipherDirectory = cipherDirectoryInfoCache.getOrElse(name) {
-            fileSystem.findDirectoryOrNull(cipherFilesRootDirectory, name)
-        }
+    public fun listFilesInCipherDirectory(name: Uuid): Flow<FileInfo> {
+        return cipherDirectoryInfoCache[name]?.let { directoryInfo ->
+            fileSystem.listFiles(directoryInfo).filter { Uuid.parseHexOrNull(it.fullName) != null }
+        } ?: emptyFlow()
+    }
 
-        return when {
-            cipherDirectory != null -> {
-                cipherDirectoryInfoCache.putIfAbsent(name, cipherDirectory)
-                fileSystem.listFiles(cipherDirectory)
-            }
-
-            else -> emptyList()
+    public suspend fun findFileInCipherDirectory(directoryName: Uuid, fileName: Uuid): FileInfo? {
+        return cipherDirectoryInfoCache[directoryName]?.let { directoryInfo ->
+            fileSystem.findFileOrNull(directoryInfo, fileName.toHexString())
         }
     }
 
-    public fun findFileInCipherDirectory(directoryName: String, fileName: String): FileInfo? {
-        val cipherDirectory = cipherDirectoryInfoCache.getOrElse(directoryName) {
-            fileSystem.findDirectoryOrNull(cipherFilesRootDirectory, directoryName)
-        }
-
-        return when {
-            cipherDirectory != null -> {
-                cipherDirectoryInfoCache.putIfAbsent(directoryName, cipherDirectory)
-                fileSystem.findFileOrNull(cipherDirectory, fileName)
-            }
-
-            else -> null
-        }
-    }
-
-    public fun createFileInCipherDirectory(directoryName: String, fileName: String): FileInfo {
+    public suspend fun createFileInCipherDirectory(directoryName: Uuid, fileName: Uuid): FileInfo {
         val cipherDirectory = cipherDirectoryInfoCache.computeIfAbsent(directoryName) {
-            fileSystem.findOrCreateDirectory(cipherFilesRootDirectory, directoryName)
+            runBlocking { fileSystem.findOrCreateDirectory(cipherFilesRootDirectory, directoryName.toHexString()) }
         }
 
-        return fileSystem.createFile(cipherDirectory, fileName)
+        return fileSystem.createFile(cipherDirectory, fileName.toHexString())
     }
 
-    public fun deleteFileFromCipherDirectory(directoryName: String, fileName: String) {
-        val cipherDirectory = cipherDirectoryInfoCache.getOrElse(directoryName) {
-            fileSystem.findDirectoryOrNull(cipherFilesRootDirectory, directoryName)
-        }
-
-        if (cipherDirectory != null) {
-            cipherDirectoryInfoCache.putIfAbsent(directoryName, cipherDirectory)
-
-            fileSystem.findFileOrNull(cipherDirectory, fileName)?.let { file ->
+    public suspend fun deleteFileFromCipherDirectory(directoryName: Uuid, fileName: Uuid) {
+        cipherDirectoryInfoCache[directoryName]?.let { cipherDirectory ->
+            fileSystem.findFileOrNull(cipherDirectory, fileName.toHexString())?.let { file ->
                 fileSystem.delete(file)
             }
         }
     }
 
-    public fun deleteCipherDirectory(name: String) {
-        val cipherDirectory = cipherDirectoryInfoCache.getOrElse(name) {
-            fileSystem.findDirectoryOrNull(cipherFilesRootDirectory, name)
-        }
-
-        if (cipherDirectory != null) {
+    public fun deleteCipherDirectory(name: Uuid) {
+        cipherDirectoryInfoCache[name]?.let { cipherDirectory ->
             fileSystem.delete(cipherDirectory)
         }
 
         cipherDirectoryInfoCache.remove(name)
     }
 
-    public fun relocateFileIntoCipherDirectory(
-        sourceFileName: String,
-        sourceParentDirectoryName: String,
-        targetDirectoryName: String
+    public suspend fun relocateFileIntoCipherDirectory(
+        sourceFileName: Uuid,
+        sourceParentDirectoryName: Uuid,
+        targetDirectoryName: Uuid
     ) {
-        // Find file first to ensure the directory is cached.
-        val sourceFile = findFileInCipherDirectory(sourceParentDirectoryName, sourceFileName)!!
         val sourceParentDirectory = cipherDirectoryInfoCache[sourceParentDirectoryName]!!
+        val sourceFile = findFileInCipherDirectory(sourceParentDirectoryName, sourceFileName)!!
 
         val targetDirectory = cipherDirectoryInfoCache.computeIfAbsent(targetDirectoryName) {
-            fileSystem.findOrCreateDirectory(cipherFilesRootDirectory, targetDirectoryName)
+            runBlocking {
+                fileSystem.findOrCreateDirectory(cipherFilesRootDirectory, targetDirectoryName.toHexString())
+            }
         }
 
         fileSystem.relocate(sourceFile, sourceParentDirectory, targetDirectory)
@@ -121,52 +99,67 @@ public class VaultFileSystem internal constructor(
 
     //region FileSystemForwarding
 
-    override fun createFile(directoryInfo: DirectoryInfo, name: String, mimeType: String): FileInfo {
-        return fileSystem.createFile(directoryInfo, name, mimeType)
+    @Throws(Exception::class)
+    public suspend fun findOrCreateFile(directoryInfo: DirectoryInfo, name: String): FileInfo {
+        return listFiles(directoryInfo).firstOrNull { it.fullName == name }
+            ?: fileSystem.createFile(directoryInfo, name)
     }
 
-    override fun findOrCreateDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
+    public suspend fun findOrCreateDirectory(directoryInfo: DirectoryInfo, name: String): DirectoryInfo {
         return fileSystem.findOrCreateDirectory(directoryInfo, name)
     }
 
-    override fun listFiles(directoryInfo: DirectoryInfo): List<FileInfo> {
+    public fun listFiles(directoryInfo: DirectoryInfo): Flow<FileInfo> {
         return fileSystem.listFiles(directoryInfo)
     }
 
-    override fun listDirectories(directoryInfo: DirectoryInfo): List<DirectoryInfo> {
+    public fun listDirectories(directoryInfo: DirectoryInfo): Flow<DirectoryInfo> {
         return fileSystem.listDirectories(directoryInfo)
     }
 
-    override fun delete(fileInfo: FileInfo) {
+    public fun delete(fileInfo: FileInfo) {
         return fileSystem.delete(fileInfo)
     }
 
-    override fun delete(directoryInfo: DirectoryInfo) {
-        // The directoryInfo could be a cipher directory. Therefore, we need to clear the cache.
-        cipherDirectoryInfoCache.clear()
-        return fileSystem.delete(directoryInfo)
-    }
-
-    override fun relocate(
-        sourceFileInfo: FileInfo,
-        sourceParentDirectoryInfo: DirectoryInfo,
-        targetDirectoryInfo: DirectoryInfo
-    ) {
-        return fileSystem.relocate(sourceFileInfo, sourceParentDirectoryInfo, targetDirectoryInfo)
-    }
-
-    override fun openInputStream(fileInfo: FileInfo): InputStream {
+    public fun openInputStream(fileInfo: FileInfo): FileInputStream {
         return fileSystem.openInputStream(fileInfo)
     }
 
-    override fun openOutputStream(fileInfo: FileInfo): OutputStream {
+    public fun openOutputStream(fileInfo: FileInfo): OutputStream {
         return fileSystem.openOutputStream(fileInfo)
     }
 
     //endregion
 
-    public companion object {
+    internal companion object {
         private const val CIPHER_FILES_DIRECTORY_NAME: String = "files"
         private const val DECRYPTION_DIRECTORY_NAME: String = "decrypted"
+
+        // Eagerly collecting commonly used directories and files to speed up later access.
+        // During vault creation or decryption, the user should be presented with a loading screen anyway.
+        internal suspend fun create(
+            fileSystem: FileSystem,
+            rootDirectory: DirectoryInfo,
+            vaultFile: FileInfo
+        ): VaultFileSystem {
+            val cipherFilesRootDirectory = fileSystem.findOrCreateDirectory(rootDirectory, CIPHER_FILES_DIRECTORY_NAME)
+            val folderIndexFile = fileSystem.findOrCreateFile(rootDirectory, "index")
+
+            val cipherDirectoriesById = fileSystem.listDirectories(cipherFilesRootDirectory)
+                .toList()
+                .mapNotNull { directoryInfo ->
+                    Uuid.parseHexOrNull(directoryInfo.name)?.let { id -> id to directoryInfo }
+                }
+                .toMap()
+
+            return VaultFileSystem(
+                fileSystem = fileSystem,
+                rootDirectory = rootDirectory,
+                cipherFilesRootDirectory = cipherFilesRootDirectory,
+                vaultFile = vaultFile,
+                folderIndexFile = folderIndexFile,
+                cipherDirectoryInfoCache = ConcurrentHashMap(cipherDirectoriesById)
+            )
+        }
     }
 }

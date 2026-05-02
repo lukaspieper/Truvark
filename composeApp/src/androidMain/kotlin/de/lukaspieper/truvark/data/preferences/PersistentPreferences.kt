@@ -8,9 +8,10 @@ package de.lukaspieper.truvark.data.preferences
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -24,14 +25,14 @@ private val Context.dataStore by preferencesDataStore(name = "AppPreferences")
  * Persistent preferences based on [DataStore].
  */
 public class PersistentPreferences(context: Context) {
-    private val dataStore: DataStore<Preferences> = context.dataStore
+    private val dataStore = context.dataStore
 
-    public companion object {
-        public val LAST_USED_VAULT_ROOT_URI: Preferences.Key<String> = stringPreferencesKey("PREF_VAULT_ROOT_URI")
-        public val BIOMETRIC_CONFIG: Preferences.Key<String> = stringPreferencesKey("PREF_BIOMETRY_CONFIG")
-        public val LOGGING_ALLOWED: Preferences.Key<Boolean> = booleanPreferencesKey("PREF_LOGGING_ALLOWED")
-        public val IS_LIST_LAYOUT: Preferences.Key<Boolean> = booleanPreferencesKey("PREF_IS_LIST_LAYOUT")
-        public val IMAGES_FIT_SCREEN: Preferences.Key<Boolean> = booleanPreferencesKey("PREF_IMAGES_FIT_SCREEN")
+    private companion object {
+        val LAST_USED_VAULT_ROOT_URI = stringPreferencesKey("PREF_LAST_USED_VAULT_ROOT_URI")
+        val BIOMETRIC_CONFIG = byteArrayPreferencesKey("PREF_BIOMETRIC_CONFIG")
+        val LOGGING_ALLOWED = booleanPreferencesKey("PREF_LOGGING_ALLOWED")
+        val IS_LIST_LAYOUT = booleanPreferencesKey("PREF_IS_LIST_LAYOUT")
+        val IMAGES_FIT_SCREEN = booleanPreferencesKey("PREF_IMAGES_FIT_SCREEN")
     }
 
     public suspend fun saveLastUsedVaultRootUri(uri: Uri) {
@@ -45,22 +46,22 @@ public class PersistentPreferences(context: Context) {
 
         when {
             lastUsedVaultRootUri.isNullOrBlank() -> Uri.EMPTY
-            else -> Uri.parse(lastUsedVaultRootUri)
+            else -> lastUsedVaultRootUri.toUri()
         }
     }
 
     public suspend fun saveBiometricConfig(config: BiometricConfig) {
         dataStore.edit { preferences ->
-            preferences[BIOMETRIC_CONFIG] = config.toJson()
+            preferences[BIOMETRIC_CONFIG] = config.toByteArray()
         }
     }
 
     public val biometricConfig: Flow<BiometricConfig?> = dataStore.data.map { preferences ->
-        val json = preferences[BIOMETRIC_CONFIG]
+        val bytes = preferences[BIOMETRIC_CONFIG]
 
         when {
-            json.isNullOrBlank() -> null
-            else -> BiometricConfig.fromJson(json)
+            bytes == null || bytes.isEmpty() -> null
+            else -> BiometricConfig.fromByteArray(bytes)
         }
     }
 

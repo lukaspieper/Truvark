@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,19 +20,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.constants.FixedValues
+import de.lukaspieper.truvark.domain.vault.VaultConfig
 import de.lukaspieper.truvark.ui.controls.MaterialDialog
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.preview.PagePreviews
@@ -47,7 +48,7 @@ public fun SetupDialog(
     state: LauncherViewModel.LauncherState,
     updateState: (LauncherViewModel.LauncherState) -> Unit,
     inspectDirectory: (Uri) -> Unit,
-    createVault: (String) -> Unit,
+    createVault: (ByteArray) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (state == PROCESSING) {
@@ -96,8 +97,8 @@ public fun SetupDialog(
             )
         }
     } else if (state == VAULT_CREATION) {
-        var password by rememberSaveable { mutableStateOf("") }
-        var passwordConfirmation by rememberSaveable { mutableStateOf("") }
+        val passwordState = remember { TextFieldState() }
+        val passwordConfirmationState = remember { TextFieldState() }
         var errorText by rememberSaveable { mutableStateOf<Int?>(null) }
 
         MaterialDialog(
@@ -105,12 +106,12 @@ public fun SetupDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (password != passwordConfirmation) {
+                        if (passwordState.text != passwordConfirmationState.text) {
                             errorText = R.string.inputs_do_not_match
-                        } else if (password.length < FixedValues.MIN_PASSWORD_LENGTH) {
+                        } else if (passwordState.text.length < VaultConfig.MIN_PASSWORD_LENGTH) {
                             errorText = R.string.password_length
                         } else {
-                            createVault(password)
+                            createVault(passwordState.text.toString().toByteArray())
                         }
                     }
                 ) {
@@ -124,24 +125,20 @@ public fun SetupDialog(
             )
 
             PasswordField(
-                value = password,
-                onValueChange = { password = it },
-                imeAction = ImeAction.Next,
+                state = passwordState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp)
             )
 
             PasswordField(
-                value = passwordConfirmation,
-                onValueChange = { passwordConfirmation = it },
-                imeAction = ImeAction.Next,
+                state = passwordConfirmationState,
                 label = R.string.repeat_password,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Text(
-                text = if (errorText != null) stringResource(errorText!!, FixedValues.MIN_PASSWORD_LENGTH) else "",
+                text = if (errorText != null) stringResource(errorText!!, VaultConfig.MIN_PASSWORD_LENGTH) else "",
                 color = MaterialTheme.colorScheme.error,
             )
         }

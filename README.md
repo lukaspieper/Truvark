@@ -21,10 +21,10 @@ Compared to many other popular alternatives, Truvark...
 - [x] works completely offline, no internet access/permission required
 - [x] runs without dangerous permissions like full storage/media access
 - [x] contains no advertising, telemetry or other user data collection
-- [x] encrypts the database and thumbnails
-- [x] allows biometric unlocking (e.g. fingerprint) without compromising security
+- [x] encrypts all indices and thumbnails
+- [x] allows biometric unlocking (e.g. fingerprint) securely
 
-As you can see, there are already plenty of reasons to give Truvark a try today!
+As you can see, there are already plenty of reasons to give Truvark a try!
 
 <p align="center">
 <a href='https://github.com/lukaspieper/Truvark/releases/latest'>
@@ -80,7 +80,8 @@ In addition, Argon2(id) is used for key derivation. It won the
 [Password Hashing Competition](https://en.wikipedia.org/wiki/Password_Hashing_Competition)
 in 2015 and is one of the best (if not the best) algorithm for this task.
 
-Finally, Realm was chosen for the database because it supports database encryption out of the box.
+Instead of a database, index files are used to store metadata. They are encrypted the same way the user files are
+encrypted.
 
 > [!NOTE]
 > Many other vault apps use an unencrypted database!

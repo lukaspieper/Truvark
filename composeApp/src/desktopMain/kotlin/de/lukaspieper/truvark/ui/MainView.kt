@@ -6,7 +6,6 @@
 
 package de.lukaspieper.truvark.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -18,23 +17,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.shapes
-import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -48,18 +43,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import java.io.File
 import javax.swing.JFileChooser
-
-@Composable
-public fun AppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme(),
-        typography = typography,
-        shapes = shapes,
-        content = content
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +56,7 @@ public fun MainView(viewModel: MainViewModel) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = viewModel.vault?.displayName ?: "Truvark",
+                        text = viewModel.vault?.name ?: "Truvark",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -93,7 +77,7 @@ public fun MainView(viewModel: MainViewModel) {
     }
 
     if (openDialog) {
-        AlertDialog(
+        BasicAlertDialog(
             onDismissRequest = {
                 // This dialog cannot be dismissed by pressing outside
             }
@@ -125,7 +109,6 @@ public fun DirectorySelection(viewModel: MainViewModel) {
         TextButton(
             onClick = {
                 JFileChooser().apply {
-                    currentDirectory = File(".")
                     dialogTitle = "Select a directory"
                     fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
                     isAcceptAllFileFilterUsed = false

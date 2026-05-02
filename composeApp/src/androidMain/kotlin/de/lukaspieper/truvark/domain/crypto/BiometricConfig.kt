@@ -4,38 +4,51 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+@file:UseSerializers(UuidByteArraySerializer::class)
+
 package de.lukaspieper.truvark.domain.crypto
 
-import kotlinx.serialization.SerialName
+import de.lukaspieper.truvark.data.serialization.UuidByteArraySerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.protobuf.ProtoNumber
+import kotlin.uuid.Uuid
 
 @Serializable
 public data class BiometricConfig(
-    @SerialName("VaultId")
-    val vaultId: String,
+    @ProtoNumber(1)
+    val vaultId: Uuid,
 
-    @SerialName("IV")
+    @ProtoNumber(2)
     val iv: ByteArray,
 
-    @SerialName("AccessKey")
+    @ProtoNumber(3)
     val accessKey: ByteArray
 ) {
     public companion object {
 
-        public fun fromJson(json: String): BiometricConfig {
-            return Json.decodeFromString(serializer(), json)
+        @Throws(Exception::class)
+        internal fun fromByteArray(bytes: ByteArray): BiometricConfig {
+            return ProtoBuf.decodeFromByteArray(serializer(), bytes)
         }
     }
 
-    public fun toJson(): String {
-        return Json.encodeToString(serializer(), this)
+    init {
+        require(vaultId != Uuid.NIL)
+        require(iv.isNotEmpty())
+        require(accessKey.isNotEmpty())
+    }
+
+    @Throws(Exception::class)
+    internal fun toByteArray(): ByteArray {
+        return ProtoBuf.encodeToByteArray(serializer(), this)
     }
 
     // generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other == null || this::class != other::class) return false
+        if (javaClass != other?.javaClass) return false
 
         other as BiometricConfig
 

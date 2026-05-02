@@ -15,13 +15,12 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    // alias(libs.plugins.composeHotReload) TODO: Not working with current Kotlin version
+    alias(libs.plugins.composeHotReload)
 
-    alias(libs.plugins.android.hilt)
-    alias(libs.plugins.google.ksp)
-    alias(libs.plugins.realm.kotlin)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.oss.licenses)
+    alias(libs.plugins.android.hilt)
+    alias(libs.plugins.google.ksp)
 }
 
 kotlin {
@@ -29,12 +28,13 @@ kotlin {
 
     compilerOptions {
         freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
+        freeCompilerArgs.add("-opt-in=kotlinx.serialization.ExperimentalSerializationApi")
     }
 
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -55,10 +55,6 @@ kotlin {
         val desktopTest by getting
 
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-
-            implementation(libs.android.core.ktx)
             implementation(libs.android.core.splashscreen)
             implementation(libs.google.accompanist.permissions)
             implementation(libs.android.workmanager)
@@ -77,13 +73,12 @@ kotlin {
             implementation(libs.android.compose.adaptive.layout)
             implementation(libs.android.compose.adaptive.navigation)
 
-            // Navigation
-            implementation(libs.android.navigation.compose)
-
-            // Media player
+            // Media
             implementation(libs.telephoto)
             implementation(libs.google.accompanist.drawablepainter)
             implementation(libs.bundles.coil)
+            implementation(libs.androidx.media3.exoplayer)
+            implementation(libs.androidx.media3.ui.compose)
 
             // Cryptography
             implementation(libs.argon2.android)
@@ -96,14 +91,12 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
 
             implementation(compose.materialIconsExtended)
             implementation(libs.tink.android)
-            implementation(libs.realm.kotlin)
-            implementation(libs.kotlin.serialization.json)
             implementation(libs.logcat)
+            implementation(libs.kotlinx.serialization.protobuf)
+            implementation(libs.okio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -113,7 +106,8 @@ kotlin {
         }
         desktopTest.dependencies {
             implementation(libs.junit.jupiter)
-            runtimeOnly(libs.junit.platform.launcher)
+            implementation(libs.junit.platform.launcher)
+            implementation(libs.kotlin.reflect)
         }
     }
 }
@@ -133,13 +127,13 @@ composeCompiler {
 
 android {
     namespace = "de.lukaspieper.truvark"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 29
-        targetSdk = 35
-        versionCode = 16
-        versionName = "1.1.0"
+        minSdk = 31
+        targetSdk = 36
+        versionCode = 200
+        versionName = "2.0.0"
 
         ndk {
             // Tink does not support 32-bit architectures (https://developers.google.com/tink/faq/support_for_32bit)
@@ -189,8 +183,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
@@ -199,8 +193,8 @@ android.applicationVariants.configureEach {
 
     val copyLicensesTask = tasks.register<Copy>("${variantName}CopyLicenses") {
         from("$rootDir/LICENSES")
-        // TODO: Don't depend on oss-licenses-plugin's directory. Haven't figured `registerGeneratedResFolders` out yet.
-        into(layout.buildDirectory.dir("generated/third_party_licenses/$variantName/res/raw"))
+        // TODO: Don't depend on oss-licenses-plugin's directory (it already changed in the past).
+        into(layout.buildDirectory.dir("generated/res/${variantName}OssLicensesTask/raw"))
 
         rename { fileName ->
             fileName.lowercase()

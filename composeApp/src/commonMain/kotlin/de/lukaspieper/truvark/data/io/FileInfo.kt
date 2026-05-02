@@ -9,7 +9,7 @@ package de.lukaspieper.truvark.data.io
 import kotlin.time.Duration
 
 /**
- * Information about a file. These information are like a snapshot and may get outdated. For example, the size is not
+ * Represents information about a file at a certain point in time (like a snapshot). For example, the size does not get
  * updated when data is written to the file.
  */
 public data class FileInfo(
@@ -24,7 +24,4 @@ public data class FileInfo(
         require(mimeType.isNotBlank()) { "mimeType must not be blank" }
         require(mimeType == mimeType.lowercase()) { "mimeType must be lowercase" }
     }
-
-    val name: String by lazy { fullName.substringBeforeLast(".") }
-    val extension: String by lazy { fullName.substringAfterLast(".", "") }
 }

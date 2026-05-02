@@ -22,13 +22,13 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 /**
- * Note that [JavaFileSystem] is not actually used in production but heavily in tests and the desktop prototype.
+ * Note that [JavaFileSystem] is only used by the desktop prototype and this test suite.
  * This test class covers some default implementation in [FileSystem] too.
  *
  * The tests use [TestContext.internalDirectory] to arrange the tests, as it is the only exposed directory not using the
  * [TestContext.fileSystem] because that class/object is under test.
  */
-class JavaFileSystemTests : TestContext(createVault = false) {
+class JavaFileSystemTests : TestContext() {
 
     fun File.createNewFileAsFileInfo(fileName: String, content: ByteArray = ByteArray(0)): FileInfo {
         return resolveAsFileInfo(fileName).withData(content)

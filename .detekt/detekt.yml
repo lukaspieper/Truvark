@@ -16,6 +16,7 @@ complexity:
     threshold: 300
   LongParameterList:
     functionThreshold: 10
+    constructorThreshold: 10
     ignoreAnnotated: [ 'Composable' ]
   TooManyFunctions:
     active: false
@@ -40,6 +41,7 @@ style:
   ForbiddenComment:
     active: false
   MagicNumber:
+    ignoreAnnotation: true
     excludes: [ '**/ui/**', '**.kts', '**/src/*Test/**' ]
   MaxLineLength:
     excludes: [ '**/src/*Test/**' ]
@@ -58,20 +60,31 @@ style:
 Compose:
   ComposableAnnotationNaming:
     active: true
+  ComposableNaming:
+    active: true
+  ComposableParamOrder:
+    active: true
   CompositionLocalAllowlist:
     active: false
-    # allowedCompositionLocals: LocalSomething,LocalSomethingElse
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:
     active: true
-    # You can optionally add your own composables here
-    # contentEmitters: MyComposable,MyOtherComposable
+  ContentTrailingLambda:
+    active: true
+  ContentSlotReused:
+    active: true
   DefaultsVisibility:
+    active: true
+  LambdaParameterEventTrailing:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  Material2:
     active: true
   ModifierClickableOrder:
     active: true
-  ModifierComposable:
+  ModifierComposed:
     active: true
   ModifierMissing:
     active: true
@@ -79,25 +92,23 @@ Compose:
     active: true
   ModifierNotUsedAtRoot:
     active: true
-    # You can optionally add your own composables here
-    # contentEmitters: MyComposable,MyOtherComposable
   ModifierReused:
     active: true
   ModifierWithoutDefault:
     active: true
   MultipleEmitters:
     active: false
-    # You can optionally add your own composables here
-    # contentEmitters: MyComposable,MyOtherComposable
   MutableParams:
-    active: false
-  ComposableNaming:
     active: true
-    # You can optionally disable the checks in this rule for regex matches against the composable name (e.g. molecule presenters)
-    # allowedComposableFunctionNames: .*Presenter,.*MoleculePresenter
-  ComposableParamOrder:
+  MutableStateAutoboxing:
+    active: true
+  MutableStateParam:
+    active: true
+  ParameterNaming:
     active: true
   PreviewAnnotationNaming:
+    active: false
+  PreviewNaming:
     active: false
   PreviewPublic:
     active: true
@@ -106,10 +117,8 @@ Compose:
   RememberContentMissing:
     active: true
   UnstableCollections:
-    active: false
+    active: true
   ViewModelForwarding:
     active: true
   ViewModelInjection:
     active: true
-    # You can optionally add your own ViewModel factories here
-    # viewModelFactories: hiltViewModel,potatoViewModel

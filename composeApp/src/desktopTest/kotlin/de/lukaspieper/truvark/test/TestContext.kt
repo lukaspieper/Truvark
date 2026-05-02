@@ -6,94 +6,84 @@
 
 package de.lukaspieper.truvark.test
 
-import com.google.crypto.tink.streamingaead.StreamingAeadConfig
-import de.lukaspieper.truvark.constants.FileNames
+import com.google.crypto.tink.RegistryConfiguration
+import com.google.crypto.tink.StreamingAead
+import com.google.crypto.tink.TinkProtoKeysetFormat
+import com.google.crypto.tink.subtle.AesGcmJce
 import de.lukaspieper.truvark.crypto.Argon2.Config
 import de.lukaspieper.truvark.crypto.JvmArgon2
 import de.lukaspieper.truvark.data.io.DirectoryInfo
-import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.io.JavaFileSystem
-import de.lukaspieper.truvark.domain.IdGenerator
 import de.lukaspieper.truvark.domain.vault.Vault
 import de.lukaspieper.truvark.domain.vault.VaultFactory
 import de.lukaspieper.truvark.test.doubles.SchedulerFake
-import de.lukaspieper.truvark.test.doubles.ThumbnailProviderFake
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.uuid.Uuid
 
 /**
- * Test basis for all kind of tests using IO, whether they require a vault or not. A Android-like filesystem
- * ([internalDirectory], [sharedDirectoryInfo]) is created on top of [TempDir], exposing directories in form of [File]
- * and [DirectoryInfo].
+ * Basis for all test classes using IO, whether they require a vault or not. An Android-like filesystem is created,
+ * exposing directories as [File] or [DirectoryInfo]:
+ *
+ * [TempDir]
+ * - [internalDirectory]
+ * - [sharedDirectoryInfo]
+ * - [vaultDirectoryInfo]
  */
 abstract class TestContext(
     protected val vaultName: String = "vault",
-    protected val vaultPassword: ByteArray = Uuid.random().toByteArray(),
-    override val fileSystem: JavaFileSystem = JavaFileSystem(),
-    protected val vaultFactory: VaultFactory = VaultFactory(
-        argon2 = JvmArgon2(
+    protected val vaultPassword: ByteArray = Uuid.random().toByteArray()
+) : IoExtensions, VaultExtensions {
+
+    override val fileSystem = JavaFileSystem()
+    protected open val vaultFactory by lazy {
+        VaultFactory(
             // Lower memory cost and iterations for faster tests
-            defaultConfig = Config(
-                memoryCostInKibibyte = 128,
-                iterations = 1
-            )
-        ),
-        fileSystem = fileSystem,
-        idGenerator = IdGenerator.Default,
-        thumbnailProvider = ThumbnailProviderFake(),
-        scheduler = SchedulerFake()
-    ),
-    private val createVault: Boolean = true
-) : IoExtensions, RealmExtensions {
+            argon2 = JvmArgon2(Config(memoryCostInKibibyte = 128, iterations = 1)),
+            fileSystem = fileSystem,
+            scheduler = SchedulerFake()
+        )
+    }
 
     @field:TempDir
     private lateinit var tempDir: File
     private val tempDirectoryInfo by lazy { fileSystem.directoryInfo(tempDir) }
 
     protected val internalDirectory by lazy { tempDir.resolve("internal").also { it.mkdir() } }
-    protected val sharedDirectoryInfo by lazy { fileSystem.findOrCreateDirectory(tempDirectoryInfo, "shared") }
-    protected val vaultDirectoryInfo by lazy { fileSystem.findOrCreateDirectory(tempDirectoryInfo, vaultName) }
-
-    protected val vaultCipherFilesDirectoryInfo by lazy {
-        fileSystem.findOrCreateDirectory(vaultDirectoryInfo, "files") // Constant is private
+    protected val sharedDirectoryInfo by lazy {
+        runBlocking { fileSystem.findOrCreateDirectory(tempDirectoryInfo, "shared") }
+    }
+    override val vaultDirectoryInfo by lazy {
+        runBlocking { fileSystem.findOrCreateDirectory(tempDirectoryInfo, vaultName) }
     }
 
-    // TODO: Fails without vault initialization, use private constant?
-    protected val vaultDecryptionDirectoryInfo
-        get() = vault.fileSystem.decryptionRootDirectory
+    private var _vault: Lazy<Vault> = lazy {
+        runBlocking { vaultFactory.createVault(vaultDirectoryInfo, vaultPassword) }
+    }
 
-    protected val internalDatabaseFile: File
-        get() = internalDirectory.resolve(FileNames.INDEX_REALM)
+    protected val vault: Vault
+        get() = _vault.value
 
-    protected val vaultFileInfo: FileInfo?
-        get() = fileSystem.findFileOrNull(vaultDirectoryInfo, FileNames.VAULT)
+    override val vaultStreamingAead: StreamingAead by lazy {
+        // Mostly copy-paste from VaultFactory
+        val hash = JvmArgon2().hashPassword(vaultPassword, vault.config.argon2Config)
+        val passwordBasedKey = AesGcmJce(hash.toRaw())
+
+        val keyset = TinkProtoKeysetFormat.parseEncryptedKeyset(
+            vault.config.encryptedStreamingAeadKeyset,
+            passwordBasedKey,
+            vault.config.id.toByteArray() + VaultFactory.StreamingAeadAssociatedDataSuffix
+        )
+
+        keyset.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
+    }
 
     /**
-     * [vault] is only initialized if [createVault] is true.
+     * Vault caches data like indices in memory. This method clears the cache by reloading the vault from disk.
      */
-    protected lateinit var vault: Vault
-        private set
-
-    @BeforeEach
-    fun setUp() {
-        StreamingAeadConfig.register()
-
-        if (createVault) {
-            vault = vaultFactory.createVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
-        }
-    }
-
-    @AfterEach
-    fun tearDown() {
-        if (createVault && !vault.realm.isClosed()) {
-            vault.realm.close()
-        }
+    protected fun reloadVault() {
+        // TODO: Might fail if vault was never accessed before?!
+        _vault = lazy { runBlocking { vaultFactory.decryptVault(vaultDirectoryInfo, vaultPassword) } }
     }
 }

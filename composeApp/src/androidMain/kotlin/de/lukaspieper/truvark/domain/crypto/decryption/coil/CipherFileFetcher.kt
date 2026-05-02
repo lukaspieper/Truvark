@@ -6,7 +6,6 @@
 
 package de.lukaspieper.truvark.domain.crypto.decryption.coil
 
-import android.net.Uri
 import coil3.ImageLoader
 import coil3.decode.DataSource
 import coil3.decode.ImageSource
@@ -15,7 +14,6 @@ import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import coil3.request.Options
 import de.lukaspieper.truvark.data.io.FileInfo
-import de.lukaspieper.truvark.domain.crypto.decryption.DecryptingFileHandle
 import de.lukaspieper.truvark.domain.vault.Vault
 import okio.buffer
 
@@ -26,18 +24,15 @@ public class CipherFileFetcher(
 ) : Fetcher {
 
     override suspend fun fetch(): FetchResult {
-        // TODO: Make this FileSystem-agnostic, e.g. by splitting file access and decryption and adding a method
-        //  returning a FileHandle
-        require(fileInfo.uri is Uri)
+        vault.createDecryptingFileHandle(fileInfo).use { decryptingFileHandle ->
+            val imageSource = ImageSource(decryptingFileHandle.source().buffer(), options.fileSystem)
 
-        val decryptingFileHandle = DecryptingFileHandle(options.context.contentResolver, vault, fileInfo.uri as Uri)
-        val imageSource = ImageSource(decryptingFileHandle.singleSource().buffer(), options.fileSystem)
-
-        return SourceFetchResult(
-            source = imageSource,
-            mimeType = decryptingFileHandle.header.mimeType,
-            dataSource = DataSource.DISK
-        )
+            return SourceFetchResult(
+                source = imageSource,
+                mimeType = decryptingFileHandle.metadata.mimeType,
+                dataSource = DataSource.DISK
+            )
+        }
     }
 
     public class Factory(private val vault: Vault) : Fetcher.Factory<FileInfo> {

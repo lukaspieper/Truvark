@@ -6,112 +6,26 @@
 
 package de.lukaspieper.truvark.work
 
-import de.lukaspieper.truvark.data.io.FileInfo
-import de.lukaspieper.truvark.data.io.FileSystem
-import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
-import de.lukaspieper.truvark.domain.entities.RealmCipherFileEntity
-import de.lukaspieper.truvark.domain.entities.RealmCipherFolderEntity
-import de.lukaspieper.truvark.domain.vault.internal.FileDecryption
-import de.lukaspieper.truvark.domain.vault.internal.FileDeletion
-import de.lukaspieper.truvark.domain.vault.internal.FileEncryption
-import de.lukaspieper.truvark.domain.vault.internal.FileRelocation
-import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 
-public abstract class WorkBundle(
-    public var size: Int
-) {
-    public abstract val progress: StateFlow<Int>
+public abstract class WorkBundle {
+    private val _progress = MutableStateFlow(0)
 
-    public abstract suspend fun processUnit()
+    public abstract val properties: Properties
+    public abstract val size: Int
+    public val progress: StateFlow<Int> = _progress.asStateFlow()
 
-    internal class EncryptingWorkBundle(
-        private val fileEncryption: FileEncryption,
-        private val fileSystem: FileSystem,
-        private val sources: List<() -> FileInfo>,
-        private val destination: RealmCipherFolderEntity,
-        private val deleteSources: Boolean
-    ) : WorkBundle(
-        size = sources.size
-    ) {
-        override val progress = MutableStateFlow(0)
-
-        override suspend fun processUnit() {
-            val source = sources[progress.getAndUpdate { it + 1 }]()
-            fileEncryption.encryptFile(source, destination, RealmInstant.now())
-
-            if (deleteSources) {
-                fileSystem.delete(source)
-            }
-        }
+    public suspend fun processUnit() {
+        processUnitAtIndex(_progress.getAndUpdate { it + 1 })
     }
 
-    internal class DecryptingWorkBundle(
-        private val fileDecryption: FileDecryption,
-        parentFolder: CipherFolderEntity,
-        private val files: List<RealmCipherFileEntity>,
-        private val folders: List<RealmCipherFolderEntity>
-    ) : WorkBundle(
-        size = files.size + folders.size
-    ) {
-        private val destinationDirectoryInfo by lazy {
-            fileDecryption.findOrCreateDecryptionDestinationDirectory(parentFolder)
-        }
-        override val progress = MutableStateFlow(0)
+    protected abstract suspend fun processUnitAtIndex(index: Int)
 
-        override suspend fun processUnit() {
-            val index = progress.getAndUpdate { it + 1 }
-
-            when {
-                index < folders.size -> {
-                    fileDecryption.decryptFoldersRecursively(folders[index], destinationDirectoryInfo)
-                }
-
-                index < size -> {
-                    fileDecryption.decryptFile(files[index - folders.size], destinationDirectoryInfo)
-                }
-            }
-        }
-    }
-
-    internal class DeletingWorkBundle(
-        private val fileDeletion: FileDeletion,
-        private val files: List<RealmCipherFileEntity>,
-        private val folders: List<RealmCipherFolderEntity>
-    ) : WorkBundle(
-        size = files.size + folders.size
-    ) {
-        override val progress = MutableStateFlow(0)
-
-        override suspend fun processUnit() {
-            val index = progress.getAndUpdate { it + 1 }
-
-            when {
-                index < folders.size -> fileDeletion.deleteFoldersRecursively(folders[index])
-                index < size -> fileDeletion.deleteFile(files[index - folders.size])
-            }
-        }
-    }
-
-    internal class RelocatingWorkBundle(
-        private val fileRelocation: FileRelocation,
-        private val destination: CipherFolderEntity,
-        private val files: List<RealmCipherFileEntity>,
-        private val folders: List<RealmCipherFolderEntity>
-    ) : WorkBundle(
-        size = files.size + folders.size
-    ) {
-        override val progress = MutableStateFlow(0)
-
-        override suspend fun processUnit() {
-            val index = progress.getAndUpdate { it + 1 }
-
-            when {
-                index < folders.size -> fileRelocation.relocateFolder(folders[index], destination)
-                index < size -> fileRelocation.relocateFile(files[index - folders.size], destination)
-            }
-        }
-    }
+    /**
+     * Empty interface to supply additional data through the work bundle to the [Scheduler].
+     */
+    public interface Properties
 }

@@ -17,7 +17,7 @@ public sealed class License(
         private val licenseByUri = mapOf(
             "http://www.apache.org/licenses/LICENSE-2.0.txt" to ApacheLicenseV20,
             "https://www.apache.org/licenses/LICENSE-2.0.txt" to ApacheLicenseV20,
-            "https://www.apache.org/licenses/LICENSE-2.0" to ApacheLicenseV20,
+            "https://opensource.org/licenses/BSD-3-Clause" to Bsd3License,
             "https://github.com/lambdapioneer/argon2kt/blob/master/LICENSE" to MitLicense
         )
 
@@ -44,5 +44,10 @@ public sealed class License(
     public data object GeneralPublicLicenseV30OrLater : License(
         name = "GNU General Public License",
         textResId = R.raw.gpl_3_0_or_later
+    )
+
+    public data object Bsd3License : License(
+        name = "The 3-Clause BSD License",
+        textResId = R.raw.bsd_3_clause
     )
 }

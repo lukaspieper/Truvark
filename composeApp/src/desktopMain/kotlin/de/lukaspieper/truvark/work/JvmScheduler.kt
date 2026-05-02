@@ -6,18 +6,9 @@
 
 package de.lukaspieper.truvark.work
 
-import de.lukaspieper.truvark.domain.vault.Vault
+public class JvmScheduler : Scheduler {
 
-public class JvmScheduler : Scheduler() {
-
-    override fun schedule(
-        workBundle: WorkBundle,
-        metadata: SchedulerMetadata
-    ) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onVaultChanged(vault: Vault) {
+    override fun schedule(workBundle: WorkBundle) {
         TODO("Not yet implemented")
     }
 }

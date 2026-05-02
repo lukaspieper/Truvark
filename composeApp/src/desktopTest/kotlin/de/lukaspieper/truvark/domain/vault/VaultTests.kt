@@ -6,15 +6,12 @@
 
 package de.lukaspieper.truvark.domain.vault
 
-import de.lukaspieper.truvark.constants.FileNames
-import de.lukaspieper.truvark.constants.FixedValues.MAX_VAULT_NAME_LENGTH
+import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
 import de.lukaspieper.truvark.test.TestContext
 import de.lukaspieper.truvark.test.data.AmountProvider
 import de.lukaspieper.truvark.test.data.BlankStringProvider
 import de.lukaspieper.truvark.test.data.DisplayNameProvider
-import de.lukaspieper.truvark.test.data.FileDataProvider
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
@@ -26,79 +23,40 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 class VaultTests : TestContext() {
 
-    /**
-     * - Using [TestContext.internalDirectory] because it is the only exposed [java.io.File] directory.
-     * - Using [FileDataProvider] because [FileNames.INDEX_REALM] would cause a conflict. A subdirectory could be used
-     *   instead.
-     */
-    @Nested
-    inner class WriteEncryptedDatabaseCopyTo {
-
-        @ParameterizedTest
-        @ArgumentsSource(FileDataProvider::class)
-        fun `writeEncryptedDatabaseCopyTo without existing file creates encrypted Copy`(fileName: String) {
-            // Arrange
-            val destinationFile = internalDirectory.resolve(fileName)
-
-            // Act
-            vault.writeEncryptedDatabaseCopyTo(destinationFile)
-
-            // Assert
-            assertTrue(destinationFile.length() > 0)
-        }
-
-        @ParameterizedTest
-        @ArgumentsSource(FileDataProvider::class)
-        fun `writeEncryptedDatabaseCopyTo with existing file overwrites existing file`(fileName: String) {
-            // Arrange
-            val destinationFile = internalDirectory.resolve(fileName)
-            destinationFile.createNewFile()
-
-            // Act
-            vault.writeEncryptedDatabaseCopyTo(destinationFile)
-
-            // Assert
-            assertTrue(destinationFile.length() > 0)
-        }
-    }
-
     @Nested
     inner class FindCipherFolderEntitySubfolders {
 
         @ParameterizedTest
         @ArgumentsSource(AmountProvider::class)
-        fun `findCipherFolderEntitySubfolders with given root level folders return same amount`(amountOfFolders: Int) {
+        suspend fun `findCipherFolderEntitySubfolders with given root level folders return matching list`(
+            amountOfFolders: Int
+        ) {
             // Arrange
-            repeat(amountOfFolders) {
-                vault.realm.createRandomCipherFolderEntity()
-            }
+            val createdFolders = vault.createRandomCipherFolderEntities(amountOfFolders)
+            reloadVault()
 
             // Act
-            val rootFolders = runBlocking {
-                vault.findCipherFolderEntitySubfolders("").first()
-            }
+            val rootFolders = vault.findCipherFolderEntitySubfolders(vault.rootFolder).first()
 
             // Assert
-            assertEquals(amountOfFolders, rootFolders.size)
+            assertEquals(createdFolders.sortedBy { it.id }, rootFolders.sortedBy { it.id })
         }
 
         @ParameterizedTest
         @ArgumentsSource(AmountProvider::class)
-        fun `findCipherFolderEntitySubfolders with given subfolders return same amount`(amountOfSubfolders: Int) {
+        suspend fun `findCipherFolderEntitySubfolders with given subfolders return matching list`(
+            amountOfSubfolders: Int
+        ) {
             // Arrange
-            val parentFolder = vault.realm.createRandomCipherFolderEntity()
-
-            repeat(amountOfSubfolders) {
-                vault.realm.createRandomCipherFolderEntity(parentFolder.id)
-            }
+            val parentFolder = vault.createRandomCipherFolderEntity()
+            val createdSubfolders = vault.createRandomCipherFolderEntities(amountOfSubfolders, parentFolder)
+            reloadVault()
 
             // Act
-            val subfolders = runBlocking {
-                vault.findCipherFolderEntitySubfolders(parentFolder.id).first()
-            }
+            val subfolders = vault.findCipherFolderEntitySubfolders(parentFolder).first()
 
             // Assert
-            assertEquals(amountOfSubfolders, subfolders.size)
+            assertEquals(createdSubfolders.sortedBy { it.id }, subfolders.sortedBy { it.id })
         }
     }
 
@@ -107,79 +65,64 @@ class VaultTests : TestContext() {
 
         @ParameterizedTest
         @ArgumentsSource(AmountProvider::class)
-        fun `findCipherFileEntitiesForFolder with given fileEntities return same amount`(
+        suspend fun `findCipherFileEntitiesForFolder with given fileEntities return same amount`(
             amountOfFileEntities: Int
         ) {
             // Arrange
-            val parentFolder = vault.realm.createRandomCipherFolderEntity()
-
-            repeat(amountOfFileEntities) {
-                vault.realm.createRandomCipherFileEntity(parentFolder)
-            }
+            val parentFolder = vault.createRandomCipherFolderEntity()
+            val createdFiles = vault.createRandomCipherFileEntities(amountOfFileEntities, parentFolder)
 
             // Act
-            val fileEntities = runBlocking {
-                vault.findCipherFileEntitiesForFolder(parentFolder.id).first()
-            }
+            val fileEntities = vault.findCipherFileEntitiesForFolder(parentFolder).first()
 
             // Assert
-            assertEquals(amountOfFileEntities, fileEntities.size)
+            assertTrue { fileEntities.all { file -> file.folderId == parentFolder.id } }
+            assertEquals(createdFiles.sortedBy { it.id }, fileEntities.sortedBy { it.id })
         }
     }
 
     @Nested
-    inner class UpdateDisplayName {
+    inner class UpdateName {
 
         @ParameterizedTest
         @ArgumentsSource(DisplayNameProvider::class)
-        fun `updateDisplayName updates vault name successfully`(newDisplayName: String) {
+        fun `updateName updates name successfully`(updatedName: String) {
             // Act
-            vault.updateDisplayName(newDisplayName)
+            vault.updateName(updatedName)
 
             // Assert
-            // Close vault and reopen it to check if the vault config is not corrupted
-            vault.realm.close()
-            val updatedVault = vaultFactory.decryptVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
-            assertEquals(newDisplayName, updatedVault.displayName)
+            reloadVault()
+            assertEquals(updatedName, vault.name)
         }
 
         @Test
-        fun `updateDisplayName with unchanged vault name does not fail`() {
+        fun `updateName with unchanged name does not fail`() {
             // Act
-            vault.updateDisplayName(vault.displayName)
+            val vaultName = vault.name
+            vault.updateName(vaultName)
 
             // Assert
-            // Close vault and reopen it to check if the vault config is not corrupted
-            vault.realm.close()
-            val updatedVault = vaultFactory.decryptVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
-            assertEquals(vault.displayName, updatedVault.displayName)
+            reloadVault()
+            assertEquals(vaultName, vault.name)
         }
 
         @ParameterizedTest
         @ArgumentsSource(BlankStringProvider::class)
-        fun `updateDisplayName with invalid vault name throws IllegalArgumentException`(invalidVaultName: String) {
+        fun `updateName with invalid name throws IllegalArgumentException`(invalidName: String) {
             // Act, Assert
             assertThrows<IllegalArgumentException> {
-                vault.updateDisplayName(invalidVaultName)
+                vault.updateName(invalidName)
             }
         }
 
         @Test
-        fun `updateDisplayName with too long vault name throws IllegalArgumentException`() {
+        fun `updateName with too long name throws IllegalArgumentException`() {
             // Arrange
-            val invalidVaultName = "1".repeat(MAX_VAULT_NAME_LENGTH + 1)
+            val invalidName = "1".repeat(MAX_VAULT_NAME_LENGTH + 1)
 
             // Act, Assert
             assertThrows<IllegalArgumentException> {
-                vault.updateDisplayName(invalidVaultName)
+                vault.updateName(invalidName)
             }
         }
     }
@@ -189,46 +132,42 @@ class VaultTests : TestContext() {
 
         @ParameterizedTest
         @ArgumentsSource(DisplayNameProvider::class)
-        fun `renameFolder updates folder name successfully`(newFolderName: String) {
+        suspend fun `renameFolder updates folder name successfully`(displayName: String) {
             // Arrange
-            val folder = vault.realm.createRandomCipherFolderEntity()
+            val folder = vault.createRandomCipherFolderEntity()
+            reloadVault() // cannot rename "unknown" folders, must be in cache.
 
             // Act
-            runBlocking {
-                vault.renameFolder(folder, newFolderName)
-            }
+            vault.renameFolder(folder, displayName)
 
             // Assert
-            val updatedFolder = runBlocking {
-                vault.findCipherFolderEntity(folder.id)
-            }
-            assertEquals(newFolderName, updatedFolder.displayName)
+            reloadVault() // to ensure data is persisted to disk.
+
+            val folderFromDisk = vault.findCipherFolderEntity(folder.id)
+            assertEquals(displayName, folderFromDisk.displayName)
         }
 
-        @Test
-        fun `renameFolder with unchanged folder name does not fail`() {
+        @ParameterizedTest
+        @ArgumentsSource(DisplayNameProvider::class)
+        suspend fun `renameFolder with unchanged folder name does not fail`(displayName: String) {
             // Arrange
-            val folder = vault.realm.createRandomCipherFolderEntity()
+            val folder = vault.createFolder(displayName, vault.rootFolder)
 
             // Act, Assert
             assertDoesNotThrow {
-                runBlocking {
-                    vault.renameFolder(folder, folder.displayName)
-                }
+                vault.renameFolder(folder, folder.displayName)
             }
         }
 
         @ParameterizedTest
         @ArgumentsSource(BlankStringProvider::class)
-        fun `renameFolder with invalid folder name throws IllegalArgumentException`(invalidFolderName: String) {
+        suspend fun `renameFolder with invalid folder name throws IllegalArgumentException`(invalidFolderName: String) {
             // Arrange
-            val folder = vault.realm.createRandomCipherFolderEntity()
+            val folder = vault.createRandomCipherFolderEntity()
 
             // Act, Assert
             assertThrows<IllegalArgumentException> {
-                runBlocking {
-                    vault.renameFolder(folder, invalidFolderName)
-                }
+                vault.renameFolder(folder, invalidFolderName)
             }
         }
     }

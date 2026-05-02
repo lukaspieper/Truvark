@@ -7,13 +7,12 @@
 package de.lukaspieper.truvark.ui.views.presenter
 
 import android.annotation.SuppressLint
-import android.media.MediaDataSource
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,8 +25,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
@@ -49,17 +51,20 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.exoplayer.source.MediaSource
 import de.lukaspieper.truvark.Page
 import de.lukaspieper.truvark.data.io.FileInfo
-import de.lukaspieper.truvark.domain.crypto.decryption.coil.CipherZoomableImageSource
+import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
 import de.lukaspieper.truvark.ui.extensions.safeDrawingTopAppBar
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.preview.PreviewSampleData
+import de.lukaspieper.truvark.ui.preview.PreviewSampleData.toPreviewUuid
 import de.lukaspieper.truvark.ui.views.presenter.views.FileNotFoundContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.NotSupportedContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.VideoContentView
 import me.saket.telephoto.zoomable.ZoomableImage
+import kotlin.uuid.Uuid
 
 @Composable
 public fun PresenterPage(
@@ -68,7 +73,7 @@ public fun PresenterPage(
     modifier: Modifier = Modifier,
     viewModel: PresenterViewModel = hiltViewModel(
         creationCallback = { factory: PresenterViewModel.Factory ->
-            factory.create(parameters.folderId)
+            factory.create(Uuid.parseHex(parameters.folderId))
         }
     )
 ) {
@@ -78,9 +83,9 @@ public fun PresenterPage(
     PresenterView(
         itemsData = itemsData,
         createCipherZoomableImageSource = viewModel::createCipherZoomableImageSource,
-        createMediaDataSource = viewModel::createMediaDataSource,
+        createMediaSource = viewModel::createMediaSource,
         imagesFitScreen = imagesFitScreen,
-        initialFileId = parameters.fileId,
+        initialFileId = Uuid.parseHex(parameters.fileId),
         navigateBack = navigateBack,
         modifier = modifier
     )
@@ -92,16 +97,15 @@ public fun PresenterPage(
 private fun PresenterView(
     itemsData: PresenterViewModel.ItemsData,
     createCipherZoomableImageSource: (FileInfo, String) -> CipherZoomableImageSource,
-    createMediaDataSource: (FileInfo) -> MediaDataSource,
+    createMediaSource: (FileInfo) -> MediaSource,
     imagesFitScreen: Boolean,
-    initialFileId: String,
+    initialFileId: Uuid,
     navigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val activity = LocalActivity.current
 
-    // TODO: Use `Saveable`. Needs to be "synced" with MediaView controls.
-    val isTopBarVisible = remember { mutableStateOf(true) }
+    val isTopBarVisible = rememberSaveable { mutableStateOf(true) }
     var topBarTitle by rememberSaveable { mutableStateOf("") }
 
     DisposableEffect(isTopBarVisible.value) {
@@ -156,7 +160,7 @@ private fun PresenterView(
         CipherFilePager(
             itemsData = itemsData,
             createCipherZoomableImageSource = createCipherZoomableImageSource,
-            createMediaDataSource = createMediaDataSource,
+            createMediaSource = createMediaSource,
             initialFileId = initialFileId,
             imagesFitScreen = imagesFitScreen,
             isTopBarVisible = isTopBarVisible,
@@ -170,8 +174,8 @@ private fun PresenterView(
 private fun CipherFilePager(
     itemsData: PresenterViewModel.ItemsData,
     createCipherZoomableImageSource: (FileInfo, String) -> CipherZoomableImageSource,
-    createMediaDataSource: (FileInfo) -> MediaDataSource,
-    initialFileId: String,
+    createMediaSource: (FileInfo) -> MediaSource,
+    initialFileId: Uuid,
     imagesFitScreen: Boolean,
     isTopBarVisible: State<Boolean>,
     switchTopBarVisibility: () -> Unit,
@@ -189,42 +193,45 @@ private fun CipherFilePager(
 
     LaunchedEffect(pagerState, updateTopBarTitle) {
         snapshotFlow { pagerState.currentPage }.collect { index ->
-            val fileFullName = itemsData.cipherFileEntities[index].fullName()
+            val fileFullName = itemsData.cipherFileEntities[index].fullName
             updateTopBarTitle("${index + 1}/${pagerState.pageCount} - $fileFullName")
         }
     }
 
-    HorizontalPager(
-        state = pagerState,
-        key = { index -> itemsData.cipherFileEntities[index].id },
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) { index ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (itemsData.physicalFiles == null) {
-                CircularProgressIndicator(modifier = Modifier.align(alignment = Alignment.Center))
-            } else {
-                val cipherFileEntity = remember(itemsData, index) { itemsData.cipherFileEntities[index] }
-                val physicalFile = remember(cipherFileEntity) { itemsData.physicalFiles[cipherFileEntity.id] }
-
-                if (physicalFile == null) {
-                    FileNotFoundContentView(cipherFileEntity.fullName())
+    Surface(
+        color = Color.Black,
+        contentColor = dynamicDarkColorScheme(LocalContext.current).onBackground,
+        modifier = modifier.fillMaxSize()
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            key = { index -> itemsData.cipherFileEntities[index].id }
+        ) { index ->
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (itemsData.physicalFilesById == null) {
+                    CircularProgressIndicator()
                 } else {
-                    CipherFilePresenter(
-                        fileName = cipherFileEntity.fullName(),
-                        mimeType = cipherFileEntity.mimeType,
-                        createCipherZoomableImageSource = {
-                            createCipherZoomableImageSource(physicalFile, cipherFileEntity.mimeType)
-                        },
-                        createMediaDataSource = { createMediaDataSource(physicalFile) },
-                        isTopBarVisible = isTopBarVisible,
-                        switchTopBarVisibility = switchTopBarVisibility,
-                        imagesFitScreen = imagesFitScreen,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .align(Alignment.Center)
-                    )
+                    val cipherFileEntity = remember(itemsData, index) { itemsData.cipherFileEntities[index] }
+                    val physicalFile = remember(cipherFileEntity) { itemsData.physicalFilesById[cipherFileEntity.id] }
+
+                    if (physicalFile == null) {
+                        FileNotFoundContentView(cipherFileEntity.fullName)
+                    } else {
+                        CipherFilePresenter(
+                            fileName = cipherFileEntity.fullName,
+                            mimeType = cipherFileEntity.mimeType,
+                            createCipherZoomableImageSource = {
+                                createCipherZoomableImageSource(physicalFile, cipherFileEntity.mimeType)
+                            },
+                            createMediaSource = { createMediaSource(physicalFile) },
+                            isTopBarVisible = isTopBarVisible,
+                            switchTopBarVisibility = switchTopBarVisibility,
+                            imagesFitScreen = imagesFitScreen
+                        )
+                    }
                 }
             }
         }
@@ -232,11 +239,11 @@ private fun CipherFilePager(
 }
 
 @Composable
-private fun CipherFilePresenter(
+private fun BoxScope.CipherFilePresenter(
     fileName: String,
     mimeType: String,
     createCipherZoomableImageSource: () -> CipherZoomableImageSource,
-    createMediaDataSource: () -> MediaDataSource,
+    createMediaSource: () -> MediaSource,
     isTopBarVisible: State<Boolean>,
     switchTopBarVisibility: () -> Unit,
     imagesFitScreen: Boolean,
@@ -252,19 +259,19 @@ private fun CipherFilePresenter(
             contentDescription = null,
             contentScale = if (imagesFitScreen) ContentScale.Fit else ContentScale.Inside,
             onClick = { switchTopBarVisibility() },
-            modifier = modifier
+            modifier = modifier.matchParentSize()
         )
     } else if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) {
-        val mediaDataSource = remember(fileName) { createMediaDataSource() }
+        val mediaDataSource = remember(fileName) { createMediaSource() }
 
         VideoContentView(
-            mediaDataSource = mediaDataSource,
+            mediaSource = mediaDataSource,
             isTopBarVisible = isTopBarVisible,
             switchTopBarVisibility = switchTopBarVisibility,
             modifier = modifier
         )
     } else {
-        NotSupportedContentView(fileName)
+        NotSupportedContentView(fileName, modifier)
     }
 }
 
@@ -272,13 +279,11 @@ private fun CipherFilePresenter(
 @Composable
 private fun PresenterViewPreview() = PreviewHost {
     PresenterView(
-        itemsData = PresenterViewModel.ItemsData(
-            cipherFileEntities = PreviewSampleData.cipherFileEntities
-        ),
+        itemsData = PresenterViewModel.ItemsData(cipherFileEntities = PreviewSampleData.cipherFileEntities),
         createCipherZoomableImageSource = { _, _ -> error("Not implemented") },
-        createMediaDataSource = { error("Not implemented") },
+        createMediaSource = { error("Not implemented") },
         imagesFitScreen = true,
-        initialFileId = "file0",
+        initialFileId = 1.toPreviewUuid(),
         navigateBack = { }
     )
 }

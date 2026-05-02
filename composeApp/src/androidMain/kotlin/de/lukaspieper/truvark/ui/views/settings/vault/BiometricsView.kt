@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -86,7 +88,7 @@ private fun SetupBiometricUnlockingView(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var password by remember { mutableStateOf("") }
+    val passwordState = remember { TextFieldState() }
 
     var setupResult by remember { mutableStateOf<BiometricSetupResult?>(null) }
     val isPasswordIncorrect by remember(setupResult) {
@@ -95,7 +97,7 @@ private fun SetupBiometricUnlockingView(
 
     LaunchedEffect(setupResult) {
         if (setupResult == BiometricSetupResult.SUCCESS) {
-            password = ""
+            passwordState.clearText()
         }
     }
 
@@ -104,12 +106,11 @@ private fun SetupBiometricUnlockingView(
         modifier = modifier.fillMaxWidth()
     ) {
         PasswordField(
-            value = password,
-            onValueChange = { password = it },
+            state = passwordState,
             label = R.string.confirm_vaults_password,
             onKeyboardDone = {
                 coroutineScope.launch {
-                    setupResult = setupBiometricUnlocking(password.toByteArray())
+                    setupResult = setupBiometricUnlocking(passwordState.text.toString().toByteArray())
                 }
             },
             passwordIsIncorrect = isPasswordIncorrect,
@@ -119,7 +120,7 @@ private fun SetupBiometricUnlockingView(
         Button(
             onClick = {
                 coroutineScope.launch {
-                    setupResult = setupBiometricUnlocking(password.toByteArray())
+                    setupResult = setupBiometricUnlocking(passwordState.text.toString().toByteArray())
                 }
             },
             modifier = Modifier.height(TextFieldDefaults.MinHeight)

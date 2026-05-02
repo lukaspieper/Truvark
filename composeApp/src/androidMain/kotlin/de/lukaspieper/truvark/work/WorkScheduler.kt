@@ -12,10 +12,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
-import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
-import androidx.work.ListenableWorker
-import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
@@ -25,27 +22,28 @@ import androidx.work.Worker
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.common.NotificationChannel
 import de.lukaspieper.truvark.di.VaultModule
-import de.lukaspieper.truvark.domain.vault.Vault
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import logcat.LogPriority
 import logcat.logcat
 
 /**
- * A [WorkManager] that schedules [WorkBundle]s and automatically enqueues [DatabaseSyncingWorker] to ensure database
- * consistency. For running work, notifications are shown.
+ * A [WorkManager] that schedules [WorkBundle]s. For running work, notifications are shown.
  *
- * Note that most workers (including [DatabaseSyncingWorker]) require [VaultModule.initializeVaultModule]
- * to be executed before.
+ * Note that most workers require [VaultModule.initializeVaultModule] to be executed before.
  */
-public class WorkScheduler(private val appContext: Context) : Scheduler() {
+public class WorkScheduler(private val appContext: Context) : Scheduler {
 
-    public companion object {
-        public const val CHANNEL_ID: String = "de.lukaspieper.truvark"
+    private companion object {
+        const val CHANNEL_ID = "de.lukaspieper.truvark"
 
         /**
          * Just any constant name that is used for enqueuing all [Worker]s to prevent running multiple operations in
          * the same folder or even on the same files.
          */
-        public const val UNIQUE_WORK_NAME: String = "UNIQUE_WORK_NAME"
+        const val UNIQUE_WORK_NAME = "UNIQUE_WORK_NAME"
     }
 
     private val workManager = WorkManager.getInstance(appContext)
@@ -56,7 +54,7 @@ public class WorkScheduler(private val appContext: Context) : Scheduler() {
     init {
         val enqueuedWorkQuery = WorkQuery.fromStates(WorkInfo.State.ENQUEUED)
         val enqueuedWorkInfo = workManager.getWorkInfos(enqueuedWorkQuery).get()
-        logcat(LogPriority.INFO) {
+        logcat(LogPriority.WARN) {
             "Number of enqueued work that did not run before being canceled: ${enqueuedWorkInfo.size}"
         }
 
@@ -67,120 +65,122 @@ public class WorkScheduler(private val appContext: Context) : Scheduler() {
         workManager.pruneWork()
     }
 
-    override fun onVaultChanged(vault: Vault) {
-        // TODO: Pass down the vault ID, to check if the worker got the correct vault injected
-        schedule(DatabaseSyncingWorker.EmptyWorkBundle(), AndroidSchedulerMetadata(R.string.sync_database))
-    }
+    override fun schedule(workBundle: WorkBundle) {
+        require(workBundle.properties is NotificationProperties)
 
-    override fun schedule(workBundle: WorkBundle, metadata: SchedulerMetadata) {
-        require(metadata is AndroidSchedulerMetadata)
+        val scheduledBundle = ScheduledBundle(appContext, workBundle, notificationChannel.provideNotificationBuilder())
 
         var notificationId: Int
         do {
             notificationId = notificationChannel.generateNotificationId()
         } while (scheduledBundles.containsKey(notificationId))
 
-        val notificationBuilder = notificationChannel.provideNotificationBuilder().apply {
-            setSmallIcon(R.drawable.ic_truvark)
-            setContentTitle(appContext.getString(metadata.notificationTitle))
-            setCategory(Notification.CATEGORY_SERVICE)
-            setOnlyAlertOnce(true)
-            setOngoing(true)
-            setVisibility(NotificationCompat.VISIBILITY_SECRET)
-            setProgress(0, 0, true)
+        scheduledBundles[notificationId] = scheduledBundle
+        notificationChannel.notify(notificationId, scheduledBundle.buildNotification()!!)
+
+        val workRequests = MutableList(workBundle.size) {
+            OneTimeWorkRequestBuilder<UniversalWorker>()
+                .setInputData(UniversalWorker.createInputData(notificationId))
+                .addTag(notificationId.toString())
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build()
         }
-        notificationChannel.notify(notificationId, notificationBuilder.build())
+        workManager.enqueueUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequests)
 
-        val scheduledBundle = ScheduledBundle(notificationId, metadata, workBundle, notificationBuilder)
-        scheduledBundles[scheduledBundle.notificationId] = scheduledBundle
+        scheduledBundle.updateNotificationJob = CoroutineScope(Dispatchers.Default).launch {
+            workBundle.progress.collect { progress ->
+                val notification = buildUpdatedNotification(notificationId)
 
-        val workRequests = MutableList(workBundle.size) { buildOneTimeWorkRequest<UniversalWorker>(scheduledBundle) }
-        val dbSyncRequest = buildOneTimeWorkRequest<DatabaseSyncingWorker>(
-            scheduledBundle.copy(
-                metadata = scheduledBundle.metadata.copy(notificationTitle = R.string.sync_database)
-            )
-        )
+                // Some operations might keep the notification after finishing. Therefore, the cleanup is separated.
+                if (notification != null) {
+                    notificationChannel.notify(notificationId, notification)
+                } else {
+                    notificationChannel.cancel(notificationId)
+                }
 
-        workManager.beginUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequests)
-            .then(dbSyncRequest)
-            .enqueue()
-    }
-
-    private inline fun <reified T : ListenableWorker> buildOneTimeWorkRequest(
-        scheduledBundle: ScheduledBundle
-    ): OneTimeWorkRequest {
-        return OneTimeWorkRequestBuilder<T>()
-            .setInputData(scheduledBundle.toInputData())
-            .addTag(scheduledBundle.notificationId.toString())
-            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            .build()
-    }
-
-    public suspend fun processWork(notificationId: Int, @StringRes contentTitleResId: Int) {
-        val scheduledBundle = scheduledBundles[notificationId] ?: return
-
-        val notification = buildUpdatedNotification(notificationId, contentTitleResId)!!
-        notificationChannel.notify(notificationId, notification)
-
-        scheduledBundle.workBundle.processUnit()
-    }
-
-    public fun buildUpdatedNotification(notificationId: Int, @StringRes contentTitleResId: Int): Notification? {
-        val scheduledBundle = scheduledBundles[notificationId] ?: return null
-        var contentTitle = appContext.getString(contentTitleResId)
-
-        // TODO: This implementation could allow race conditions?
-        val (size, progress) = Pair(scheduledBundle.workBundle.size, scheduledBundle.workBundle.progress.value)
-        if (size > 0 && progress > 0) {
-            contentTitle = "$contentTitle ($progress/$size)"
-            scheduledBundle.notificationBuilder.setProgress(size, progress, false)
-        }
-
-        scheduledBundle.notificationBuilder.setContentTitle(contentTitle)
-        return scheduledBundle.notificationBuilder.build()
-    }
-
-    public fun finishNotification(notificationId: Int) {
-        val scheduledBundle = scheduledBundles[notificationId]
-
-        if (scheduledBundle?.metadata?.notificationFinishTitle == null) {
-            notificationChannel.cancel(notificationId)
-            return
-        }
-
-        val notification = scheduledBundle.notificationBuilder.apply {
-            setContentTitle(appContext.getString(scheduledBundle.metadata.notificationFinishTitle))
-            setProgress(0, 0, false)
-            setOngoing(false)
-            setAutoCancel(true)
-
-            scheduledBundle.metadata.notificationAction?.let { intent ->
-                val pendingIntent = PendingIntent.getActivity(appContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-                setContentIntent(pendingIntent)
-
-                scheduledBundle.metadata.notificationActionText?.let { actionText ->
-                    addAction(R.drawable.ic_truvark, appContext.getString(actionText), pendingIntent)
+                // Cleaning up no matter if the notification is kept or not.
+                if (progress == workBundle.size) {
+                    scheduledBundle.updateNotificationJob.cancel()
+                    scheduledBundles.remove(notificationId)
                 }
             }
-        }.build()
-        notificationChannel.notify(notificationId, notification)
+        }
     }
 
-    public data class AndroidSchedulerMetadata(
+    public suspend fun processWork(notificationId: Int) {
+        scheduledBundles[notificationId]?.workBundle?.processUnit()
+    }
+
+    public fun buildUpdatedNotification(notificationId: Int): Notification? {
+        val scheduledBundle = scheduledBundles[notificationId] ?: return null
+        return scheduledBundle.buildNotification()
+    }
+
+    public data class NotificationProperties(
         @StringRes val notificationTitle: Int,
         @StringRes val notificationFinishTitle: Int? = null,
         val notificationAction: Intent? = null,
         @StringRes val notificationActionText: Int? = null,
-    ) : SchedulerMetadata
+    ) : WorkBundle.Properties
 
     private data class ScheduledBundle(
-        val notificationId: Int,
-        val metadata: AndroidSchedulerMetadata,
+        private val context: Context,
         val workBundle: WorkBundle,
-        val notificationBuilder: NotificationCompat.Builder,
+        private val notificationBuilder: NotificationCompat.Builder,
     ) {
-        fun toInputData(): Data {
-            return UniversalWorker.createInputData(notificationId, metadata.notificationTitle)
+        private val properties = workBundle.properties as NotificationProperties
+
+        lateinit var updateNotificationJob: Job
+
+        init {
+            with(notificationBuilder) {
+                setSmallIcon(R.drawable.ic_truvark)
+                setCategory(Notification.CATEGORY_SERVICE)
+                setOnlyAlertOnce(true)
+                setOngoing(true)
+                setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                setProgress(0, 0, true)
+            }
+        }
+
+        fun buildNotification(): Notification? {
+            if (workBundle.progress.value == workBundle.size) {
+                return buildFinishNotification()
+            }
+
+            var contentTitle = context.getString(properties.notificationTitle)
+
+            with(workBundle) {
+                if (size > 0 && progress.value > 0) {
+                    contentTitle = "$contentTitle (${progress.value}/$size)"
+                    notificationBuilder.setProgress(size, progress.value, false)
+                }
+            }
+
+            notificationBuilder.setContentTitle(contentTitle)
+            return notificationBuilder.build()
+        }
+
+        private fun buildFinishNotification(): Notification? {
+            if (properties.notificationFinishTitle == null) {
+                return null
+            }
+
+            return notificationBuilder.apply {
+                setContentTitle(context.getString(properties.notificationFinishTitle))
+                setProgress(0, 0, false)
+                setOngoing(false)
+                setAutoCancel(true)
+
+                properties.notificationAction?.let { intent ->
+                    val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+                    setContentIntent(pendingIntent)
+
+                    properties.notificationActionText?.let { actionText ->
+                        addAction(R.drawable.ic_truvark, context.getString(actionText), pendingIntent)
+                    }
+                }
+            }.build()
         }
     }
 }

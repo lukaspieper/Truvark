@@ -16,14 +16,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.constants.FileNames
-import de.lukaspieper.truvark.constants.FixedValues
-import de.lukaspieper.truvark.data.database.DatabaseFileSynchronization
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.di.VaultModule
-import de.lukaspieper.truvark.domain.IdGenerator
 import de.lukaspieper.truvark.domain.crypto.BiometricConfig
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
 import de.lukaspieper.truvark.domain.vault.VaultConfig
@@ -31,7 +27,10 @@ import de.lukaspieper.truvark.domain.vault.VaultFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.any
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
@@ -46,8 +45,6 @@ import javax.inject.Inject
 public class LauncherViewModel @Inject constructor(
     private val preferences: PersistentPreferences,
     private val fileSystem: AndroidFileSystem,
-    private val databaseFileSynchronization: DatabaseFileSynchronization,
-    private val idGenerator: IdGenerator,
     private val vaultFactory: VaultFactory,
     private val biometricCryptoProvider: BiometricCryptoProvider
 ) : ViewModel() {
@@ -70,7 +67,7 @@ public class LauncherViewModel @Inject constructor(
             preferences.lastUsedVaultRootUri.first().let { uri ->
                 try {
                     val selectedDirectory = fileSystem.directoryInfo(uri)
-                    val vaultFile = fileSystem.findFileOrNull(selectedDirectory, FileNames.VAULT)
+                    val vaultFile = fileSystem.findFileOrNull(selectedDirectory, VaultConfig.FILENAME)
                     vaultFactory.tryReadVaultConfig(vaultFile!!)!!.let {
                         withContext(Dispatchers.Main) {
                             vaultConfig = it
@@ -102,8 +99,11 @@ public class LauncherViewModel @Inject constructor(
         }
 
         val selectedDirectory = fileSystem.directoryInfo(uri)
-        val foundFiles = fileSystem.listFiles(selectedDirectory)
-        val vaultFile = foundFiles.firstOrNull { it.fullName == FileNames.VAULT }
+
+        var hasNoFiles = false
+        val vaultFile = fileSystem.listFiles(selectedDirectory)
+            .onEmpty { hasNoFiles = true }
+            .firstOrNull { it.fullName == VaultConfig.FILENAME }
 
         if (vaultFile != null) {
             vaultFactory.tryReadVaultConfig(vaultFile)?.let {
@@ -117,7 +117,7 @@ public class LauncherViewModel @Inject constructor(
                     state = LauncherState.NONE
                 }
             }
-        } else if (foundFiles.isEmpty() && fileSystem.listDirectories(selectedDirectory).isEmpty()) {
+        } else if (hasNoFiles && !fileSystem.listDirectories(selectedDirectory).any { true }) {
             withContext(Dispatchers.Main) {
                 directory = selectedDirectory
                 directoryUri = uri
@@ -130,19 +130,15 @@ public class LauncherViewModel @Inject constructor(
         }
     }
 
-    public fun createVault(password: String): Job = GlobalScope.launch(Dispatchers.IO) {
+    public fun createVault(password: ByteArray): Job = GlobalScope.launch(Dispatchers.IO) {
         withContext(Dispatchers.Main) {
             state = LauncherState.PROCESSING
         }
 
         directory!!.let { directory ->
-            val vaultId = idGenerator.createStringId(FixedValues.VAULT_ID_LENGTH)
-
             val vault = vaultFactory.createVault(
                 vaultDirectory = directory,
-                password = password.toByteArray(),
-                databaseFile = fileSystem.appFilesDir().resolve(vaultId).resolve(FileNames.INDEX_REALM),
-                vaultId = vaultId
+                password = password
             )
 
             fileSystem.takePersistableUriPermission(directoryUri!!)
@@ -186,17 +182,7 @@ public class LauncherViewModel @Inject constructor(
         }
 
         try {
-            val internalDatabaseFile = fileSystem.appFilesDir().resolve(vaultConfig!!.id).resolve(FileNames.INDEX_REALM)
-            databaseFileSynchronization.synchronizeDatabaseFiles(
-                vaultDatabaseFile = fileSystem.findOrCreateFile(directory!!, FileNames.INDEX_DATABASE),
-                internalDatabaseFile = internalDatabaseFile
-            )
-
-            val vault = vaultFactory.decryptVault(
-                directory!!,
-                password,
-                internalDatabaseFile
-            )
+            val vault = vaultFactory.decryptVault(directory!!, password)
 
             VaultModule.initializeVaultModule(vault)
             withContext(Dispatchers.Main) {

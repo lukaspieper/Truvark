@@ -15,8 +15,8 @@ import java.util.stream.Stream
 class BlankStringProvider : ArgumentsProvider {
 
     override fun provideArguments(
-        parameters: ParameterDeclarations?,
-        context: ExtensionContext?
+        parameters: ParameterDeclarations,
+        context: ExtensionContext
     ): Stream<out Arguments> {
         return arrayOf("", " ", "   ").map { Arguments.of(it) }.stream()
     }

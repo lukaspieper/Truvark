@@ -6,69 +6,43 @@
 
 package de.lukaspieper.truvark.domain.vault
 
-import de.lukaspieper.truvark.constants.FileNames
 import de.lukaspieper.truvark.test.TestContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.security.GeneralSecurityException
+import javax.crypto.AEADBadTagException
 import kotlin.uuid.Uuid
 
-class VaultFactoryTests : TestContext(
-    vaultPassword = "z1zrwxrv2foHslr.rrlhxHcXCcwh1p".toByteArray(),
-    createVault = false
-) {
+class VaultFactoryTests : TestContext(vaultPassword = "z1zrwxrv2foHslr.rrlhxHcXCcwh1p".toByteArray()) {
+
     @Nested
     inner class CreateVault {
 
         @Test
-        fun `createVault writes a VaultConfig to disk and returns valid vault`() {
+        suspend fun `createVault writes a VaultConfig to disk and returns valid vault`() {
             // Act
-            val vault = vaultFactory.createVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
+            val vault = vaultFactory.createVault(vaultDirectoryInfo, vaultPassword)
 
             // Assert
-            val vaultConfig = assertDoesNotThrow { vaultFactory.tryReadVaultConfig(vaultFileInfo!!)!! }
+            val vaultConfig = assertDoesNotThrow { vaultFactory.tryReadVaultConfig(vault.fileSystem.vaultFile)!! }
             assertAll(
-                { assertTrue(vaultConfig.encryptedKeyset.isNotBlank()) },
-                { assertTrue(vaultConfig.id.isNotBlank()) },
-                { assertTrue(vaultConfig.displayName.isNotBlank()) },
-                { assertTrue(vaultConfig.encryptedDatabaseKey.isNotEmpty()) },
+                { assertTrue(vaultConfig.id != Uuid.NIL) },
+                { assertTrue(vaultConfig.name.isNotBlank()) },
+                { assertTrue(vaultConfig.encryptedStreamingAeadKeyset.isNotEmpty()) },
+                { assertTrue(vaultConfig.argon2Config.isNotBlank()) },
             )
-
-            vault.realm.close()
         }
 
         @Test
-        fun `createVault with empty password throws IllegalArgumentException`() {
+        suspend fun `createVault with empty password throws IllegalArgumentException`() {
             // Act, Assert
             assertThrows<IllegalArgumentException> {
-                vaultFactory.createVault(
-                    vaultDirectory = vaultDirectoryInfo,
-                    password = ByteArray(0),
-                    databaseFile = internalDatabaseFile
-                )
-            }
-        }
-
-        @Test
-        fun `createVault with invalid databaseFile throws IllegalArgumentException`() {
-            // Act, Assert
-            assertThrows<IllegalArgumentException> {
-                vaultFactory.createVault(
-                    vaultDirectory = vaultDirectoryInfo,
-                    password = vaultPassword,
-                    databaseFile = internalDirectory // is a directory, not a file. Therefore it is invalid.
-                )
+                vaultFactory.createVault(vaultDirectoryInfo, password = ByteArray(0))
             }
         }
     }
@@ -76,83 +50,60 @@ class VaultFactoryTests : TestContext(
     @Nested
     inner class DecryptVault {
 
-        // `${'$'}` == `$`
-        private val validSampleVaultFileContent =
-            """
-            {
-                "DisplayName": "junit",
-                "EncryptedKeyset": "Ep4B6cPiN+GNKKuPh75MJHUGxwHvo771p3cSeUITPmultVsYJJ/nUJgdXsz8Ph764AXKGFdSkFvHihFXPo1EN5CcNNMh4utvmNzx3aEL0a5QsSNTPLNTUSWkBnb1ITga1kF7DUnKc4MCYidVAzXn5vZpT1zZ6VfODJHISnSMXrDhUAiIMiwQefwkIHoDYuHdnelpZEq6fXdU9knq5hDMyOc${'$'}argon2id${'$'}v=19${'$'}m=65536,t=3,p=1${'$'}u/Ky8+ZqrCm++NnJ/1SstQ",
-                "Id": "VwNaOs",
-                "EncryptedDatabaseKey": [40, -55, 37, 66, 127, -30, 36, -31, 91, 8, 50, -50, -117, 28, -90, -109, -98, -115, 69, -4, -62, -45, 28, 30, -127, -34, 60, -40, -56, -125, -7, -5, -70, 27, -107, -74, 64, 76, 82, -12, -45, -124, -54, 81, -107, -68, 82, 52, 45, -25, 110, -88, -104, 120, -66, 43, -126, 94, 90, 51, -92, 10, 116, 59, 98, -40, -75, 94, -10, 9, -101, -121, -90, 75, 55, 96, -77, 104, -97, -94, 50, 105, 2, -128, 118, -68, 36, -14, 0, 118, 7, 30, -58, -35, -82, 31, -35, -113, -56, 26, 23, -114, 36, 84, 76, 22, 60, -49, -53, -76, 12, 121, -11, 100, 61, 65, -49, 109, -23, 4]
-            }
-        """.toByteArray()
+        private val validHexEncodedSampleVaultFileContent =
+            "0a10f84b2d50364f48ff815960e961207f0612057661756c741a33246172676f6e32696424763d3139246d3d3132382c743d312c703d3124796c584864414d697169336e68423473526e3730425122a201129f013051f6be1d42d4aea83e20c9a58b3dcd00f04b51359eb8e3d7576ce069f0b5fb5fc74cda013650e3f32db0c5f6f8b1e7bfccd9b7c3aaa270a60a75eece02008f353082aaa976ecf3381d21838154f67c06f7d8aff13044365c41787e24034a5684b4e73b7f567a4b40252b8f2967e0a90384911ec4dfb581594e139d5a3c6e729dc8675c7f28dc152261e0bd8204e18e436dc71763789d4324f9c3ef2efc772a9001128d010429f3d7612b36f79779841a07e11b3e0f2cbcf20add63cf82f9925c1e01c3f67eaf4f6cb2391353b4596c43a1c1933efe00bc1abf8fce947a07e1946e127441024158ead7935a4077f11df2eb8b34df85c9c8d7ebfaa62f3a7a8c8cb86fc21646b0e21acb062a7ee61ebcc578e48e2697c31c9dd2fa44e5b7dd42e5f7c4e1fe6a3a919388af92794a0872a929"
 
-        // encryptedKeyset is modified, compare with above one
-        private val invalidSampleVaultFileContent =
-            """
-            {
-                "DisplayName": "junit",
-                "EncryptedKeyset": "Up4B6cPiN+GNKKuPh75MJHUGxwHvo771p3cSeUITPmultVsYJJ/nUJgdXsz8Ph764AXKGFdSkFvHihFXPo1EN5CcNNMh4utvmNzx3aEL0a5QsSNTPLNTUSWkBnb1ITga1kF7DUnKc4MCYidVAzXn5vZpT1zZ6VfODJHISnSMXrDhUAiIMiwQefwkIHoDYuHdnelpZEq6fXdU9knq5hDMyOc${'$'}argon2id${'$'}v=19${'$'}m=65536,t=3,p=1${'$'}u/Ky8+ZqrCm++NnJ/1SstQ",
-                "Id": "VwNaOs"
-            }
-        """.toByteArray()
+        private val invalidHexEncodedSampleVaultFileContent = validHexEncodedSampleVaultFileContent.replace('a', 'b')
 
         @Test
-        fun `decryptVault with valid vault file and invalid database file throws IllegalStateException`() {
+        suspend fun `decryptVault with valid vault file returns valid vault`() {
             // Arrange
-            fileSystem.createFile(vaultDirectoryInfo, FileNames.VAULT).withData(validSampleVaultFileContent)
-            internalDatabaseFile.writeBytes(ByteArray(16))
+            fileSystem.createFile(vaultDirectoryInfo, VaultConfig.FILENAME)
+                .withData(validHexEncodedSampleVaultFileContent.hexToByteArray())
+
+            // Act, Assert
+            assertDoesNotThrow {
+                vaultFactory.decryptVault(vaultDirectoryInfo, vaultPassword)
+            }
+        }
+
+        @Test
+        suspend fun `decryptVault with invalid vault file throws IllegalStateException`() {
+            // Arrange
+            fileSystem.createFile(vaultDirectoryInfo, VaultConfig.FILENAME)
+                .withData(invalidHexEncodedSampleVaultFileContent.hexToByteArray())
 
             // Act, Assert
             assertThrows<IllegalStateException> {
-                vaultFactory.decryptVault(
-                    vaultDirectory = vaultDirectoryInfo,
-                    password = vaultPassword,
-                    databaseFile = internalDatabaseFile
-                )
+                vaultFactory.decryptVault(vaultDirectoryInfo, vaultPassword)
             }
         }
 
         @Test
-        fun `decryptVault with invalid vault file throws GeneralSecurityException`() {
-            // Arrange
-            fileSystem.createFile(vaultDirectoryInfo, FileNames.VAULT).withData(invalidSampleVaultFileContent)
-            internalDatabaseFile.createNewFile() // database file must exist to pass parameter validation
-
-            // Act, Assert
-            assertThrows<GeneralSecurityException> {
-                vaultFactory.decryptVault(
-                    vaultDirectory = vaultDirectoryInfo,
-                    password = vaultPassword,
-                    databaseFile = internalDatabaseFile
-                )
-            }
-        }
-
-        @Test
-        fun `decryptVault returns vault right after creation`() {
+        suspend fun `decryptVault returns vault right after creation`() {
             // Act
-            val createdVault = vaultFactory.createVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
-            createdVault.realm.close()
-
-            val decryptedVault = vaultFactory.decryptVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
-            decryptedVault.realm.close()
+            val createdVault = vaultFactory.createVault(vaultDirectoryInfo, vaultPassword)
+            val decryptedVault = vaultFactory.decryptVault(vaultDirectoryInfo, vaultPassword)
 
             // Assert
             assertAll(
                 { assertEquals(createdVault.id, decryptedVault.id) },
-                { assertEquals(createdVault.displayName, decryptedVault.displayName) },
-                { assertNotNull(createdVault.realm) },
-                { assertNotNull(decryptedVault.realm) },
+                { assertEquals(createdVault.name, decryptedVault.name) },
             )
+        }
+
+        @Test
+        suspend fun `decryptVault with tampered vault id throws due to AEAD associated data mismatch`() {
+            // Arrange
+            val createdVault = vaultFactory.createVault(vaultDirectoryInfo, vaultPassword)
+
+            val tamperedConfig = createdVault.config.copy(id = Uuid.random())
+            createdVault.fileSystem.vaultFile.withData(tamperedConfig.toByteArray())
+
+            // Act, Assert
+            assertThrows<AEADBadTagException> {
+                vaultFactory.decryptVault(vaultDirectoryInfo, vaultPassword)
+            }
         }
     }
 
@@ -160,13 +111,9 @@ class VaultFactoryTests : TestContext(
     inner class ValidatePassword {
 
         @Test
-        fun `validatePassword with valid vault file returns true`() {
+        suspend fun `validatePassword with valid vault file returns true`() {
             // Arrange
-            val vault = vaultFactory.createVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
+            val vault = vaultFactory.createVault(vaultDirectoryInfo, vaultPassword)
 
             // Act
             val isValid = vaultFactory.validatePassword(vault, vaultPassword)
@@ -176,13 +123,9 @@ class VaultFactoryTests : TestContext(
         }
 
         @Test
-        fun `validatePassword with valid vault file returns false`() {
+        suspend fun `validatePassword with valid vault file returns false`() {
             // Arrange
-            val vault = vaultFactory.createVault(
-                vaultDirectory = vaultDirectoryInfo,
-                password = vaultPassword,
-                databaseFile = internalDatabaseFile
-            )
+            val vault = vaultFactory.createVault(vaultDirectoryInfo, vaultPassword)
 
             // Act
             val isValid = vaultFactory.validatePassword(vault, Uuid.random().toByteArray())
