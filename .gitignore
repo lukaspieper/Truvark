@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Gradle files
-.gradle/
-build/
-release/
+.gradle
+.kotlin
+**/build/
+**/release/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -43,4 +44,3 @@ google-services.json
 # Truvark specific files
 .github/dependabot.yml
 .github/ISSUE_TEMPLATE/
-desktop/

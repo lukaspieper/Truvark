@@ -4,23 +4,21 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-buildscript {
-    dependencies {
-        classpath(libs.google.oss.licenses)
-    }
-}
-
 plugins {
-    alias(libs.plugins.android.gradle) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.kotlin.kapt) apply false
-    alias(libs.plugins.android.hilt) apply false
+    // this is necessary to avoid the plugins to be loaded multiple times
+    // in each subproject's classloader
+    alias(libs.plugins.androidApplication) apply false
+    alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.composeHotReload) apply false
+    alias(libs.plugins.composeMultiplatform) apply false
+    alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.kotlinMultiplatform) apply false
 
-    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.google.ksp) apply false
+    alias(libs.plugins.android.hilt) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.realm.kotlin) apply false
-    alias(libs.plugins.jetbrains.compose) apply false
-    alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.google.oss.licenses) apply false
 
     alias(libs.plugins.detekt)
 }
@@ -35,7 +33,7 @@ tasks.detekt {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("android", "desktop", "common"))
+    setSource(files("composeApp/src"))
 }
 
 tasks.detektBaseline {
@@ -43,5 +41,5 @@ tasks.detektBaseline {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("android", "desktop", "common"))
+    setSource(files("composeApp/src"))
 }

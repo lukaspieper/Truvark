@@ -15,13 +15,13 @@ permissions:
 
 jobs:
   detekt:
-    uses: lukaspieper/android-actions/.github/workflows/lint-detekt.yml@main
+    uses: ./.github/workflows/lint-detekt.yml
 
   lint:
-    uses: lukaspieper/android-actions/.github/workflows/lint.yml@main
+    uses: ./.github/workflows/lint.yml
 
   build:
-    uses: lukaspieper/android-actions/.github/workflows/assembleDebug.yml@main
+    uses: ./.github/workflows/assembleDebug.yml
 
   jvmtests:
     uses: ./.github/workflows/tests-jvm.yml
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Lint licensing
         uses: fsfe/reuse-action@v5

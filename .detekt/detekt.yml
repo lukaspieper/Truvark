@@ -13,7 +13,7 @@ complexity:
   CyclomaticComplexMethod:
     threshold: 30
   LongMethod:
-    threshold : 300
+    threshold: 300
   LongParameterList:
     functionThreshold: 10
     ignoreAnnotated: [ 'Composable' ]
@@ -26,7 +26,7 @@ exceptions:
 
 formatting:
   MaximumLineLength:
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/src/*Test/**' ]
   NoWildcardImports:
     active: false
 
@@ -34,17 +34,17 @@ naming:
   MatchingDeclarationName:
     excludes: [ '**/ui/controls/**' ]
   FunctionNaming:
-    ignoreAnnotated: [ 'Composable' ]
+    ignoreAnnotated: [ 'Composable', 'Test', 'ParameterizedTest' ]
 
 style:
   ForbiddenComment:
     active: false
   MagicNumber:
-    excludes: [ '**/ui/**', '**.kts', '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/ui/**', '**.kts', '**/src/*Test/**' ]
   MaxLineLength:
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/src/*Test/**' ]
   UnnecessaryAbstractClass:
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/src/*Test/**' ]
   WildcardImport:
     active: false
   ReturnCount:

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>Indentation:BrowserPage.kt$ </ID>
     <ID>MagicNumber:AndroidThumbnailProvider.kt$AndroidThumbnailProvider$0.07</ID>
@@ -9,6 +9,8 @@
     <ID>MagicNumber:DatabaseFileSynchronization.kt$DatabaseFileSynchronization$2000</ID>
     <ID>MagicNumber:Extensions.kt$0xFF</ID>
     <ID>MagicNumber:Extensions.kt$16</ID>
+    <ID>MagicNumber:JvmArgon2.kt$JvmArgon2$0x10</ID>
+    <ID>MagicNumber:JvmArgon2.kt$JvmArgon2$0x13</ID>
     <ID>MaxLineLength:CipherEntityGrid.kt$if (isSelected) Icons.Default.CheckCircle else Icons.AutoMirrored.Default.InsertDriveFile</ID>
     <ID>MaximumLineLength:CipherEntityGrid.kt$ </ID>
     <ID>MayBeConst:Vault.kt$Vault.Companion$internal val realmSchemaVersion = 2L</ID>
