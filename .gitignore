@@ -40,7 +40,3 @@ google-services.json
 
 # Android Profiling
 *.hprof
-
-# Truvark specific files
-.github/dependabot.yml
-.github/ISSUE_TEMPLATE/
