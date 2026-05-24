@@ -55,34 +55,17 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
 
         context.contentResolver.query(
             uri,
-            arrayOf(
-                COLUMN_DISPLAY_NAME,
-                COLUMN_MIME_TYPE,
-                COLUMN_SIZE
-            )
+            arrayOf(COLUMN_DISPLAY_NAME, COLUMN_MIME_TYPE, COLUMN_SIZE)
         ) { cursor ->
             if (cursor?.moveToFirst() == true && cursor.getString(COLUMN_MIME_TYPE) != MIME_TYPE_DIR) {
                 val mimeType = cursor.getString(COLUMN_MIME_TYPE)
-                var mediaDuration: Duration? = null
-
-                if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) {
-                    val retriever = MediaMetadataRetriever()
-                    try {
-                        retriever.setDataSource(context, uri)
-                        mediaDuration = retriever.extractMetadata(METADATA_KEY_DURATION)?.toLongOrNull()?.milliseconds
-                    } catch (e: Exception) {
-                        logcat(LogPriority.WARN) { e.asLog() }
-                    } finally {
-                        retriever.release()
-                    }
-                }
 
                 return FileInfo(
                     uri = uri,
                     fullName = cursor.getString(COLUMN_DISPLAY_NAME),
-                    mimeType = cursor.getString(COLUMN_MIME_TYPE),
+                    mimeType = mimeType,
                     size = cursor.getLong(COLUMN_SIZE),
-                    mediaDuration = mediaDuration
+                    mediaDuration = extractMediaDuration(uri, mimeType)
                 )
             }
         }
@@ -163,18 +146,17 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
             arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME, COLUMN_SIZE, COLUMN_MIME_TYPE),
         ) { cursor ->
             while (cursor?.moveToNext() == true) {
-                val documentType = cursor.getString(COLUMN_MIME_TYPE)
-                if (documentType == MIME_TYPE_DIR) continue
+                val mimeType = cursor.getString(COLUMN_MIME_TYPE)
+                if (mimeType == MIME_TYPE_DIR) continue
 
+                val uri = DocumentsContract.buildDocumentUriUsingTree(uri, cursor.getString(COLUMN_DOCUMENT_ID))
                 emit(
                     FileInfo(
-                        uri = DocumentsContract.buildDocumentUriUsingTree(
-                            uri,
-                            cursor.getString(COLUMN_DOCUMENT_ID)
-                        ),
+                        uri = uri,
                         fullName = cursor.getString(COLUMN_DISPLAY_NAME),
                         size = cursor.getLong(COLUMN_SIZE),
-                        mimeType = documentType
+                        mimeType = mimeType,
+                        mediaDuration = extractMediaDuration(uri, mimeType)
                     )
                 )
             }
@@ -251,6 +233,22 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
     override fun openOutputStream(fileInfo: FileInfo): OutputStream {
         val uri = fileInfo.uri as Uri
         return context.contentResolver.openOutputStream(uri, "rwt") ?: throw FileNotFoundException()
+    }
+
+    private fun extractMediaDuration(uri: Uri, mimeType: String): Duration? {
+        if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) {
+            val retriever = MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(context, uri)
+                return retriever.extractMetadata(METADATA_KEY_DURATION)?.toLongOrNull()?.milliseconds
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN) { e.asLog() }
+            } finally {
+                retriever.release()
+            }
+        }
+
+        return null
     }
 
     //region Extension methods
