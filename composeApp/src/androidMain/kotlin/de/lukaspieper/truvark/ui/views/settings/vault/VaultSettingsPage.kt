@@ -7,7 +7,11 @@
 package de.lukaspieper.truvark.ui.views.settings.vault
 
 import androidx.activity.compose.LocalActivity
+import androidx.biometric.AuthenticationRequest
+import androidx.biometric.AuthenticationRequest.Biometric.Strength
+import androidx.biometric.AuthenticationResult
 import androidx.biometric.BiometricManager
+import androidx.biometric.compose.rememberAuthenticationLauncher
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
@@ -49,16 +52,20 @@ import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
+import kotlinx.coroutines.CompletableDeferred
 
 @Composable
 public fun VaultSettingsPage(
     modifier: Modifier = Modifier,
     viewModel: VaultSettingsViewModel = hiltViewModel()
 ) {
-    val activity = LocalActivity.current as FragmentActivity
+    val activity = LocalActivity.current!!
+
     val biometricsStatus = remember { viewModel.checkBiometricSupport() }
-    val isVaultUsingBiometricUnlocking by viewModel.isVaultUsingBiometricUnlocking
-        .collectAsStateWithLifecycle(false)
+    val isVaultUsingBiometricUnlocking by viewModel.isVaultUsingBiometricUnlocking.collectAsStateWithLifecycle(false)
+
+    var pendingAuth by remember { mutableStateOf<CompletableDeferred<AuthenticationResult>?>(null) }
+    val authLauncher = rememberAuthenticationLauncher(resultCallback = { result -> pendingAuth?.complete(result) })
 
     VaultSettingsSections(
         vaultName = viewModel.vaultName,
@@ -66,12 +73,24 @@ public fun VaultSettingsPage(
         biometricsStatus = biometricsStatus,
         isVaultUsingBiometricUnlocking = isVaultUsingBiometricUnlocking,
         setupBiometricUnlocking = { password ->
-            viewModel.setupBiometricUnlocking(
-                password = password,
-                authenticateCryptoObject = { cryptoObject ->
-                    authenticateCryptoObject(cryptoObject, activity)
-                }
+            val prepareResult = viewModel.prepareBiometricSetup(password)
+            if (prepareResult !is BiometricSetupResult.Ready) return@VaultSettingsSections prepareResult
+
+            val deferred = CompletableDeferred<AuthenticationResult>()
+            pendingAuth = deferred
+
+            authLauncher.launch(
+                AuthenticationRequest.Biometric.Builder(title = activity.getString(R.string.setup_biometrics))
+                    .setMinStrength(Strength.Class3(prepareResult.cryptoObject))
+                    .setIsConfirmationRequired(true)
+                    .build()
             )
+
+            val cipher = (deferred.await() as? AuthenticationResult.Success)?.crypto?.cipher
+            when {
+                cipher != null -> viewModel.finalizeBiometricSetup(password, cipher)
+                else -> BiometricSetupResult.Error
+            }
         },
         modifier = modifier
     )
@@ -177,7 +196,7 @@ private fun VaultSettingsSectionsPreview() = DetailPanePreviewHost { contentPadd
         updateVaultName = { true },
         biometricsStatus = BiometricManager.BIOMETRIC_SUCCESS,
         isVaultUsingBiometricUnlocking = false,
-        setupBiometricUnlocking = { BiometricSetupResult.SUCCESS },
+        setupBiometricUnlocking = { BiometricSetupResult.Success },
         modifier = Modifier.padding(contentPadding)
     )
 }

@@ -82,7 +82,7 @@ kotlin {
 
             // Cryptography
             implementation(libs.argon2.android)
-            implementation(libs.android.biometric.ktx)
+            implementation(libs.android.biometric.compose)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

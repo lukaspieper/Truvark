@@ -13,9 +13,11 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
+import androidx.biometric.AuthenticationRequest
+import androidx.biometric.AuthenticationRequest.Biometric.Strength
+import androidx.biometric.AuthenticationResult
 import androidx.biometric.BiometricPrompt
-import androidx.biometric.auth.AuthPromptCallback
-import androidx.biometric.auth.authenticateWithClass3Biometrics
+import androidx.biometric.compose.rememberAuthenticationLauncher
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -63,7 +65,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -93,7 +94,7 @@ public fun LauncherPage(
     modifier: Modifier = Modifier,
     viewModel: LauncherViewModel = hiltViewModel()
 ) {
-    val activity = LocalActivity.current as FragmentActivity
+    val activity = LocalActivity.current!!
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
@@ -109,6 +110,28 @@ public fun LauncherPage(
         else -> null
     }
 
+    val authLauncher = rememberAuthenticationLauncher(resultCallback = { result ->
+        when (result) {
+            is AuthenticationResult.Success -> result.crypto?.cipher?.let { viewModel.unlockWithCipher(it) }
+            is AuthenticationResult.Error -> {
+                logcat("LauncherPage", LogPriority.WARN) {
+                    "Biometric unlocking failed: ${result.errorCode} '${result.errString}'"
+                }
+
+                val userCausedErrors = listOf(
+                    BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                    BiometricPrompt.ERROR_USER_CANCELED,
+                    BiometricPrompt.ERROR_CANCELED
+                )
+                if (result.errorCode !in userCausedErrors) {
+                    viewModel.disableBiometricUnlockingBecauseOfError()
+                }
+            }
+
+            else -> {}
+        }
+    })
+
     LauncherView(
         notificationPermissionState = notificationPermissionState,
         state = viewModel.state,
@@ -117,7 +140,19 @@ public fun LauncherPage(
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
-        showBiometricPrompt = { showBiometricPrompt(activity, viewModel) },
+        showBiometricPrompt = {
+            try {
+                authLauncher.launch(
+                    AuthenticationRequest.Biometric.Builder(title = activity.getString(R.string.biometric_unlocking))
+                        .setMinStrength(Strength.Class3(viewModel.getCryptoObject()))
+                        .setIsConfirmationRequired(true)
+                        .build()
+                )
+            } catch (e: Exception) {
+                logcat("LauncherPage", LogPriority.ERROR) { e.asLog() }
+                viewModel.disableBiometricUnlockingBecauseOfError()
+            }
+        },
         setupDialog = {
             SetupDialog(
                 state = viewModel.state,
@@ -372,49 +407,6 @@ private fun PasswordUnlockView(
         ) {
             Icon(Icons.Default.LockOpen, null)
         }
-    }
-}
-
-private fun showBiometricPrompt(activity: FragmentActivity, viewModel: LauncherViewModel) {
-    val callback = object : AuthPromptCallback() {
-
-        override fun onAuthenticationError(activity: FragmentActivity?, errorCode: Int, errString: CharSequence) {
-            super.onAuthenticationError(activity, errorCode, errString)
-            logcat(LogPriority.WARN) { "Biometric unlocking failed: $errorCode '$errString'" }
-
-            val errorCodesCausedByUser = listOf(
-                BiometricPrompt.ERROR_NEGATIVE_BUTTON,
-                BiometricPrompt.ERROR_USER_CANCELED,
-                BiometricPrompt.ERROR_CANCELED
-            )
-            if (!errorCodesCausedByUser.contains(errorCode)) {
-                viewModel.disableBiometricUnlockingBecauseOfError()
-            }
-        }
-
-        override fun onAuthenticationSucceeded(
-            activity: FragmentActivity?,
-            result: BiometricPrompt.AuthenticationResult
-        ) {
-            super.onAuthenticationSucceeded(activity, result)
-
-            result.cryptoObject?.cipher?.let { cipher ->
-                viewModel.unlockWithCipher(cipher)
-            }
-        }
-    }
-
-    try {
-        val cryptoObject = viewModel.getCryptoObject()
-        activity.authenticateWithClass3Biometrics(
-            crypto = cryptoObject,
-            title = activity.getString(R.string.biometric_unlocking),
-            negativeButtonText = activity.getString(R.string.cancel),
-            callback = callback
-        )
-    } catch (e: Exception) {
-        logcat("LauncherPage", LogPriority.ERROR) { e.asLog() }
-        viewModel.disableBiometricUnlockingBecauseOfError()
     }
 }
 

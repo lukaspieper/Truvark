@@ -7,8 +7,6 @@
 package de.lukaspieper.truvark.ui.views.settings.vault
 
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.biometric.auth.authenticateWithClass3Biometrics
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
@@ -48,7 +45,6 @@ import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
 import kotlinx.coroutines.launch
-import javax.crypto.Cipher
 
 @Composable
 public fun BiometricsView(
@@ -92,11 +88,11 @@ private fun SetupBiometricUnlockingView(
 
     var setupResult by remember { mutableStateOf<BiometricSetupResult?>(null) }
     val isPasswordIncorrect by remember(setupResult) {
-        derivedStateOf { setupResult == BiometricSetupResult.INVALID_PASSWORD }
+        derivedStateOf { setupResult == BiometricSetupResult.InvalidPassword }
     }
 
     LaunchedEffect(setupResult) {
-        if (setupResult == BiometricSetupResult.SUCCESS) {
+        if (setupResult == BiometricSetupResult.Success) {
             passwordState.clearText()
         }
     }
@@ -154,26 +150,12 @@ private fun ActiveBiometricsIndicator() {
     }
 }
 
-public suspend fun authenticateCryptoObject(
-    cryptoObject: BiometricPrompt.CryptoObject,
-    activity: FragmentActivity
-): Cipher? {
-    val result = activity.authenticateWithClass3Biometrics(
-        crypto = cryptoObject,
-        title = activity.getString(R.string.setup_biometrics),
-        negativeButtonText = activity.getString(R.string.cancel_setup),
-        description = activity.getString(R.string.biometric_prompt_setup_description)
-    )
-
-    return result.cryptoObject?.cipher
-}
-
 @ElementPreviews
 @Composable
 private fun BiometricsViewPreview() = PreviewHost(Modifier) {
     BiometricsView(
         biometricsStatus = BiometricManager.BIOMETRIC_SUCCESS,
         isVaultUsingBiometricUnlocking = true,
-        setupBiometricUnlocking = { BiometricSetupResult.SUCCESS }
+        setupBiometricUnlocking = { BiometricSetupResult.Success }
     )
 }

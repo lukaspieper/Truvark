@@ -40,7 +40,7 @@ android-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-comp
 android-hilt-workmanager = { module = "androidx.hilt:hilt-work", version.ref = "hilt-androidx" }
 android-workmanager = { module = "androidx.work:work-runtime", version = "2.11.2" }
 android-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.2.1" }
-android-biometric-ktx = { module = "androidx.biometric:biometric-ktx", version = "1.4.0-alpha02" }
+android-biometric-compose = { module = "androidx.biometric:biometric-compose", version = "1.4.0-alpha07" }
 android-compose-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
 android-compose-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "adaptive" }
 android-compose-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "adaptive" }

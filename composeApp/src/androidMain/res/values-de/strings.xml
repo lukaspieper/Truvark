@@ -30,14 +30,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="vault">Tresor</string>
     <string name="biometric_unlocking">Biometrisches Entsperren</string>
     <string name="setup_biometrics">Biometrie einrichten</string>
-    <string name="biometric_prompt_setup_description">Authentifizieren, um die biometrische Entsperrung für diesen Tresor einzurichten.</string>
-    <string name="cancel_setup">Einrichtung abbrechen</string>
     <string name="confirm_vaults_password">Passwort des Tresors bestätigen</string>
     <string name="setup_biometrics_description">Nur ein Tresor kann biometrisch entsperrt werden. Startest Du die biometrische Einrichtung für einen anderen Tresor, wird sie aus dem vorherigen Tresor automatisch entfernt.</string>
     <string name="vault_using_biometric_unlocking">Dieser Tresor ist für das biometrische Entsperren konfiguriert.</string>
     <string name="create_new_folder">Neuen Ordner erstellen</string>
     <string name="folder_name">Ordnername</string>
-    <string name="sync_database">Synchronisiere Datenbank</string>
     <string name="no_existing_vault_info">Der zuletzt verwendete Tresor konnte nicht gefunden werden. Öffne einen vorhandenen Tresor oder erstelle einen neuen.</string>
     <string name="biometric_unlocking_failed">Biometrisches Entsperren fehlgeschlagen! Bitte Passwort verwenden.</string>
     <string name="confirm_deletion">Löschen bestätigen</string>

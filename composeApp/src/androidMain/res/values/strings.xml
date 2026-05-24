@@ -28,14 +28,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="logging">Logging (logcat)</string>
     <string name="biometric_unlocking">Biometric unlocking</string>
     <string name="setup_biometrics">Setup biometrics</string>
-    <string name="biometric_prompt_setup_description">Authenticate yourself to setup biometric unlocking for this vault.</string>
-    <string name="cancel_setup">Cancel setup</string>
     <string name="confirm_vaults_password">Confirm vault\'s password</string>
     <string name="setup_biometrics_description">Only one vault can be unlocked biometrically. If you start the biometric setup for another vault, it will automatically be removed from the previous one.</string>
     <string name="vault_using_biometric_unlocking">This vault is configured for biometric unlocking.</string>
     <string name="create_new_folder">Create new folder</string>
     <string name="folder_name">Folder name</string>
-    <string name="sync_database">Synchronising database</string>
     <string name="no_existing_vault_info">Could not load your last used vault. Create a new vault or open an existing one.</string>
     <string name="biometric_unlocking_failed">Biometric unlock failed! Please use your password to unlock the vault.</string>
     <string name="delete_warning">You are about to delete the selected files and folders. This cannot be undone!</string>

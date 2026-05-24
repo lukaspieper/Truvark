@@ -53,19 +53,22 @@ public class VaultSettingsViewModel @Inject constructor(
         return biometricCryptoProvider.checkBiometricSupport()
     }
 
-    public suspend fun setupBiometricUnlocking(
-        password: ByteArray,
-        authenticateCryptoObject: suspend (BiometricPrompt.CryptoObject) -> Cipher?
-    ): BiometricSetupResult {
+    public fun prepareBiometricSetup(password: ByteArray): BiometricSetupResult {
         try {
             if (!vaultFactory.validatePassword(vault, password)) {
-                return BiometricSetupResult.INVALID_PASSWORD
+                return BiometricSetupResult.InvalidPassword
             }
 
             val cryptoObject = biometricCryptoProvider.createEncryptingPromptObject()
-            val cipher = authenticateCryptoObject(cryptoObject)
-            checkNotNull(cipher) { "Authentication failed" }
+            return BiometricSetupResult.Ready(cryptoObject)
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN) { e.asLog() }
+            return BiometricSetupResult.Error
+        }
+    }
 
+    public suspend fun finalizeBiometricSetup(password: ByteArray, cipher: Cipher): BiometricSetupResult {
+        try {
             val config = BiometricConfig(
                 vaultId = vault.id,
                 iv = cipher.iv,
@@ -73,16 +76,17 @@ public class VaultSettingsViewModel @Inject constructor(
             )
             preferences.saveBiometricConfig(config)
 
-            return BiometricSetupResult.SUCCESS
+            return BiometricSetupResult.Success
         } catch (e: Exception) {
             logcat(LogPriority.WARN) { e.asLog() }
-            return BiometricSetupResult.UNKNOWN_ERROR
+            return BiometricSetupResult.Error
         }
     }
 
-    public enum class BiometricSetupResult {
-        SUCCESS,
-        INVALID_PASSWORD,
-        UNKNOWN_ERROR
+    public sealed class BiometricSetupResult {
+        public data object InvalidPassword : BiometricSetupResult()
+        public data class Ready(val cryptoObject: BiometricPrompt.CryptoObject) : BiometricSetupResult()
+        public data object Success : BiometricSetupResult()
+        public data object Error : BiometricSetupResult()
     }
 }
