@@ -20,7 +20,9 @@ updates:
       default-days: 7
 
   - package-ecosystem: "github-actions"
-    directory: "/.github"
+    directories:
+      - /
+      - /.github/actions/setup
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 99
