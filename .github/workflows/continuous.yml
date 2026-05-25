@@ -32,6 +32,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Lint licensing
         uses: fsfe/reuse-action@v6
