@@ -16,7 +16,7 @@ jobs:
   detekt:
     uses: ./.github/workflows/lint-detekt.yml
     permissions:
-      security-events: read
+      security-events: write
 
   lint:
     uses: ./.github/workflows/lint.yml
