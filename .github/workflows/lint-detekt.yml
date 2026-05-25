@@ -4,12 +4,7 @@
 
 name: Run Detekt Linter workflow
 
-on:
-  workflow_call:
-    inputs:
-      upload_sarif:
-        default: false
-        type: boolean
+on: [workflow_call]
 
 jobs:
   detekt:
@@ -17,40 +12,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: 'true'
-        persist-credentials: false
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: 17
-
-    - name: Run Gradle
-      uses: gradle/actions/setup-gradle@v5
+    - name: Setup
+      uses: ./.github/actions/setup
 
     - name: Run Detekt
       run: ./gradlew detekt
 
     - name: Upload Markdown Report
+      if: success() || failure()
       run: |
         echo "<details>" >> $GITHUB_STEP_SUMMARY
         echo "<summary>Show Report</summary>" >> $GITHUB_STEP_SUMMARY
         cat build/reports/detekt/detekt.md >> $GITHUB_STEP_SUMMARY
         echo "</details>" >> $GITHUB_STEP_SUMMARY
-      if: success() || failure()
 
     - name: Upload HTML Reports
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: success() || failure()
       with:
         name: Detekt-HTML
         path: build/reports/detekt/detekt.html
 
     - name: Upload SARIF Report
-      uses: github/codeql-action/upload-sarif@v4
-      if: inputs.upload_sarif && (success() || failure())
+      uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+      if: success() || failure()
       with:
         sarif_file: build/reports/detekt/detekt.sarif
