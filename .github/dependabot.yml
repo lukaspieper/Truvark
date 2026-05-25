@@ -16,9 +16,13 @@ updates:
       interval: "monthly"
     registries: "*"
     open-pull-requests-limit: 99
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 99
+    cooldown:
+      default-days: 7

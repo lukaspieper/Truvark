@@ -10,15 +10,18 @@ on:
       - 'dependabot/**'
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   detekt:
     uses: ./.github/workflows/lint-detekt.yml
+    permissions:
+      security-events: write
 
   lint:
     uses: ./.github/workflows/lint.yml
+    permissions:
+      security-events: write
 
   build:
     uses: ./.github/workflows/assembleDebug.yml
@@ -31,7 +34,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Lint licensing
-        uses: fsfe/reuse-action@v6
+        uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0

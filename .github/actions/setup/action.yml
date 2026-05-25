@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Lukas Pieper
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Setup
+description: Checkout repository and set up JDK and Gradle
+
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK 17
+      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      with:
+        distribution: 'temurin'
+        java-version: 17
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
