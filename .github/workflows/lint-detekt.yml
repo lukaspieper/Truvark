@@ -10,8 +10,6 @@ jobs:
   detekt:
     name: Run Detekt Linter
     runs-on: ubuntu-latest
-    permissions:
-      security-events: read
 
     steps:
     - name: Checkout repository
