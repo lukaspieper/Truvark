@@ -74,8 +74,8 @@ import coil3.compose.useExistingImageAsPlaceholder
 import coil3.request.ImageRequest
 import coil3.request.allowConversionToBitmap
 import coil3.video.preferVideoFrameEmbeddedThumbnailKey
-import coil3.video.videoFrameMillis
 import coil3.video.videoFrameOption
+import coil3.video.videoFramePercent
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor.Companion.useThumbnailCache
@@ -234,7 +234,10 @@ public fun CipherEntityGrid(
                 }
             }
 
-            val thumbnail = remember(folderHierarchyLevel.physicalFilesById) {
+            val thumbnail = remember(
+                cipherFileEntity.id,
+                folderHierarchyLevel.physicalFilesById[cipherFileEntity.id]
+            ) {
                 val imageData = folderHierarchyLevel.physicalFilesById.getOrElse(cipherFileEntity.id) {
                     // When physicalFilesById is not populated yet, Coil would get a null request and won't check its
                     // cache. To give the cache a chance to have a hit, creating a fake FileInfo from cipherFileEntity.
@@ -250,8 +253,8 @@ public fun CipherEntityGrid(
                     .data(imageData)
                     .allowConversionToBitmap(true)
                     .useThumbnailCache(true)
-                    .videoFrameMillis(1_000) // Arbitrary value, but not too early to avoid black frames.
-                    .videoFrameOption(MediaMetadataRetriever.OPTION_CLOSEST)
+                    .videoFramePercent(0.20) // Arbitrary value, but not too early to avoid black frames.
+                    .videoFrameOption(MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     .preferVideoFrameEmbeddedThumbnailKey(true)
                     .useExistingImageAsPlaceholder(true)
                     .build()

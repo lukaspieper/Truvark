@@ -26,14 +26,15 @@ import de.lukaspieper.truvark.domain.vault.Vault
 import de.lukaspieper.truvark.work.WorkScheduler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
@@ -93,18 +94,20 @@ public class BrowserViewModel @Inject constructor(
         updateFolderHierarchyLevelJob = updateFolderHierarchyLevel()
     }
 
-    @OptIn(FlowPreview::class)
     private fun updateFolderHierarchyLevel(): Job {
         // TODO: Optimize loading data for the grid/list view.
-        // - debounce is needed to prevent updates before animations are finished.
-        // - debounce also affects initial loading time negatively.
+        // - throttling (conflate+delay) is needed to prevent updates before animations are finished.
         // - loading the physical files may still be to slow.
 
         val currentFolder = currentFolderHierarchyLevel.folder
         return viewModelScope.launch(Dispatchers.IO) {
             launch {
                 vault.findCipherFolderEntitySubfolders(currentFolder)
-                    .debounce(100)
+                    .conflate()
+                    .transform {
+                        emit(it)
+                        delay(500)
+                    }
                     .collect { folders ->
                         withContext(Dispatchers.Main) {
                             updatePeekOfStack {
@@ -115,7 +118,11 @@ public class BrowserViewModel @Inject constructor(
             }
 
             val sharedFilesFlow = vault.findCipherFileEntitiesForFolder(currentFolder)
-                .debounce(100)
+                .conflate()
+                .transform {
+                    emit(it)
+                    delay(500)
+                }
                 .shareIn(this, SharingStarted.Eagerly, replay = 1)
 
             launch {
