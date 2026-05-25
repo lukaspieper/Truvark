@@ -20,6 +20,8 @@ jobs:
 
   lint:
     uses: ./.github/workflows/lint.yml
+    permissions:
+      security-events: write
 
   build:
     uses: ./.github/workflows/assembleDebug.yml
