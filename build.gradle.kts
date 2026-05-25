@@ -32,6 +32,7 @@ tasks.detekt {
     buildUponDefaultConfig = true
     parallel = true
     setSource(files("composeApp/src"))
+    basePath = rootProject.projectDir.absolutePath
 }
 
 tasks.detektBaseline {
@@ -40,4 +41,5 @@ tasks.detektBaseline {
     buildUponDefaultConfig = true
     parallel = true
     setSource(files("composeApp/src"))
+    basePath = rootProject.projectDir.absolutePath
 }
