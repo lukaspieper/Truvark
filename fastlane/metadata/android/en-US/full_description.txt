@@ -1,0 +1,16 @@
+Maybe you're wondering why you should give an underdog file encryption app a chance? Especially when this type of app is all about trust?
+
+Compared to many other popular alternatives, Truvark...
+
+<ul>
+<li>supports multiple vaults on a single device</li>
+<li>supports deep folder structures (subfolders)</li>
+<li>decrypts common media files (images, video, audio) in-app on the fly</li>
+<li>works completely offline, no internet access/permission required</li>
+<li>runs without dangerous permissions like full storage/media access</li>
+<li>contains no advertising, telemetry or other user data collection</li>
+<li>encrypts all indices and thumbnails</li>
+<li>allows biometric unlocking (e.g. fingerprint) securely</li>
+</ul>
+
+As you can see, there are already plenty of reasons to give Truvark a try!
