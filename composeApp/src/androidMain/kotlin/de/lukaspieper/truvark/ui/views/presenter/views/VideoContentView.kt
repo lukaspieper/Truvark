@@ -54,7 +54,6 @@ public fun BoxScope.VideoContentView(
                 repeatMode = REPEAT_MODE_ALL
                 setMediaSource(mediaSource)
                 prepare()
-                // playWhenReady = true
             }
 
         onStopOrDispose {

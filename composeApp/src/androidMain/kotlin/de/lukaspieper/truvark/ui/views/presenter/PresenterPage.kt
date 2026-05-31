@@ -42,6 +42,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -201,7 +202,9 @@ private fun CipherFilePager(
     Surface(
         color = Color.Black,
         contentColor = dynamicDarkColorScheme(LocalContext.current).onBackground,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .keepScreenOn()
     ) {
         HorizontalPager(
             state = pagerState,
