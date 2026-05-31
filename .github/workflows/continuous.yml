@@ -41,3 +41,16 @@ jobs:
 
       - name: Lint licensing
         uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
+
+  fastlane-validate:
+    name: Validate fastlane metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      
+      - name: Validate fastlane metadata
+        uses: ashutoshgngwr/validate-fastlane-supply-metadata@c8857fdbbd3e00f9a5cbe8604bcecfa95ce8fef8 # v2.1.0
