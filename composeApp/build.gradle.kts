@@ -135,6 +135,8 @@ android {
         versionCode = 200
         versionName = "2.0.0"
 
+        proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
         ndk {
             // Tink does not support 32-bit architectures (https://developers.google.com/tink/faq/support_for_32bit)
             abiFilters += listOf("arm64-v8a", "x86_64")
@@ -151,7 +153,6 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         release {
             resValue("string", "app_name", "Truvark")
@@ -159,10 +160,18 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            ndk {
-                debugSymbolLevel = "FULL"
-            }
+        }
+    }
+
+    flavorDimensions += "signing"
+    productFlavors {
+        create("self") {
+            dimension = "signing"
+            isDefault = true
+        }
+        create("fdroid") {
+            dimension = "signing"
+            applicationIdSuffix = ".fdroid"
         }
     }
 
