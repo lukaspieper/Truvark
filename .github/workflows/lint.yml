@@ -28,7 +28,7 @@ jobs:
       run: |
         echo "<details>" >> $GITHUB_STEP_SUMMARY
         echo "<summary>Show Report</summary>" >> $GITHUB_STEP_SUMMARY
-        sed -n '/<body/,/<\/body>/p' composeApp/build/reports/lint-results-selfDebug.html >> $GITHUB_STEP_SUMMARY
+        sed -n '/<body/,/<\/body>/p' composeApp/build/reports/lint-results-debug.html >> $GITHUB_STEP_SUMMARY
         echo "</details>" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload HTML Reports
@@ -36,10 +36,10 @@ jobs:
       if: success() || failure()
       with:
         name: Lint-HTML
-        path: composeApp/build/reports/lint-results-selfDebug.html
+        path: composeApp/build/reports/lint-results-debug.html
 
     - name: Upload SARIF Report
       uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
       if: success() || failure()
       with:
-        sarif_file: composeApp/build/reports/lint-results-selfDebug.sarif
+        sarif_file: composeApp/build/reports/lint-results-debug.sarif
