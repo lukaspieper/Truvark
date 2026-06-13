@@ -175,6 +175,12 @@ android {
         jniLibs.keepDebugSymbols.add("**/*.so") // F-Droid reproducible builds failed without it.
     }
 
+    dependenciesInfo {
+        // F-Droid apk check failed without them.
+        includeInApk = false
+        includeInBundle = false
+    }
+
     lint {
         sarifReport = true
         abortOnError = false
