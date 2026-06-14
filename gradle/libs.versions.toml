@@ -79,7 +79,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 google-oss-licenses = { id = "com.google.android.gms.oss-licenses-plugin", version = "0.12.0" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 android-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-dagger" }
-google-ksp = { id = "com.google.devtools.ksp", version = "2.3.8" }
+google-ksp = { id = "com.google.devtools.ksp", version = "2.3.9" }
 
 # Tooling
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
