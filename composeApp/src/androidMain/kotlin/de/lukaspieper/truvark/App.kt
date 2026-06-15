@@ -9,11 +9,8 @@ package de.lukaspieper.truvark
 import android.app.Application
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
 import com.google.crypto.tink.prf.PrfConfig
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
-import dagger.hilt.android.HiltAndroidApp
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -21,28 +18,27 @@ import logcat.AndroidLogcatLogger
 import logcat.LogPriority
 import logcat.LogcatLogger
 import logcat.logcat
-import javax.inject.Inject
+import org.koin.android.ext.android.get
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.context.GlobalContext.startKoin
 
-@HiltAndroidApp
-public class App : Application(), Configuration.Provider {
-
-    @Inject
-    public lateinit var preferences: PersistentPreferences
-
-    @Inject
-    public lateinit var workerFactory: HiltWorkerFactory
-
-    override val workManagerConfiguration: Configuration by lazy {
-        Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
-    }
+public class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
         enableStrictModeForDebug()
 
-        initLogging()
+        startKoin {
+            androidLogger() // TODO: Replace with own logger that respects the logging setting.
+            androidContext(this@App)
+            workManagerFactory()
+
+            modules(KoinModules.appModule, KoinModules.vaultModule)
+        }
+
+        initLogging(get<PersistentPreferences>())
 
         StreamingAeadConfig.register()
         PrfConfig.register()
@@ -64,7 +60,7 @@ public class App : Application(), Configuration.Provider {
         StrictMode.setVmPolicy(VmPolicy.Builder().detectAll().penaltyLog().build())
     }
 
-    private fun initLogging() {
+    private fun initLogging(preferences: PersistentPreferences) {
         val isLoggingAllowed = runBlocking { preferences.loggingAllowed.first() }
 
         val minPriority = if (BuildConfig.DEBUG) LogPriority.VERBOSE else LogPriority.INFO

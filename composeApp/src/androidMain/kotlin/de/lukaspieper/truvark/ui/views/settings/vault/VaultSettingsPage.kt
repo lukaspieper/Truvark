@@ -44,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
@@ -53,11 +52,12 @@ import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
 import kotlinx.coroutines.CompletableDeferred
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 public fun VaultSettingsPage(
     modifier: Modifier = Modifier,
-    viewModel: VaultSettingsViewModel = hiltViewModel()
+    viewModel: VaultSettingsViewModel = koinViewModel()
 ) {
     val activity = LocalActivity.current!!
 

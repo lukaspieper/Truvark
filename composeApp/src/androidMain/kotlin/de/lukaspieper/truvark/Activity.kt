@@ -21,7 +21,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dagger.hilt.android.AndroidEntryPoint
 import de.lukaspieper.truvark.ui.theme.AppTheme
 import de.lukaspieper.truvark.ui.views.browser.BrowserPage
 import de.lukaspieper.truvark.ui.views.launcher.LauncherPage
@@ -31,7 +30,6 @@ import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
 /**
  * This activity is the only one in this app.
  */
-@AndroidEntryPoint
 public class Activity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -55,7 +55,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
 import de.lukaspieper.truvark.Page
@@ -70,13 +69,14 @@ import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
     navigate: (Page) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: BrowserViewModel = hiltViewModel()
+    viewModel: BrowserViewModel = koinViewModel()
 ) {
     BackHandler(enabled = viewModel.isRootLevel.not()) {
         viewModel.navigateToParentFolder()

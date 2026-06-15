@@ -14,8 +14,7 @@ plugins {
     alias(libs.plugins.composeHotReload) apply false
 
     alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.google.ksp) apply false
-    alias(libs.plugins.android.hilt) apply false
+    alias(libs.plugins.koin.compiler) apply false
     alias(libs.plugins.google.oss.licenses) apply false
 
     alias(libs.plugins.detekt)

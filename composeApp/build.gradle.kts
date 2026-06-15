@@ -18,9 +18,8 @@ plugins {
     alias(libs.plugins.composeHotReload)
 
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.koin.compiler)
     alias(libs.plugins.google.oss.licenses)
-    alias(libs.plugins.android.hilt)
-    alias(libs.plugins.google.ksp)
 }
 
 kotlin {
@@ -59,14 +58,16 @@ kotlin {
             implementation(libs.google.accompanist.permissions)
             implementation(libs.android.workmanager)
             implementation(libs.google.material)
+            implementation(libs.androidx.navigation.compose)
 
             // Data and storage
             implementation(libs.android.datastore.preferences)
 
             // Dependency Injection
-            implementation(libs.dagger.hilt)
-            implementation(libs.android.hilt.workmanager)
-            implementation(libs.android.hilt.navigation.compose)
+            implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(libs.koin.androidx.compose.navigation)
+            implementation(libs.koin.androidx.workmanager)
+            implementation(libs.koin.annotations)
 
             // Adaptive
             implementation(libs.android.compose.adaptive)
@@ -114,9 +115,6 @@ kotlin {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-
-    add("kspAndroid", libs.dagger.hilt.compiler)
-    add("kspAndroid", libs.android.hilt.compiler)
 }
 
 // TODO: Compose Compiler metrics: no output?

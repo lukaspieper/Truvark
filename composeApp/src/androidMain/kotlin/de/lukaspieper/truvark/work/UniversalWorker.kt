@@ -9,14 +9,11 @@ package de.lukaspieper.truvark.work
 import android.content.Context
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build
-import androidx.hilt.work.HiltWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority.DEBUG
 import logcat.LogPriority.ERROR
@@ -25,10 +22,9 @@ import logcat.asLog
 import logcat.logcat
 import kotlin.system.measureTimeMillis
 
-@HiltWorker
-public class UniversalWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
-    @Assisted workerParameters: WorkerParameters,
+public class UniversalWorker(
+    appContext: Context,
+    workerParameters: WorkerParameters,
     private val workScheduler: WorkScheduler
 ) : Worker(appContext, workerParameters) {
 

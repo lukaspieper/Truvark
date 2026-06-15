@@ -17,10 +17,6 @@ import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import coil3.ImageLoader
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
@@ -35,16 +31,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
 import kotlin.uuid.Uuid
 
 @OptIn(UnstableApi::class)
-@HiltViewModel(assistedFactory = PresenterViewModel.Factory::class)
-public class PresenterViewModel @AssistedInject constructor(
+public class PresenterViewModel(
     private val preferences: PersistentPreferences,
     private val vault: Vault,
     private val fileSystem: AndroidFileSystem,
     private val imageLoader: ImageLoader,
-    @Assisted private val folderId: Uuid,
+    @InjectedParam private val folderId: Uuid,
 ) : ViewModel() {
 
     private val mediaSourceFactory by lazy {
@@ -97,9 +93,4 @@ public class PresenterViewModel @AssistedInject constructor(
         val physicalFilesById: Map<Uuid, FileInfo>? = null,
         val physicalFilesByUri: Map<Any, FileInfo> = emptyMap()
     )
-
-    @AssistedFactory
-    public interface Factory {
-        public fun create(folderId: Uuid): PresenterViewModel
-    }
 }
