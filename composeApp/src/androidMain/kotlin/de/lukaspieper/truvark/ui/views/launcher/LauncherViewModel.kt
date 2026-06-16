@@ -14,7 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.lukaspieper.truvark.KoinModules
+import de.lukaspieper.truvark.KoinModule
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.DirectoryInfo
@@ -141,8 +141,9 @@ public class LauncherViewModel(
             fileSystem.takePersistableUriPermission(directoryUri!!)
             preferences.saveLastUsedVaultRootUri(directoryUri!!)
 
-            KoinModules.vault = vault
+            KoinModule.createUnlockedVaultScopeOrIgnore(vault)
             withContext(Dispatchers.Main) {
+                vaultConfig = vault.config
                 state = LauncherState.DONE
             }
         }
@@ -181,7 +182,7 @@ public class LauncherViewModel(
         try {
             val vault = vaultFactory.decryptVault(directory!!, password)
 
-            KoinModules.vault = vault
+            KoinModule.createUnlockedVaultScopeOrIgnore(vault)
             withContext(Dispatchers.Main) {
                 state = LauncherState.DONE
             }

@@ -74,6 +74,7 @@ import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
+    parameters: Page.Browser,
     navigate: (Page) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BrowserViewModel = koinViewModel()
@@ -99,10 +100,11 @@ public fun BrowserPage(
         deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
         updateIsListLayout = viewModel::updateIsListLayout,
-        navigateToSettings = { navigate(Page.SettingsHome) },
+        navigateToSettings = { navigate(Page.SettingsHome(parameters.vaultId)) },
         navigateToFilePresenter = { cipherFileEntity ->
             navigate(
                 Page.Presenter(
+                    parameters.vaultId,
                     viewModel.currentFolderHierarchyLevel.folder.id.toHexString(),
                     cipherFileEntity.id.toHexString()
                 )

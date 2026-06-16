@@ -35,7 +35,7 @@ public class App : Application() {
             androidContext(this@App)
             workManagerFactory()
 
-            modules(KoinModules.appModule, KoinModules.vaultModule)
+            modules(KoinModule.module)
         }
 
         initLogging(get<PersistentPreferences>())
