@@ -9,6 +9,7 @@ package de.lukaspieper.truvark
 import android.content.Context
 import coil3.ImageLoader
 import coil3.request.CachePolicy
+import coil3.util.DebugLogger
 import de.lukaspieper.truvark.crypto.Argon2
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.FileSystem
@@ -16,7 +17,6 @@ import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.domain.crypto.AndroidArgon2
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.CipherFileFetcher
-import de.lukaspieper.truvark.domain.crypto.decryption.coil.CoilLoggerAdapter
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.FileInfoKeyer
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor
 import de.lukaspieper.truvark.domain.vault.Vault
@@ -78,7 +78,7 @@ public object KoinModule {
                     .memoryCachePolicy(CachePolicy.DISABLED)
                     .apply {
                         if (BuildConfig.DEBUG) {
-                            logger(CoilLoggerAdapter())
+                            logger(DebugLogger())
                         }
                     }
                     .build()

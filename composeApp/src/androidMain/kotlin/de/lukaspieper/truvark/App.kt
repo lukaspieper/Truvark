@@ -23,6 +23,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.logger.Level
 
 public class App : Application() {
 
@@ -31,7 +32,10 @@ public class App : Application() {
         enableStrictModeForDebug()
 
         startKoin {
-            androidLogger() // TODO: Replace with own logger that respects the logging setting.
+            if (BuildConfig.DEBUG) {
+                androidLogger(Level.DEBUG)
+            }
+
             androidContext(this@App)
             workManagerFactory()
 
