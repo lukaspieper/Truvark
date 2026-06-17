@@ -27,12 +27,8 @@ Compared to many other popular alternatives, Truvark...
 As you can see, there are already plenty of reasons to give Truvark a try!
 
 <p align="center">
-  <a href='https://github.com/lukaspieper/Truvark/releases/latest'>
-    <img alt='Get it on GitHub' src='https://raw.githubusercontent.com/flocke/andOTP/6c54b8811f950375c774b2eefebcf1f9fa13d433/assets/badges/get-it-on-github.png' width="250px"/>
-  </a>
-  <a href='https://f-droid.org/en/packages/de.lukaspieper.truvark/'>
-    <img alt='Get it on F-Droid' src='https://f-droid.org/badge/get-it-on.svg' width="250px"/>
-  </a>
+  <a href='https://github.com/lukaspieper/Truvark/releases/latest'><img alt='Get it on GitHub' src='https://raw.githubusercontent.com/flocke/andOTP/6c54b8811f950375c774b2eefebcf1f9fa13d433/assets/badges/get-it-on-github.png' width="250px"/></a>
+  <a href='https://f-droid.org/en/packages/de.lukaspieper.truvark/'><img alt='Get it on F-Droid' src='https://f-droid.org/badge/get-it-on.svg' width="250px"/></a>
 </p>
 
 <p align="center">
