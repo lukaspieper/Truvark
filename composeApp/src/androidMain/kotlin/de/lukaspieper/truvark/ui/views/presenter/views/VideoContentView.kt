@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.Player
 import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MediaSource
@@ -34,7 +35,7 @@ import androidx.media3.ui.compose.material3.Player
 import de.lukaspieper.truvark.ui.controls.customBottomControls
 import de.lukaspieper.truvark.ui.controls.customCenterControls
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalApi::class)
 @Composable
 public fun BoxScope.VideoContentView(
     mediaSource: MediaSource,

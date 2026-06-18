@@ -151,7 +151,6 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
-
         }
         release {
             resValue("string", "app_name", "Truvark")
