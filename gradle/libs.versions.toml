@@ -7,7 +7,7 @@ kotlin = "2.3.21"
 kotlinx-coroutines = "1.11.0"
 coil = "3.4.0"
 composeHotReload = "1.1.1"
-composeMultiplatform = "1.11.0"
+composeMultiplatform = "1.11.1"
 
 # Android
 agp = "8.13.2"
