@@ -50,7 +50,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.source.MediaSource
 import de.lukaspieper.truvark.Page
@@ -65,6 +64,8 @@ import de.lukaspieper.truvark.ui.views.presenter.views.FileNotFoundContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.NotSupportedContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.VideoContentView
 import me.saket.telephoto.zoomable.ZoomableImage
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.uuid.Uuid
 
 @Composable
@@ -72,11 +73,7 @@ public fun PresenterPage(
     parameters: Page.Presenter,
     navigateBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: PresenterViewModel = hiltViewModel(
-        creationCallback = { factory: PresenterViewModel.Factory ->
-            factory.create(Uuid.parseHex(parameters.folderId))
-        }
-    )
+    viewModel: PresenterViewModel = koinViewModel { parametersOf(Uuid.parseHex(parameters.folderId)) }
 ) {
     val itemsData by viewModel.itemsData.collectAsStateWithLifecycle()
     val imagesFitScreen by viewModel.imagesFitScreen.collectAsStateWithLifecycle(true)

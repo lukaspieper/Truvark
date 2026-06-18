@@ -65,7 +65,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
@@ -86,19 +85,20 @@ import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 public fun LauncherPage(
     navigateAndClearBackStack: (Page) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LauncherViewModel = hiltViewModel()
+    viewModel: LauncherViewModel = koinViewModel()
 ) {
     val activity = LocalActivity.current!!
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
-            navigateAndClearBackStack(Page.Browser)
+            navigateAndClearBackStack(Page.Browser(viewModel.vaultConfig!!.id.toHexString()))
         }
     }
 

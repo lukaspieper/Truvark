@@ -14,12 +14,12 @@ public sealed interface Page {
     public data object Launcher : Page
 
     @Serializable
-    public data object Browser : Page
+    public data class Browser(val vaultId: String) : Page
 
     // Navigation does not support Uuid, using String here.
     @Serializable
-    public data class Presenter(val folderId: String, val fileId: String) : Page
+    public data class Presenter(val vaultId: String, val folderId: String, val fileId: String) : Page
 
     @Serializable
-    public data object SettingsHome : Page
+    public data class SettingsHome(val vaultId: String) : Page
 }

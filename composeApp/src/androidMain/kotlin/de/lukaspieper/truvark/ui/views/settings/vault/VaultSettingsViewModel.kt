@@ -11,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.domain.crypto.BiometricConfig
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
@@ -23,10 +22,8 @@ import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 import javax.crypto.Cipher
-import javax.inject.Inject
 
-@HiltViewModel
-public class VaultSettingsViewModel @Inject constructor(
+public class VaultSettingsViewModel(
     private val vaultFactory: VaultFactory,
     private val vault: Vault,
     private val biometricCryptoProvider: BiometricCryptoProvider,

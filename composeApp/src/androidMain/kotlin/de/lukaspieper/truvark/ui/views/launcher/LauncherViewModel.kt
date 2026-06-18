@@ -14,12 +14,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+import de.lukaspieper.truvark.KoinModule
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
-import de.lukaspieper.truvark.di.VaultModule
 import de.lukaspieper.truvark.domain.crypto.BiometricConfig
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
 import de.lukaspieper.truvark.domain.vault.VaultConfig
@@ -39,10 +38,8 @@ import logcat.asLog
 import logcat.logcat
 import java.security.GeneralSecurityException
 import javax.crypto.Cipher
-import javax.inject.Inject
 
-@HiltViewModel
-public class LauncherViewModel @Inject constructor(
+public class LauncherViewModel(
     private val preferences: PersistentPreferences,
     private val fileSystem: AndroidFileSystem,
     private val vaultFactory: VaultFactory,
@@ -144,8 +141,9 @@ public class LauncherViewModel @Inject constructor(
             fileSystem.takePersistableUriPermission(directoryUri!!)
             preferences.saveLastUsedVaultRootUri(directoryUri!!)
 
-            VaultModule.initializeVaultModule(vault)
+            KoinModule.createUnlockedVaultScopeOrIgnore(vault)
             withContext(Dispatchers.Main) {
+                vaultConfig = vault.config
                 state = LauncherState.DONE
             }
         }
@@ -184,7 +182,7 @@ public class LauncherViewModel @Inject constructor(
         try {
             val vault = vaultFactory.decryptVault(directory!!, password)
 
-            VaultModule.initializeVaultModule(vault)
+            KoinModule.createUnlockedVaultScopeOrIgnore(vault)
             withContext(Dispatchers.Main) {
                 state = LauncherState.DONE
             }

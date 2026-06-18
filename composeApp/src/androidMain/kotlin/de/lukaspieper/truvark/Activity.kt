@@ -21,19 +21,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dagger.hilt.android.AndroidEntryPoint
 import de.lukaspieper.truvark.ui.theme.AppTheme
 import de.lukaspieper.truvark.ui.views.browser.BrowserPage
 import de.lukaspieper.truvark.ui.views.launcher.LauncherPage
 import de.lukaspieper.truvark.ui.views.presenter.PresenterPage
 import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
+import org.koin.android.ext.android.getKoin
+import org.koin.compose.scope.UnboundKoinScope
+import org.koin.core.annotation.KoinDelicateAPI
+import org.koin.core.annotation.KoinExperimentalAPI
 
 /**
  * This activity is the only one in this app.
  */
-@AndroidEntryPoint
 public class Activity : AppCompatActivity() {
 
+    @OptIn(KoinDelicateAPI::class, KoinExperimentalAPI::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         // Calling before onCreate because of this exception: https://stackoverflow.com/a/73129726
         installSplashScreen()
@@ -58,21 +61,34 @@ public class Activity : AppCompatActivity() {
                             }
                         )
                     }
-                    composable<Page.Browser> {
-                        BrowserPage(navigate = { route -> navController.navigateSafely(route) })
+                    composable<Page.Browser> { navigation ->
+                        val route: Page.Browser = navigation.toRoute()
+
+                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
+                            BrowserPage(
+                                parameters = route,
+                                navigate = { route -> navController.navigateSafely(route) }
+                            )
+                        }
                     }
                     composable<Page.Presenter> { navigation ->
                         val route: Page.Presenter = navigation.toRoute()
 
-                        PresenterPage(
-                            parameters = route,
-                            navigateBack = navController::popBackStack
-                        )
+                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
+                            PresenterPage(
+                                parameters = route,
+                                navigateBack = navController::popBackStack
+                            )
+                        }
                     }
-                    composable<Page.SettingsHome> {
-                        SettingsHomePage(
-                            navigateBack = navController::popBackStack
-                        )
+                    composable<Page.SettingsHome> { navigation ->
+                        val route: Page.SettingsHome = navigation.toRoute()
+
+                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
+                            SettingsHomePage(
+                                navigateBack = navController::popBackStack
+                            )
+                        }
                     }
                 }
             }

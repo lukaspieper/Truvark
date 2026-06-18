@@ -21,7 +21,6 @@ import androidx.work.WorkQuery
 import androidx.work.Worker
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.common.NotificationChannel
-import de.lukaspieper.truvark.di.VaultModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

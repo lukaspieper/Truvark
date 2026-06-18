@@ -11,8 +11,8 @@ composeMultiplatform = "1.11.0"
 
 # Android
 agp = "8.13.2"
-hilt-dagger = "2.58"
-hilt-androidx = "1.3.0"
+koin = "4.2.2"
+koin-plugin = "1.0.1"
 accompanist = "0.37.3"
 media3 = "1.10.1"
 adaptive = "1.2.0"
@@ -33,17 +33,17 @@ coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coil" }
 
 # Android
-dagger-hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt-dagger" }
-dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt-dagger" }
-android-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-androidx" }
-android-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-androidx" }
-android-hilt-workmanager = { module = "androidx.hilt:hilt-work", version.ref = "hilt-androidx" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
+koin-androidx-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation" }
+koin-androidx-workmanager = { module = "io.insert-koin:koin-androidx-workmanager" }
+koin-annotations = { module = "io.insert-koin:koin-annotations" }
 android-workmanager = { module = "androidx.work:work-runtime", version = "2.11.2" }
 android-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.2.1" }
 android-biometric-compose = { module = "androidx.biometric:biometric-compose", version = "1.4.0-alpha07" }
 android-compose-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
 android-compose-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "adaptive" }
 android-compose-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "adaptive" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.8" }
 android-core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 androidx-media3-ui-compose = { module = "androidx.media3:media3-ui-compose-material3", version.ref = "media3" }
@@ -78,8 +78,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 # Android
 google-oss-licenses = { id = "com.google.android.gms.oss-licenses-plugin", version = "0.12.0" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-android-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-dagger" }
-google-ksp = { id = "com.google.devtools.ksp", version = "2.3.8" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 
 # Tooling
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

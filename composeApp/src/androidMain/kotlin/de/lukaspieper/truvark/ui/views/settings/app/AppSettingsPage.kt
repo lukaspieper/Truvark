@@ -12,18 +12,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.LabeledSwitch
 import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.theme.paddings
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 public fun AppSettingsPage(
     modifier: Modifier = Modifier,
-    viewModel: AppSettingsViewModel = hiltViewModel()
+    viewModel: AppSettingsViewModel = koinViewModel()
 ) {
     val imagesFitScreen = viewModel.imagesFitScreen.collectAsStateWithLifecycle(false)
     val isLoggingEnabled = viewModel.isLoggingEnabled.collectAsStateWithLifecycle(false)

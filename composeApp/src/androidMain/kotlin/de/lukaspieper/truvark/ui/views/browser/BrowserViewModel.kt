@@ -15,7 +15,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
-import dagger.hilt.android.lifecycle.HiltViewModel
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.FileInfo
@@ -40,11 +39,9 @@ import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
-import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-@HiltViewModel
-public class BrowserViewModel @Inject constructor(
+public class BrowserViewModel(
     private val vault: Vault,
     private val fileSystem: AndroidFileSystem,
     private val preferences: PersistentPreferences,
