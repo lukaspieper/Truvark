@@ -30,7 +30,7 @@ tasks.detekt {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("composeApp/src"))
+    setSource(files("androidApp/src", "desktopApp/src", "shared/src"))
     basePath = rootProject.projectDir.absolutePath
 }
 
@@ -39,6 +39,6 @@ tasks.detektBaseline {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("composeApp/src"))
+    setSource(files("androidApp/src", "desktopApp/src", "shared/src"))
     basePath = rootProject.projectDir.absolutePath
 }

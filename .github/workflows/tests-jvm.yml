@@ -21,14 +21,14 @@ jobs:
       uses: ./.github/actions/setup
 
     - name: Run JVM Tests
-      run: ./gradlew desktopTest
+      run: ./gradlew shared:jvmTest
 
     - name: Upload Markdown Report
       if: success() || failure()
       run: |
         echo "<details>" >> $GITHUB_STEP_SUMMARY
         echo "<summary>Show Report</summary>" >> $GITHUB_STEP_SUMMARY
-        sed -n '/<body>/,/<\/body>/p' composeApp/build/reports/tests/desktopTest/index.html >> $GITHUB_STEP_SUMMARY
+        sed -n '/<body>/,/<\/body>/p' shared/build/reports/tests/jvmTest/index.html >> $GITHUB_STEP_SUMMARY
         echo "</details>" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload HTML Reports
@@ -36,4 +36,4 @@ jobs:
       if: success() || failure()
       with:
         name: Tests-HTML
-        path: composeApp/build/reports/tests
+        path: shared/build/reports/tests
