@@ -1,8 +1,8 @@
 ---
-name: Release Template
-about: Checklist for creating a new release.
-title: Release [Version]
-labels: ''
+name: Release checklist
+about: Prepare a new release.
+title: Release v{x.y.z}
+labels: 'documentation'
 assignees: ''
 ---
 
@@ -66,7 +66,6 @@ cover the most important features.
 - [ ] Show information for missing files
 
 # Changelog
-
 - [ ] Insert the changelog here. 
 
 # Release steps
