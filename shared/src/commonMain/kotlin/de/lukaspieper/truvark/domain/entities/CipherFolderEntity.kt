@@ -16,8 +16,7 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
-@ConsistentCopyVisibility
-public data class CipherFolderEntity internal constructor(
+public data class CipherFolderEntity(
     @ProtoNumber(1)
     public val id: Uuid,
 

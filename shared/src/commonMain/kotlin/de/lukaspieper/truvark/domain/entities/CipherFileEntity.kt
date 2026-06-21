@@ -44,7 +44,7 @@ public data class CipherFileEntity private constructor(
     @Transient
     public lateinit var folderId: Uuid
 
-    internal constructor(
+    public constructor(
         id: Uuid,
         fullName: String,
         mimeType: String,

@@ -33,9 +33,9 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 public class Vault internal constructor(
-    internal var config: VaultConfig,
-    internal val streamingAead: StreamingAead,
-    internal val prfSet: PrfSet,
+    public var config: VaultConfig,
+    public val streamingAead: StreamingAead,
+    public val prfSet: PrfSet,
     public val fileSystem: VaultFileSystem,
     private val scheduler: Scheduler
 ) {

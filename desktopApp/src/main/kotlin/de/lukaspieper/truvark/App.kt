@@ -18,6 +18,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.google.crypto.tink.prf.PrfConfig
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
 import de.lukaspieper.truvark.crypto.JvmArgon2
 import de.lukaspieper.truvark.data.io.JavaFileSystem
@@ -29,7 +30,8 @@ import logcat.LogcatLogger
 import logcat.PrintLogger
 
 /**
- * `gradlew desktopRun -DmainClass=de.lukaspieper.truvark.AppKt --quiet`
+ * Standard run: `./gradlew :desktopApp:run`
+ * Hot reload: `./gradlew :desktopApp:hotRun --auto`
  */
 public fun main() {
     initLogging()
@@ -72,4 +74,5 @@ private fun initLogging() {
 
 private fun initTink() {
     StreamingAeadConfig.register()
+    PrfConfig.register()
 }
