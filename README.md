@@ -44,6 +44,24 @@ As you can see, there are already plenty of reasons to give Truvark a try!
 * [FAQ](docs/faq.md): Answers to frequently asked questions about the app like vault locking, decrypted file location
   and backup procedures.
 
+## Expectations and Scope
+
+Truvark is first and foremost a security-focused application. The goal is to provide strong, well-understood security
+guarantees rather than relying on "security through obscurity" features. While some vault applications include hidden
+modes, disguises, fake vaults, or similar mechanisms, these are generally not aligned with the project's philosophy.
+Features that create a false sense of security are especially problematic, as they can encourage users to lower their
+guard without providing meaningful protection in return. Security should come from the design and implementation of the
+application, not from making users believe their data is safer than it actually is.
+
+Therefore, the scope and development of Truvark are intentionally guided by this security-first approach. Truvark
+started as a tool built to meet my own needs and was later shared with the community. While feedback and feature
+requests are always welcome, the project's direction is intentionally focused rather than driven by feature
+accumulation. New features are considered when they solve a genuine problem, provide meaningful value, fit naturally
+within the existing design, and do not compromise security or reliability. Each addition must justify the complexity it
+introduces and its long-term maintenance cost. As a result, some requests may not be implemented, even if they would be
+useful to some users. The goal is not to build the most feature-rich vault application, but to build one that can remain
+secure, dependable, and maintainable over time.
+
 ## License
 
 This app is licensed under [*GPL-3.0-or-later*](LICENSES/GPL-3.0-or-later.txt).
