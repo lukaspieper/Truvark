@@ -68,7 +68,7 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 detekt-rules-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
-detekt-rules-compose = { module = "io.nlopez.compose.rules:detekt", version = "0.4.28" }
+detekt-rules-compose = { module = "io.nlopez.compose.rules:detekt", version = "0.6.1" }
 
 [bundles]
 coil = ["coil-compose", "coil-gif", "coil-svg", "coil-video"]
