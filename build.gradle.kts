@@ -7,11 +7,11 @@
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
-    alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
-    alias(libs.plugins.composeHotReload) apply false
+    alias(libs.plugins.kotlinJvm) apply false
+    alias(libs.plugins.kotlinMultiplatform) apply false
 
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.koin.compiler) apply false
@@ -30,7 +30,7 @@ tasks.detekt {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("composeApp/src"))
+    setSource(files("androidApp/src", "desktopApp/src", "shared/src"))
     basePath = rootProject.projectDir.absolutePath
 }
 
@@ -39,6 +39,6 @@ tasks.detektBaseline {
     baseline = file(".detekt/detekt-baseline.xml")
     buildUponDefaultConfig = true
     parallel = true
-    setSource(files("composeApp/src"))
+    setSource(files("androidApp/src", "desktopApp/src", "shared/src"))
     basePath = rootProject.projectDir.absolutePath
 }
