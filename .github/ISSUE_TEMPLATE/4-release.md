@@ -65,9 +65,8 @@ cover the most important features.
 - [ ] Show information for files that are not supported
 - [ ] Show information for missing files
 
-# Changelog
-- [ ] Insert the changelog here. 
-
 # Release steps
-- [ ] Increment the version number and string
+- [ ] Update `versionCode` and `versionName`
+- [ ] Add changelog to Fastlane (`/fastlane/metadata/android/{en-US}/changelogs/{versionCode}.txt`) 
 - [ ] Create a new release (with tag)
+- [ ] Check F-Droid availability
