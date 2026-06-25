@@ -18,7 +18,7 @@ import de.lukaspieper.truvark.ui.controls.LabeledSwitch
 import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.theme.paddings
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 public fun AppSettingsPage(

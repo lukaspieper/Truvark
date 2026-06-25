@@ -10,31 +10,23 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavOptionsBuilder
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.navigation3.ui.NavDisplay
 import de.lukaspieper.truvark.ui.theme.AppTheme
-import de.lukaspieper.truvark.ui.views.browser.BrowserPage
-import de.lukaspieper.truvark.ui.views.launcher.LauncherPage
-import de.lukaspieper.truvark.ui.views.presenter.PresenterPage
-import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
-import org.koin.android.ext.android.getKoin
-import org.koin.compose.scope.UnboundKoinScope
+import org.koin.android.ext.android.get
+import org.koin.android.scope.AndroidScopeComponent
+import org.koin.androidx.compose.navigation3.getEntryProvider
+import org.koin.androidx.scope.activityRetainedScope
 import org.koin.core.annotation.KoinDelicateAPI
 import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.core.scope.Scope
 
 /**
  * This activity is the only one in this app.
  */
-public class Activity : AppCompatActivity() {
+public class Activity : AppCompatActivity(), AndroidScopeComponent {
+
+    override val scope: Scope by activityRetainedScope()
 
     @OptIn(KoinDelicateAPI::class, KoinExperimentalAPI::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,61 +37,15 @@ public class Activity : AppCompatActivity() {
 
         setContent {
             AppTheme {
-                val navController = rememberNavController()
+                val navigator = get<Navigator>()
 
-                NavHost(
-                    navController = navController,
-                    startDestination = Page.Launcher,
-                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
-                ) {
-                    composable<Page.Launcher> {
-                        LauncherPage(
-                            navigateAndClearBackStack = { route ->
-                                navController.navigateSafely(route) {
-                                    popUpTo(0)
-                                }
-                            }
-                        )
-                    }
-                    composable<Page.Browser> { navigation ->
-                        val route: Page.Browser = navigation.toRoute()
-
-                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
-                            BrowserPage(
-                                parameters = route,
-                                navigate = { route -> navController.navigateSafely(route) }
-                            )
-                        }
-                    }
-                    composable<Page.Presenter> { navigation ->
-                        val route: Page.Presenter = navigation.toRoute()
-
-                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
-                            PresenterPage(
-                                parameters = route,
-                                navigateBack = navController::popBackStack
-                            )
-                        }
-                    }
-                    composable<Page.SettingsHome> { navigation ->
-                        val route: Page.SettingsHome = navigation.toRoute()
-
-                        UnboundKoinScope(getKoin().getScope(route.vaultId)) {
-                            SettingsHomePage(
-                                navigateBack = navController::popBackStack
-                            )
-                        }
-                    }
-                }
+                // TODO: Handle multi-touch navigation conflicts
+                NavDisplay(
+                    backStack = navigator.backStack,
+                    onBack = { navigator.goBack() },
+                    entryProvider = getEntryProvider()
+                )
             }
-        }
-    }
-
-    private fun NavController.navigateSafely(route: Page, builder: NavOptionsBuilder.() -> Unit = {}) {
-        // This approach prevents multi-touch navigation, e.g. touching multiple files in the file browser would
-        // lead to multiple navigation events. Navigating back would need to go through all of them.
-        if (currentDestination?.hasRoute(route::class) == false) {
-            navigate(route, builder)
         }
     }
 }

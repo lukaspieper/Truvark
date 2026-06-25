@@ -85,14 +85,13 @@ import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 public fun LauncherPage(
     navigateAndClearBackStack: (Page) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LauncherViewModel = koinViewModel()
+    viewModel: LauncherViewModel,
+    modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current!!
 

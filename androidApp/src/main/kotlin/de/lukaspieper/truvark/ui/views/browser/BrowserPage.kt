@@ -69,15 +69,14 @@ import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
     parameters: Page.Browser,
     navigate: (Page) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: BrowserViewModel = koinViewModel()
+    viewModel: BrowserViewModel,
+    modifier: Modifier = Modifier
 ) {
     BackHandler(enabled = viewModel.isRootLevel.not()) {
         viewModel.navigateToParentFolder()
