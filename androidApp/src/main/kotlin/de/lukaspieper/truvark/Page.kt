@@ -42,5 +42,5 @@ public sealed interface Page : NavKey {
     public data class Presenter(val vaultId: String, val folderId: String, val fileId: String) : Page
 
     @Serializable
-    public data class SettingsHome(val vaultId: String) : Page
+    public data class SettingsHome(val vaultId: String?) : Page
 }

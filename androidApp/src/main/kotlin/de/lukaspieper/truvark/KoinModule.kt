@@ -71,6 +71,7 @@ public object KoinModule {
 
         worker<UniversalWorker>()
         viewModel<LauncherViewModel>()
+        viewModel<AppSettingsViewModel>()
 
         activityRetainedScope {
             // scoped { NavBackStack(Page.Launcher) }
@@ -80,6 +81,7 @@ public object KoinModule {
                 val navigator = get<Navigator>()
                 LauncherPage(
                     navigateAndClearBackStack = { route -> navigator.goToReplace(route) },
+                    navigateTo = { route -> navigator.goTo(route) },
                     viewModel = koinViewModel()
                 )
             }
@@ -104,10 +106,18 @@ public object KoinModule {
                 )
             }
             navigation<Page.SettingsHome> { route ->
-                UnboundKoinScope(getScope(route.vaultId)) {
-                    val navigator = get<Navigator>()
+                val navigator = get<Navigator>()
+                if (route.vaultId != null) {
+                    UnboundKoinScope(getScope(route.vaultId)) {
+                        SettingsHomePage(
+                            navigateBack = navigator::goBack,
+                            vaultId = route.vaultId
+                        )
+                    }
+                } else {
                     SettingsHomePage(
-                        navigateBack = navigator::goBack
+                        navigateBack = navigator::goBack,
+                        vaultId = null
                     )
                 }
             }
@@ -139,7 +149,6 @@ public object KoinModule {
             } bind ImageLoader::class
 
             viewModel<BrowserViewModel>()
-            viewModel<AppSettingsViewModel>()
             viewModel<VaultSettingsViewModel>()
             viewModel<PresenterViewModel>()
         }

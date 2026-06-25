@@ -37,11 +37,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -90,6 +92,7 @@ import logcat.logcat
 @Composable
 public fun LauncherPage(
     navigateAndClearBackStack: (Page) -> Unit,
+    navigateTo: (Page) -> Unit,
     viewModel: LauncherViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -139,6 +142,7 @@ public fun LauncherPage(
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
+        navigateToSettings = { navigateTo(Page.SettingsHome(vaultId = null)) },
         showBiometricPrompt = {
             try {
                 authLauncher.launch(
@@ -174,12 +178,19 @@ private fun LauncherView(
     unlockingErrorText: Int?,
     updateState: (LauncherViewModel.LauncherState) -> Unit,
     unlockVaultWithPassword: (ByteArray) -> Unit,
+    navigateToSettings: () -> Unit,
     showBiometricPrompt: () -> Unit,
     setupDialog: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     SafeDrawingScaffold(
         largeTopAppBarTitle = stringResource(R.string.app_name),
+        largeTopAppBarActions = {
+            IconButton(
+                onClick = navigateToSettings,
+                content = { Icon(Icons.Default.Settings, null) }
+            )
+        },
         modifier = modifier,
     ) { paddingValues ->
         Column(
@@ -428,6 +439,7 @@ private fun NoNotificationPermissionPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )
@@ -445,6 +457,7 @@ private fun NoVaultSelectedPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )
@@ -462,6 +475,7 @@ private fun VaultSelectedPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )

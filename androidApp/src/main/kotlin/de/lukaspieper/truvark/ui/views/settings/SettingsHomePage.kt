@@ -62,11 +62,13 @@ import logcat.logcat
 @Composable
 public fun SettingsHomePage(
     navigateBack: () -> Unit,
+    vaultId: String?,
     modifier: Modifier = Modifier
 ) {
     val settingsMenuItems = mapOf(
         SettingsMenuItem.Key.VAULT to SettingsMenuItem.Internal(
-            Icons.Default.Lock, R.string.vault, R.string.settings_description_vault
+            Icons.Default.Lock, R.string.vault, R.string.settings_description_vault,
+            enabled = vaultId != null
         ),
         SettingsMenuItem.Key.APP to SettingsMenuItem.Internal(
             Icons.Default.AppSettingsAlt, R.string.app, R.string.settings_description_app
@@ -88,7 +90,8 @@ public fun SettingsHomePage(
         // Do initial navigation when both panes are visible. Note that primary maps to the detail pane.
         val detailPaneState = scaffoldNavigator.scaffoldState.currentState.primary
         if (scaffoldNavigator.currentDestination?.contentKey == null && detailPaneState == PaneAdaptedValue.Expanded) {
-            scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, SettingsMenuItem.Key.VAULT)
+            val initialKey = if (vaultId != null) SettingsMenuItem.Key.VAULT else SettingsMenuItem.Key.APP
+            scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, initialKey)
         }
     }
 
@@ -119,19 +122,18 @@ public fun SettingsHomePage(
                         derivedStateOf { settingsMenuItem == selectedMenuItem }
                     }
                     val onClick: () -> Unit = {
-                        when (settingsMenuItem) {
+                        when (val item = settingsMenuItem) {
                             is SettingsMenuItem.Internal -> {
-                                coroutineScope.launch {
-                                    scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, key)
+                                if (item.enabled) {
+                                    coroutineScope.launch {
+                                        scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, key)
+                                    }
                                 }
                             }
 
                             is SettingsMenuItem.External -> {
                                 try {
-                                    val browserIntent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        (settingsMenuItem as SettingsMenuItem.External).uri
-                                    )
+                                    val browserIntent = Intent(Intent.ACTION_VIEW, item.uri)
                                     context.startActivity(browserIntent, Bundle.EMPTY)
                                 } catch (e: Exception) {
                                     logcat("SettingsHomePage", LogPriority.WARN) { e.asLog() }
@@ -140,11 +142,13 @@ public fun SettingsHomePage(
                         }
                     }
 
+                    val item = settingsMenuItem
                     SettingsButton(
-                        icon = settingsMenuItem.icon,
-                        title = stringResource(settingsMenuItem.title),
-                        description = settingsMenuItem.description?.let { stringResource(it) },
-                        isExternal = settingsMenuItem is SettingsMenuItem.External,
+                        icon = item.icon,
+                        title = stringResource(item.title),
+                        description = item.description?.let { stringResource(it) },
+                        isExternal = item is SettingsMenuItem.External,
+                        isEnabled = if (item is SettingsMenuItem.Internal) item.enabled else true,
                         isSelected = isSelected,
                         onClick = onClick
                     )
@@ -183,18 +187,26 @@ public fun SettingsButton(
     description: String?,
     isExternal: Boolean,
     isSelected: Boolean,
+    isEnabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Button(
         onClick = onClick,
-        enabled = !isSelected,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
+        enabled = isEnabled && !isSelected,
+        colors = if (isSelected) {
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        },
         shape = CardDefaults.shape,
         modifier = modifier.fillMaxWidth()
     ) {
@@ -227,5 +239,5 @@ public fun SettingsButton(
 @PagePreviews
 @Composable
 private fun SettingsViewPreview() = PreviewHost {
-    SettingsHomePage(navigateBack = {})
+    SettingsHomePage(navigateBack = {}, vaultId = null)
 }

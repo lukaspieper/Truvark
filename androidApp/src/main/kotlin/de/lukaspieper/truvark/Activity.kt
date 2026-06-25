@@ -10,6 +10,9 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation3.ui.NavDisplay
 import de.lukaspieper.truvark.ui.theme.AppTheme
@@ -43,7 +46,8 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent {
                 NavDisplay(
                     backStack = navigator.backStack,
                     onBack = { navigator.goBack() },
-                    entryProvider = getEntryProvider()
+                    entryProvider = getEntryProvider(),
+                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
                 )
             }
         }

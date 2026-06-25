@@ -25,7 +25,8 @@ public sealed interface SettingsMenuItem {
     public data class Internal(
         override val icon: ImageVector,
         @StringRes override val title: Int,
-        @StringRes override val description: Int? = null
+        @StringRes override val description: Int? = null,
+        val enabled: Boolean = true
     ) : SettingsMenuItem
 
     public data class External(
