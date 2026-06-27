@@ -11,10 +11,15 @@ import androidx.annotation.RawRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,13 +27,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,14 +53,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
+import de.lukaspieper.truvark.ui.extensions.safeDrawingStart
 import de.lukaspieper.truvark.ui.preview.PagePreviews
+import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.licensing.License.GeneralPublicLicenseV30OrLater
 
 @Composable
 public fun OpenSourceLicensePage(
-    modifier: Modifier = Modifier,
+    navigateBack: () -> Unit,
+    isExpandedLayout: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val resources = LocalResources.current
     val licensedItems by produceState(initialValue = emptyList()) {
@@ -59,6 +72,8 @@ public fun OpenSourceLicensePage(
 
     OpenSourceLicenseView(
         licensedItems = licensedItems,
+        isExpandedLayout = isExpandedLayout,
+        navigateBack = navigateBack,
         modifier = modifier
     )
 }
@@ -92,58 +107,81 @@ private fun Resources.readRawStringResource(@RawRes id: Int): String {
 @Composable
 public fun OpenSourceLicenseView(
     licensedItems: List<LicensedItem>,
+    isExpandedLayout: Boolean,
+    navigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedLicense by remember { mutableStateOf<License>(License.UnknownLicense) }
 
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-        modifier = modifier.fillMaxSize()
-    ) {
-        item {
-            Card(
-                onClick = { selectedLicense = GeneralPublicLicenseV30OrLater },
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = GeneralPublicLicenseV30OrLater.name,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+    val containerColor = when {
+        isExpandedLayout -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    Scaffold(
+        modifier = modifier,
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.safeDrawingStart),
+        containerColor = containerColor,
+        topBar = {
+            TopAppBar(
+                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsets.safeDrawingStart),
+                colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
+                title = { Text(text = stringResource(R.string.settings_licensing)) },
+                navigationIcon = {
+                    if (!isExpandedLayout) {
+                        IconButton(onClick = navigateBack) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                        }
+                    }
                 }
+            )
+        }
+    ) { contentPadding ->
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+            contentPadding = contentPadding + PaddingValues(all = MaterialTheme.paddings.large),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Card(
+                    onClick = { selectedLicense = GeneralPublicLicenseV30OrLater },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = GeneralPublicLicenseV30OrLater.name,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.size(MaterialTheme.paddings.extraLarge))
             }
 
-            Spacer(modifier = Modifier.size(MaterialTheme.paddings.extraLarge))
-        }
-
-        items(licensedItems) { licenseItem ->
-            Card(
-                enabled = licenseItem.license != License.UnknownLicense,
-                onClick = { selectedLicense = licenseItem.license },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
-                    Text(
-                        text = licenseItem.id,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = licenseItem.license.name,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+            items(licensedItems) { licenseItem ->
+                Card(
+                    enabled = licenseItem.license != License.UnknownLicense,
+                    onClick = { selectedLicense = licenseItem.license },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
+                        Text(
+                            text = licenseItem.id,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = licenseItem.license.name,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
-        }
-
-        item {
-            Spacer(Modifier.size(8.dp))
         }
     }
 
@@ -192,13 +230,14 @@ public fun OpenSourceLicenseView(
 
 @PagePreviews
 @Composable
-private fun OpenSourceLicenseViewPreview() = DetailPanePreviewHost { contentPadding ->
+private fun OpenSourceLicenseViewPreview() = PreviewHost {
     val licensedItems = List(10) {
         LicensedItem("Item $it", License.UnknownLicense)
     }
 
     OpenSourceLicenseView(
         licensedItems = licensedItems,
-        modifier = Modifier.padding(contentPadding)
+        isExpandedLayout = false,
+        navigateBack = {}
     )
 }

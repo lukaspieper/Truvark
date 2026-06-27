@@ -21,13 +21,9 @@ import de.lukaspieper.truvark.domain.crypto.decryption.coil.FileInfoKeyer
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor
 import de.lukaspieper.truvark.domain.vault.Vault
 import de.lukaspieper.truvark.domain.vault.VaultFactory
-import de.lukaspieper.truvark.ui.views.browser.BrowserPage
 import de.lukaspieper.truvark.ui.views.browser.BrowserViewModel
-import de.lukaspieper.truvark.ui.views.launcher.LauncherPage
 import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel
-import de.lukaspieper.truvark.ui.views.presenter.PresenterPage
 import de.lukaspieper.truvark.ui.views.presenter.PresenterViewModel
-import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
 import de.lukaspieper.truvark.ui.views.settings.app.AppSettingsViewModel
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel
 import de.lukaspieper.truvark.work.Scheduler
@@ -35,30 +31,21 @@ import de.lukaspieper.truvark.work.UniversalWorker
 import de.lukaspieper.truvark.work.WorkScheduler
 import logcat.LogPriority.DEBUG
 import logcat.logcat
-import org.koin.androidx.scope.dsl.activityRetainedScope
-import org.koin.compose.scope.UnboundKoinScope
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinDelicateAPI
-import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.context.GlobalContext
 import org.koin.core.module.Module
-import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import org.koin.dsl.navigation3.navigation
 import org.koin.plugin.module.dsl.factory
 import org.koin.plugin.module.dsl.single
 import org.koin.plugin.module.dsl.viewModel
 import org.koin.plugin.module.dsl.worker
-import kotlin.uuid.Uuid
 
 public object KoinModule {
 
     private const val VAULT_SCOPE = "unlocked_vault"
 
     // Koin does not support Dagger's '@Reusable' feature (https://github.com/InsertKoinIO/koin/issues/1378)
-    @OptIn(KoinExperimentalAPI::class, KoinDelicateAPI::class)
     public val module: Module = module {
 
         single<PersistentPreferences>()
@@ -70,58 +57,9 @@ public object KoinModule {
         factory<VaultFactory>()
 
         worker<UniversalWorker>()
+
         viewModel<LauncherViewModel>()
         viewModel<AppSettingsViewModel>()
-
-        activityRetainedScope {
-            // scoped { NavBackStack(Page.Launcher) }
-            scoped { Navigator(startDestination = Page.Launcher) } bind Navigator::class
-
-            navigation<Page.Launcher> {
-                val navigator = get<Navigator>()
-                LauncherPage(
-                    navigateAndClearBackStack = { route -> navigator.goToReplace(route) },
-                    navigateTo = { route -> navigator.goTo(route) },
-                    viewModel = koinViewModel()
-                )
-            }
-
-            navigation<Page.Browser> { route ->
-                val navigator = get<Navigator>()
-                BrowserPage(
-                    parameters = route,
-                    navigate = { route -> navigator.goTo(route) },
-                    viewModel = koinViewModel(scope = getScope(route.vaultId))
-                )
-            }
-
-            navigation<Page.Presenter> { route ->
-                val navigator = get<Navigator>()
-                PresenterPage(
-                    parameters = route,
-                    navigateBack = navigator::goBack,
-                    viewModel = koinViewModel(scope = getScope(route.vaultId)) {
-                        parametersOf(Uuid.parseHex(route.folderId))
-                    }
-                )
-            }
-            navigation<Page.SettingsHome> { route ->
-                val navigator = get<Navigator>()
-                if (route.vaultId != null) {
-                    UnboundKoinScope(getScope(route.vaultId)) {
-                        SettingsHomePage(
-                            navigateBack = navigator::goBack,
-                            vaultId = route.vaultId
-                        )
-                    }
-                } else {
-                    SettingsHomePage(
-                        navigateBack = navigator::goBack,
-                        vaultId = null
-                    )
-                }
-            }
-        }
 
         scope(named(VAULT_SCOPE)) {
 

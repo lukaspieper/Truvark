@@ -7,23 +7,38 @@
 package de.lukaspieper.truvark.ui.views.settings.app
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.LabeledSwitch
-import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
+import de.lukaspieper.truvark.ui.extensions.safeDrawingStart
 import de.lukaspieper.truvark.ui.preview.PagePreviews
+import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 public fun AppSettingsPage(
-    modifier: Modifier = Modifier,
-    viewModel: AppSettingsViewModel = koinViewModel()
+    navigateBack: () -> Unit,
+    isExpandedLayout: Boolean,
+    viewModel: AppSettingsViewModel,
+    modifier: Modifier = Modifier
 ) {
     val imagesFitScreen = viewModel.imagesFitScreen.collectAsStateWithLifecycle(false)
     val isLoggingEnabled = viewModel.isLoggingEnabled.collectAsStateWithLifecycle(false)
@@ -33,6 +48,8 @@ public fun AppSettingsPage(
         updateImagesFitScreen = viewModel::applyImagesFitScreen,
         isLoggingEnabled = isLoggingEnabled.value,
         updateIsLoggingEnabled = viewModel::applyLogging,
+        isExpandedLayout = isExpandedLayout,
+        navigateBack = navigateBack,
         modifier = modifier
     )
 }
@@ -43,33 +60,60 @@ private fun AppSettingsView(
     updateImagesFitScreen: (Boolean) -> Unit,
     isLoggingEnabled: Boolean,
     updateIsLoggingEnabled: (Boolean) -> Unit,
+    isExpandedLayout: Boolean,
+    navigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        LabeledSwitch(
-            text = stringResource(R.string.fit_images_to_match_screen),
-            checked = imagesFitScreen,
-            onCheckedChange = updateImagesFitScreen,
-            modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
-        )
+    val containerColor = when {
+        isExpandedLayout -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    Scaffold(
+        modifier = modifier,
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.safeDrawingStart),
+        containerColor = containerColor,
+        topBar = {
+            TopAppBar(
+                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsets.safeDrawingStart),
+                colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
+                title = { Text(text = stringResource(R.string.app)) },
+                navigationIcon = {
+                    if (!isExpandedLayout) {
+                        IconButton(onClick = navigateBack) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                        }
+                    }
+                }
+            )
+        }
+    ) { contentPadding ->
+        Column(modifier = Modifier.padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))) {
+            LabeledSwitch(
+                text = stringResource(R.string.fit_images_to_match_screen),
+                checked = imagesFitScreen,
+                onCheckedChange = updateImagesFitScreen,
+                modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
+            )
 
-        LabeledSwitch(
-            text = stringResource(R.string.logging),
-            checked = isLoggingEnabled,
-            onCheckedChange = updateIsLoggingEnabled,
-            modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
-        )
+            LabeledSwitch(
+                text = stringResource(R.string.logging),
+                checked = isLoggingEnabled,
+                onCheckedChange = updateIsLoggingEnabled,
+                modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
+            )
+        }
     }
 }
 
 @PagePreviews
 @Composable
-private fun AppSettingsViewPreview() = DetailPanePreviewHost { contentPadding ->
+private fun AppSettingsViewPreview() = PreviewHost {
     AppSettingsView(
         imagesFitScreen = false,
         updateImagesFitScreen = {},
         isLoggingEnabled = false,
         updateIsLoggingEnabled = {},
-        modifier = Modifier.padding(contentPadding)
+        isExpandedLayout = false,
+        navigateBack = {}
     )
 }

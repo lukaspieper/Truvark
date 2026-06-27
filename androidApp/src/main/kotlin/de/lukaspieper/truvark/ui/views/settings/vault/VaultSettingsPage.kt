@@ -14,24 +14,34 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.compose.rememberAuthenticationLauncher
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -47,17 +57,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
-import de.lukaspieper.truvark.ui.preview.DetailPanePreviewHost
+import de.lukaspieper.truvark.ui.extensions.safeDrawingStart
 import de.lukaspieper.truvark.ui.preview.PagePreviews
+import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
 import kotlinx.coroutines.CompletableDeferred
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 public fun VaultSettingsPage(
-    modifier: Modifier = Modifier,
-    viewModel: VaultSettingsViewModel = koinViewModel()
+    viewModel: VaultSettingsViewModel,
+    navigateBack: () -> Unit,
+    isExpandedLayout: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current!!
 
@@ -92,6 +104,8 @@ public fun VaultSettingsPage(
                 else -> BiometricSetupResult.Error
             }
         },
+        isExpandedLayout = isExpandedLayout,
+        navigateBack = navigateBack,
         modifier = modifier
     )
 }
@@ -103,24 +117,51 @@ public fun VaultSettingsSections(
     biometricsStatus: Int,
     isVaultUsingBiometricUnlocking: Boolean,
     setupBiometricUnlocking: suspend (ByteArray) -> BiometricSetupResult,
+    isExpandedLayout: Boolean,
+    navigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        verticalArrangement = spacedBy(48.dp),
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        VaultName(
-            vaultName = vaultName,
-            updateVaultName = updateVaultName
-        )
+    val containerColor = when {
+        isExpandedLayout -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    Scaffold(
+        modifier = modifier,
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.safeDrawingStart),
+        containerColor = containerColor,
+        topBar = {
+            TopAppBar(
+                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsets.safeDrawingStart),
+                colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
+                title = { Text(text = stringResource(R.string.vault)) },
+                navigationIcon = {
+                    if (!isExpandedLayout) {
+                        IconButton(onClick = navigateBack) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                        }
+                    }
+                }
+            )
+        }
+    ) { contentPadding ->
+        Column(
+            verticalArrangement = spacedBy(48.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
+                .verticalScroll(rememberScrollState())
+        ) {
+            VaultName(
+                vaultName = vaultName,
+                updateVaultName = updateVaultName
+            )
 
-        BiometricsView(
-            biometricsStatus = biometricsStatus,
-            isVaultUsingBiometricUnlocking = isVaultUsingBiometricUnlocking,
-            setupBiometricUnlocking = setupBiometricUnlocking
-        )
+            BiometricsView(
+                biometricsStatus = biometricsStatus,
+                isVaultUsingBiometricUnlocking = isVaultUsingBiometricUnlocking,
+                setupBiometricUnlocking = setupBiometricUnlocking
+            )
+        }
     }
 }
 
@@ -190,13 +231,14 @@ public fun VaultName(
 
 @PagePreviews
 @Composable
-private fun VaultSettingsSectionsPreview() = DetailPanePreviewHost { contentPadding ->
+private fun VaultSettingsSectionsPreview() = PreviewHost {
     VaultSettingsSections(
         vaultName = "Preview vault",
         updateVaultName = { true },
         biometricsStatus = BiometricManager.BIOMETRIC_SUCCESS,
         isVaultUsingBiometricUnlocking = false,
         setupBiometricUnlocking = { BiometricSetupResult.Success },
-        modifier = Modifier.padding(contentPadding)
+        isExpandedLayout = false,
+        navigateBack = {}
     )
 }
