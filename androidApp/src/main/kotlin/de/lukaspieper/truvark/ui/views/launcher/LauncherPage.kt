@@ -72,8 +72,9 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.ListRoute
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.Route
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
 import de.lukaspieper.truvark.ui.preview.PagePreviews
@@ -91,8 +92,8 @@ import logcat.logcat
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 public fun LauncherPage(
-    navigateAndClearBackStack: (Page) -> Unit,
-    navigateTo: (Page) -> Unit,
+    navigateAndClearBackStack: (Route) -> Unit,
+    navigateTo: (Route) -> Unit,
     viewModel: LauncherViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -100,7 +101,7 @@ public fun LauncherPage(
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
-            navigateAndClearBackStack(Page.Browser(viewModel.vaultConfig!!.id.toHexString()))
+            navigateAndClearBackStack(Route.Browser(viewModel.vaultConfig!!.id.toHexString()))
         }
     }
 
@@ -142,7 +143,7 @@ public fun LauncherPage(
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
-        navigateToSettings = { navigateTo(Page.SettingsHome(vaultId = null)) },
+        navigateToSettings = { navigateTo(ListRoute.SettingsHome(vaultId = null)) },
         showBiometricPrompt = {
             try {
                 authLauncher.launch(

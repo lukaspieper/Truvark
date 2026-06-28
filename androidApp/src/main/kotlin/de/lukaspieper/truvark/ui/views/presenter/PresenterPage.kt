@@ -52,7 +52,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.source.MediaSource
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.Route
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
 import de.lukaspieper.truvark.ui.extensions.safeDrawingTopAppBar
@@ -68,7 +68,7 @@ import kotlin.uuid.Uuid
 
 @Composable
 public fun PresenterPage(
-    parameters: Page.Presenter,
+    parameters: Route.Presenter,
     navigateBack: () -> Unit,
     viewModel: PresenterViewModel,
     modifier: Modifier = Modifier

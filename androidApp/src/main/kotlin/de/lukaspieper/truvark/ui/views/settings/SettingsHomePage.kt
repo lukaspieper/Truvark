@@ -40,9 +40,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation3.runtime.NavKey
-import de.lukaspieper.truvark.DetailPage
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.DetailRoute
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.Route
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -55,16 +55,16 @@ import logcat.logcat
 @Composable
 public fun SettingsHomePage(
     navigateBack: () -> Unit,
-    navigateTo: (Page) -> Unit,
+    navigateTo: (Route) -> Unit,
     vaultId: String?,
     isExpandedLayout: Boolean,
-    currentPage: NavKey?,
+    currentRoute: NavKey?,
     modifier: Modifier = Modifier
 ) {
     LaunchedEffect(navigateTo, isExpandedLayout) {
         // Do initial navigation when both panes are visible.
-        if (isExpandedLayout && currentPage !is DetailPage) {
-            navigateTo(if (vaultId != null) Page.VaultSettings(vaultId = vaultId) else Page.AppSettings)
+        if (isExpandedLayout && currentRoute !is DetailRoute) {
+            navigateTo(if (vaultId != null) DetailRoute.VaultSettings(vaultId = vaultId) else DetailRoute.AppSettings)
         }
     }
 
@@ -100,9 +100,9 @@ public fun SettingsHomePage(
                     .verticalScroll(rememberScrollState())
                     .padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
             ) {
-                val isVaultSettingsSelected = currentPage is Page.VaultSettings
+                val isVaultSettingsSelected = currentRoute is DetailRoute.VaultSettings
                 SegmentedListItem(
-                    onClick = { navigateTo(Page.VaultSettings(vaultId = vaultId!!)) },
+                    onClick = { navigateTo(DetailRoute.VaultSettings(vaultId = vaultId!!)) },
                     shapes = roundShape,
                     colors = if (isVaultSettingsSelected) selectedColors else defaultColors,
                     enabled = !isVaultSettingsSelected && vaultId != null,
@@ -111,9 +111,9 @@ public fun SettingsHomePage(
                     supportingContent = { Text(stringResource(R.string.settings_description_vault)) },
                 )
 
-                val isAppSettingsSelected = currentPage is Page.AppSettings
+                val isAppSettingsSelected = currentRoute is DetailRoute.AppSettings
                 SegmentedListItem(
-                    onClick = { navigateTo(Page.AppSettings) },
+                    onClick = { navigateTo(DetailRoute.AppSettings) },
                     shapes = roundShape,
                     colors = if (isAppSettingsSelected) selectedColors else defaultColors,
                     enabled = !isAppSettingsSelected,
@@ -122,9 +122,9 @@ public fun SettingsHomePage(
                     supportingContent = { Text(stringResource(R.string.settings_description_app)) },
                 )
 
-                val isLicensesSelected = currentPage is Page.Licenses
+                val isLicensesSelected = currentRoute is DetailRoute.Licenses
                 SegmentedListItem(
-                    onClick = { navigateTo(Page.Licenses) },
+                    onClick = { navigateTo(DetailRoute.Licenses) },
                     shapes = roundShape,
                     colors = if (isLicensesSelected) selectedColors else defaultColors,
                     enabled = !isLicensesSelected,
@@ -161,6 +161,6 @@ private fun SettingsViewPreview() = PreviewHost {
         navigateTo = {},
         vaultId = null,
         isExpandedLayout = true,
-        currentPage = Page.Licenses,
+        currentRoute = DetailRoute.Licenses,
     )
 }
