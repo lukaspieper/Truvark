@@ -10,8 +10,7 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
@@ -44,7 +43,7 @@ import androidx.navigation3.runtime.NavKey
 import de.lukaspieper.truvark.DetailPage
 import de.lukaspieper.truvark.Page
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.ui.extensions.safeDrawingEnd
+import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -72,7 +71,7 @@ public fun SettingsHomePage(
     val context = LocalContext.current
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.safeDrawingEnd),
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsetsSides.End),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings)) },

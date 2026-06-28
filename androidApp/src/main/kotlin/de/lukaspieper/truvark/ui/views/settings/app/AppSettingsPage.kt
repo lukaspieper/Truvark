@@ -9,7 +9,7 @@ package de.lukaspieper.truvark.ui.views.settings.app
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.safeDrawing
@@ -28,7 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.LabeledSwitch
-import de.lukaspieper.truvark.ui.extensions.safeDrawingStart
+import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -70,11 +70,11 @@ private fun AppSettingsView(
     }
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.safeDrawingStart),
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsetsSides.Start),
         containerColor = containerColor,
         topBar = {
             TopAppBar(
-                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsets.safeDrawingStart),
+                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsetsSides.Start),
                 colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
                 title = { Text(text = stringResource(R.string.app)) },
                 navigationIcon = {

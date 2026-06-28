@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
-import de.lukaspieper.truvark.ui.extensions.safeDrawingStart
+import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -127,11 +127,11 @@ public fun VaultSettingsSections(
     }
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.safeDrawingStart),
+        contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsetsSides.Start),
         containerColor = containerColor,
         topBar = {
             TopAppBar(
-                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsets.safeDrawingStart),
+                windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsetsSides.Start),
                 colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
                 title = { Text(text = stringResource(R.string.vault)) },
                 navigationIcon = {
