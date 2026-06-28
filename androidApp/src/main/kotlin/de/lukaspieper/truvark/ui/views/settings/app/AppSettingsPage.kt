@@ -6,6 +6,7 @@
 
 package de.lukaspieper.truvark.ui.views.settings.app
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.ui.controls.LabeledSwitch
+import de.lukaspieper.truvark.ui.controls.SegmentedSwitchListItem
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -54,6 +56,7 @@ public fun AppSettingsPage(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AppSettingsView(
     imagesFitScreen: Boolean,
@@ -87,19 +90,20 @@ private fun AppSettingsView(
             )
         }
     ) { contentPadding ->
-        Column(modifier = Modifier.padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))) {
-            LabeledSwitch(
+        Column(
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+            modifier = Modifier.padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
+        ) {
+            SegmentedSwitchListItem(
                 text = stringResource(R.string.fit_images_to_match_screen),
                 checked = imagesFitScreen,
                 onCheckedChange = updateImagesFitScreen,
-                modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
             )
 
-            LabeledSwitch(
+            SegmentedSwitchListItem(
                 text = stringResource(R.string.logging),
                 checked = isLoggingEnabled,
                 onCheckedChange = updateIsLoggingEnabled,
-                modifier = Modifier.padding(horizontal = MaterialTheme.paddings.small)
             )
         }
     }
