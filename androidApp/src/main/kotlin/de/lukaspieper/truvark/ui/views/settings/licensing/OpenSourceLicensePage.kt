@@ -6,8 +6,6 @@
 
 package de.lukaspieper.truvark.ui.views.settings.licensing
 
-import android.content.res.Resources
-import androidx.annotation.RawRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,32 +21,28 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -59,60 +53,38 @@ import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.licensing.License.GeneralPublicLicenseV30OrLater
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun OpenSourceLicensePage(
     navigateBack: () -> Unit,
     isExpandedLayout: Boolean,
+    viewModel: OpenSourceLicenseViewModel,
     modifier: Modifier = Modifier
 ) {
-    val resources = LocalResources.current
-    val licensedItems by produceState(initialValue = emptyList()) {
-        value = fetchLicenseItems(resources)
-    }
-
     OpenSourceLicenseView(
-        licensedItems = licensedItems,
+        licensedItems = viewModel.licensedItems,
+        selectedLicense = viewModel.selectedLicense,
+        selectedLicenseText = viewModel.selectedLicenseText,
+        selectLicense = viewModel::selectLicense,
+        dismissRequest = viewModel::clearSelectedLicense,
         isExpandedLayout = isExpandedLayout,
         navigateBack = navigateBack,
         modifier = modifier
     )
 }
 
-private fun fetchLicenseItems(resources: Resources): List<LicensedItem> {
-    val metadata = resources.readRawStringResource(R.raw.third_party_license_metadata)
-    val licenseUris = resources.readRawStringResource(R.raw.third_party_licenses)
-
-    val undetectedLicensedItems: List<LicensedItem> = listOf()
-
-    val metadataRegex = Regex("^(\\d+):(\\d+)\\s(.+)\$")
-    return metadata.lineSequence()
-        .mapNotNull { line -> metadataRegex.matchEntire(line) }
-        .map { matchResult ->
-            val (uriStartIndex, uriLength, itemId) = matchResult.destructured
-            val licenseUri = licenseUris.substring(uriStartIndex.toInt(), uriStartIndex.toInt() + uriLength.toInt())
-            LicensedItem(itemId, License.getByUri(licenseUri))
-        }
-        .plus(undetectedLicensedItems)
-        .distinctBy { it.id.lowercase() }
-        .sortedBy { it.id.lowercase() }
-        .toList()
-}
-
-private fun Resources.readRawStringResource(@RawRes id: Int): String {
-    openRawResource(id).use { inputStream ->
-        return inputStream.bufferedReader().readText()
-    }
-}
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun OpenSourceLicenseView(
     licensedItems: List<LicensedItem>,
+    selectedLicense: License,
+    selectedLicenseText: String,
+    selectLicense: (License) -> Unit,
+    dismissRequest: () -> Unit,
     isExpandedLayout: Boolean,
     navigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedLicense by remember { mutableStateOf<License>(License.UnknownLicense) }
-
     val containerColor = when {
         isExpandedLayout -> MaterialTheme.colorScheme.surfaceContainer
         else -> MaterialTheme.colorScheme.surface
@@ -137,90 +109,102 @@ public fun OpenSourceLicenseView(
         }
     ) { contentPadding ->
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
             contentPadding = contentPadding + PaddingValues(all = MaterialTheme.paddings.large),
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                Card(
-                    onClick = { selectedLicense = GeneralPublicLicenseV30OrLater },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                SegmentedListItem(
+                    onClick = { selectLicense(GeneralPublicLicenseV30OrLater) },
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        leadingContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        supportingContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium
+                    shapes = ListItemDefaults.shapes(MaterialTheme.shapes.extraLarge),
+                    leadingContent = {
+                        Icon(
+                            painterResource(R.drawable.ic_truvark),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
                         )
-                        Text(
-                            text = GeneralPublicLicenseV30OrLater.name,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                    },
+                    content = { Text(text = stringResource(R.string.app_name)) },
+                    supportingContent = { Text(text = GeneralPublicLicenseV30OrLater.name) }
+                )
 
                 Spacer(modifier = Modifier.size(MaterialTheme.paddings.extraLarge))
             }
 
-            items(licensedItems) { licenseItem ->
-                Card(
+            itemsIndexed(licensedItems) { index, licenseItem ->
+                SegmentedListItem(
                     enabled = licenseItem.license != License.UnknownLicense,
-                    onClick = { selectedLicense = licenseItem.license },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(all = MaterialTheme.paddings.small)) {
-                        Text(
-                            text = licenseItem.id,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = licenseItem.license.name,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                    onClick = { selectLicense(licenseItem.license) },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    shapes = ListItemDefaults.segmentedShapes(index = index, count = licensedItems.size),
+                    content = { Text(text = licenseItem.id) },
+                    supportingContent = { Text(text = licenseItem.license.name) }
+                )
             }
         }
     }
 
     if (selectedLicense != License.UnknownLicense) {
-        val resources = LocalResources.current
-        val licenseText by produceState(initialValue = "") {
-            selectedLicense.textResId?.let { textResId ->
-                value = resources.readRawStringResource(textResId)
-            }
-        }
+        LicenseTextDialog(
+            license = selectedLicense,
+            licenseText = selectedLicenseText,
+            dismissRequest = dismissRequest
+        )
+    }
+}
 
-        Dialog(
-            onDismissRequest = { selectedLicense = License.UnknownLicense },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+@Composable
+private fun LicenseTextDialog(
+    license: License,
+    licenseText: String,
+    dismissRequest: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { dismissRequest() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier
+                .padding(MaterialTheme.paddings.small)
+                .sizeIn(maxWidth = 600.dp)
         ) {
-            Card(
-                shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier
-                    .padding(MaterialTheme.paddings.small)
-                    .sizeIn(maxWidth = 600.dp)
-            ) {
-                Box(Modifier.padding(horizontal = MaterialTheme.paddings.small)) {
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = license.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = dismissRequest) {
+                            Icon(Icons.Default.Close, contentDescription = null)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+
+                Box(Modifier.padding(horizontal = MaterialTheme.paddings.medium)) {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
                         Text(
                             text = licenseText,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = MaterialTheme.paddings.medium, bottom = 72.dp)
+                                .padding(vertical = MaterialTheme.paddings.medium)
                         )
-                    }
-
-                    FloatingActionButton(
-                        onClick = { selectedLicense = License.UnknownLicense },
-                        modifier = Modifier
-                            .align(alignment = Alignment.BottomEnd)
-                            .padding(bottom = MaterialTheme.paddings.small)
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = null)
                     }
                 }
             }
@@ -228,16 +212,37 @@ public fun OpenSourceLicenseView(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @PagePreviews
 @Composable
 private fun OpenSourceLicenseViewPreview() = PreviewHost {
-    val licensedItems = List(10) {
-        LicensedItem("Item $it", License.UnknownLicense)
-    }
-
     OpenSourceLicenseView(
-        licensedItems = licensedItems,
+        licensedItems = List(16) { LicensedItem("Item $it", License.ApacheLicenseV20) },
+        selectedLicense = License.UnknownLicense,
+        selectedLicenseText = "",
+        selectLicense = {},
+        dismissRequest = {},
         isExpandedLayout = false,
         navigateBack = {}
+    )
+}
+
+@PagePreviews
+@Composable
+private fun LicenseTextDialogPreview() = PreviewHost {
+    LicenseTextDialog(
+        license = License.ApacheLicenseV20,
+        licenseText = """
+            Apache License
+            Version 2.0, January 2004
+            http://www.apache.org/licenses/
+
+            TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+            1. Definitions.
+            
+            [...]
+        """.trimIndent(),
+        dismissRequest = {}
     )
 }

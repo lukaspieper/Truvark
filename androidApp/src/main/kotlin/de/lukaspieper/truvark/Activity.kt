@@ -154,7 +154,8 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<DetailPaneRoute.Licenses>(metadata = ListDetailSceneStrategy.detailPane()) {
                             OpenSourceLicensePage(
                                 navigateBack = backStack::removeLastOrNull,
-                                isExpandedLayout = isExpandedLayout
+                                isExpandedLayout = isExpandedLayout,
+                                viewModel = koinViewModel()
                             )
                         }
                     }

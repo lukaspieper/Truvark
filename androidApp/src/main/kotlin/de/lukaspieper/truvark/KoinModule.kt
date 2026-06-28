@@ -25,6 +25,7 @@ import de.lukaspieper.truvark.ui.views.browser.BrowserViewModel
 import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel
 import de.lukaspieper.truvark.ui.views.presenter.PresenterViewModel
 import de.lukaspieper.truvark.ui.views.settings.app.AppSettingsViewModel
+import de.lukaspieper.truvark.ui.views.settings.licensing.OpenSourceLicenseViewModel
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel
 import de.lukaspieper.truvark.work.Scheduler
 import de.lukaspieper.truvark.work.UniversalWorker
@@ -60,6 +61,7 @@ public object KoinModule {
 
         viewModel<LauncherViewModel>()
         viewModel<AppSettingsViewModel>()
+        viewModel<OpenSourceLicenseViewModel>()
 
         scope(named(VAULT_SCOPE)) {
 

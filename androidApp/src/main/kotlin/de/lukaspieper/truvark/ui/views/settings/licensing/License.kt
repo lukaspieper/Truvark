@@ -32,7 +32,7 @@ public sealed class License(
     )
 
     public data object ApacheLicenseV20 : License(
-        name = "Apache License Version 2.0",
+        name = "Apache License 2.0",
         textResId = R.raw.apache_2_0
     )
 
@@ -42,12 +42,12 @@ public sealed class License(
     )
 
     public data object GeneralPublicLicenseV30OrLater : License(
-        name = "GNU General Public License",
+        name = "GNU General Public License v3.0 or later",
         textResId = R.raw.gpl_3_0_or_later
     )
 
     public data object Bsd3License : License(
-        name = "The 3-Clause BSD License",
+        name = "BSD 3-Clause \"New\" or \"Revised\" License",
         textResId = R.raw.bsd_3_clause
     )
 }
