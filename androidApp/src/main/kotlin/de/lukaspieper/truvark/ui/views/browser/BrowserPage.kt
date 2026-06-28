@@ -105,8 +105,8 @@ public fun BrowserPage(
             navigate(
                 Route.Presenter(
                     parameters.vaultId,
-                    viewModel.currentFolderHierarchyLevel.folder.id.toHexString(),
-                    cipherFileEntity.id.toHexString()
+                    viewModel.currentFolderHierarchyLevel.folder.id,
+                    cipherFileEntity.id
                 )
             )
         },

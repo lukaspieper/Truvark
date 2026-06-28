@@ -81,7 +81,7 @@ public fun PresenterPage(
         createCipherZoomableImageSource = viewModel::createCipherZoomableImageSource,
         createMediaSource = viewModel::createMediaSource,
         imagesFitScreen = imagesFitScreen,
-        initialFileId = Uuid.parseHex(parameters.fileId),
+        initialFileId = parameters.fileId,
         navigateBack = navigateBack,
         modifier = modifier
     )

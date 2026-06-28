@@ -8,28 +8,28 @@ package de.lukaspieper.truvark
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 public sealed interface Route : NavKey {
     @Serializable
     public data object Launcher : Route
 
     @Serializable
-    public data class Browser(val vaultId: String) : Route
+    public data class Browser(val vaultId: Uuid) : Route
 
-    // Navigation does not support Uuid, using String here.
     @Serializable
-    public data class Presenter(val vaultId: String, val folderId: String, val fileId: String) : Route
+    public data class Presenter(val vaultId: Uuid, val folderId: Uuid, val fileId: Uuid) : Route
 }
 
 public sealed interface ListRoute : Route {
 
     @Serializable
-    public data class SettingsHome(val vaultId: String?) : ListRoute
+    public data class SettingsHome(val vaultId: Uuid?) : ListRoute
 }
 
 public sealed interface DetailRoute : Route {
     @Serializable
-    public data class VaultSettings(val vaultId: String) : DetailRoute
+    public data class VaultSettings(val vaultId: Uuid) : DetailRoute
 
     @Serializable
     public data object AppSettings : DetailRoute

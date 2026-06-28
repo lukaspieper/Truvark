@@ -101,7 +101,7 @@ public fun LauncherPage(
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
-            navigateAndClearBackStack(Route.Browser(viewModel.vaultConfig!!.id.toHexString()))
+            navigateAndClearBackStack(Route.Browser(viewModel.vaultConfig!!.id))
         }
     }
 

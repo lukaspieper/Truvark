@@ -100,7 +100,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                             BrowserPage(
                                 parameters = route,
                                 navigate = { route -> backStack.add(route) },
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId))
+                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString()))
                             )
                         }
 
@@ -108,8 +108,8 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                             PresenterPage(
                                 parameters = route,
                                 navigateBack = backStack::removeLastOrNull,
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId)) {
-                                    parametersOf(Uuid.parseHex(route.folderId))
+                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString())) {
+                                    parametersOf(route.folderId)
                                 }
                             )
                         }
@@ -117,7 +117,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<ListRoute.SettingsHome>(metadata = ListDetailSceneStrategy.listPane()) { route ->
                             SettingsHomePage(
                                 navigateBack = {
-                                    backStack.goBackTo(Route.Launcher, Route.Browser(route.vaultId ?: ""))
+                                    backStack.goBackTo(Route.Launcher, Route.Browser(route.vaultId ?: Uuid.NIL))
                                 },
                                 navigateTo = { route -> backStack.goToSettingsSubPage(route) },
                                 vaultId = route.vaultId,
@@ -129,7 +129,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<DetailRoute.VaultSettings>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
                             VaultSettingsPage(
                                 navigateBack = backStack::removeLastOrNull,
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId)),
+                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString())),
                                 isExpandedLayout = isExpandedLayout
                             )
                         }

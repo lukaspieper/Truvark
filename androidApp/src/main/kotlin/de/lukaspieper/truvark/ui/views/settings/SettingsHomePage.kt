@@ -50,13 +50,14 @@ import de.lukaspieper.truvark.ui.theme.paddings
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun SettingsHomePage(
     navigateBack: () -> Unit,
     navigateTo: (Route) -> Unit,
-    vaultId: String?,
+    vaultId: Uuid?,
     isExpandedLayout: Boolean,
     currentRoute: NavKey?,
     modifier: Modifier = Modifier
