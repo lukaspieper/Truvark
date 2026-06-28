@@ -68,7 +68,7 @@ import kotlin.uuid.Uuid
 
 @Composable
 public fun PresenterPage(
-    parameters: Route.Presenter,
+    route: Route.Presenter,
     navigateBack: () -> Unit,
     viewModel: PresenterViewModel,
     modifier: Modifier = Modifier
@@ -81,7 +81,7 @@ public fun PresenterPage(
         createCipherZoomableImageSource = viewModel::createCipherZoomableImageSource,
         createMediaSource = viewModel::createMediaSource,
         imagesFitScreen = imagesFitScreen,
-        initialFileId = parameters.fileId,
+        initialFileId = route.fileId,
         navigateBack = navigateBack,
         modifier = modifier
     )

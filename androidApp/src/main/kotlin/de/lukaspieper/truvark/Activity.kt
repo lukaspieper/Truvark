@@ -98,7 +98,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
                         entry<Route.Browser> { route ->
                             BrowserPage(
-                                parameters = route,
+                                route = route,
                                 navigate = { route -> backStack.add(route) },
                                 viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString()))
                             )
@@ -106,7 +106,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
                         entry<Route.Presenter> { route ->
                             PresenterPage(
-                                parameters = route,
+                                route = route,
                                 navigateBack = backStack::removeLastOrNull,
                                 viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString())) {
                                     parametersOf(route.folderId)
@@ -116,13 +116,13 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
                         entry<ListRoute.SettingsHome>(metadata = ListDetailSceneStrategy.listPane()) { route ->
                             SettingsHomePage(
+                                route = route,
+                                currentDetailRoute = backStack.lastOrNull() as? DetailRoute,
                                 navigateBack = {
                                     backStack.goBackTo(Route.Launcher, Route.Browser(route.vaultId ?: Uuid.NIL))
                                 },
                                 navigateTo = { route -> backStack.goToSettingsSubPage(route) },
-                                vaultId = route.vaultId,
-                                isExpandedLayout = isExpandedLayout,
-                                currentRoute = backStack.lastOrNull()
+                                isExpandedLayout = isExpandedLayout
                             )
                         }
 
