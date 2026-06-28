@@ -1,0 +1,48 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Lukas Pieper
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+package de.lukaspieper.truvark.ui.controls
+
+import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import de.lukaspieper.truvark.ui.theme.paddings
+
+@Composable
+public fun SettingsSectionCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Column(
+        verticalArrangement = spacedBy(MaterialTheme.paddings.small),
+        modifier = modifier
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = MaterialTheme.paddings.small)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            shape = MaterialTheme.shapes.large,
+        ) {
+            Column(modifier = Modifier.padding(MaterialTheme.paddings.large)) {
+                content()
+            }
+        }
+    }
+}

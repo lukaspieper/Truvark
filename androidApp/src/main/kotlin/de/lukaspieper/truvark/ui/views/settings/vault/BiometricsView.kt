@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.PasswordField
+import de.lukaspieper.truvark.ui.controls.SettingsSectionCard
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -54,26 +56,25 @@ public fun BiometricsView(
     modifier: Modifier = Modifier
 ) {
     if (biometricsStatus == BiometricManager.BIOMETRIC_SUCCESS) {
-        Column(
-            verticalArrangement = spacedBy(MaterialTheme.paddings.medium),
+        SettingsSectionCard(
+            title = stringResource(R.string.biometric_unlocking),
             modifier = modifier
         ) {
-            Text(
-                text = stringResource(R.string.biometric_unlocking),
-                style = MaterialTheme.typography.titleLarge
-            )
+            Column(
+                verticalArrangement = spacedBy(MaterialTheme.paddings.medium),
+            ) {
+                if (isVaultUsingBiometricUnlocking) {
+                    ActiveBiometricsIndicator()
+                }
 
-            if (isVaultUsingBiometricUnlocking) {
-                ActiveBiometricsIndicator()
+                Text(
+                    text = stringResource(R.string.setup_biometrics_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify
+                )
+
+                SetupBiometricUnlockingView(setupBiometricUnlocking)
             }
-
-            Text(
-                text = stringResource(R.string.setup_biometrics_description),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Justify
-            )
-
-            SetupBiometricUnlockingView(setupBiometricUnlocking)
         }
     }
 }
@@ -128,23 +129,27 @@ private fun SetupBiometricUnlockingView(
 
 @Composable
 private fun ActiveBiometricsIndicator() {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = MaterialTheme.shapes.large,
+    ) {
         Row(
             horizontalArrangement = spacedBy(MaterialTheme.paddings.medium),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(MaterialTheme.paddings.medium)
+            modifier = Modifier.padding(MaterialTheme.paddings.large)
         ) {
             Icon(
                 Icons.Outlined.CheckCircle,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.requiredSize(32.dp)
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.requiredSize(24.dp)
             )
 
             Text(
                 text = stringResource(R.string.vault_using_biometric_unlocking),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
     }

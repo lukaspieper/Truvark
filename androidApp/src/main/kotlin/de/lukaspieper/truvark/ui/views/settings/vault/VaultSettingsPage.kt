@@ -53,10 +53,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
+import de.lukaspieper.truvark.ui.controls.SettingsSectionCard
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -145,7 +145,7 @@ public fun VaultSettingsSections(
         }
     ) { contentPadding ->
         Column(
-            verticalArrangement = spacedBy(48.dp),
+            verticalArrangement = spacedBy(MaterialTheme.paddings.extraLarge),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
@@ -171,59 +171,58 @@ public fun VaultName(
     updateVaultName: (String) -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        verticalArrangement = spacedBy(MaterialTheme.paddings.medium),
+    SettingsSectionCard(
+        title = stringResource(R.string.vault_name),
         modifier = modifier
     ) {
-        Text(
-            text = stringResource(R.string.vault_name),
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Text(
-            text = stringResource(R.string.vault_name_change_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Justify
-        )
-
-        Row(
-            horizontalArrangement = spacedBy(MaterialTheme.paddings.medium),
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            verticalArrangement = spacedBy(MaterialTheme.paddings.medium)
         ) {
-            var editableVaultName by rememberSaveable(vaultName) { mutableStateOf(vaultName) }
-            var isInputValid by rememberSaveable { mutableStateOf(true) }
-            val isVaultNameEdited by remember(vaultName, editableVaultName) {
-                derivedStateOf { editableVaultName != vaultName }
-            }
-
-            TextField(
-                value = editableVaultName,
-                onValueChange = {
-                    if (it.length <= MAX_VAULT_NAME_LENGTH) {
-                        editableVaultName = it
-                    }
-                },
-                label = { Text(stringResource(R.string.vault_name)) },
-                singleLine = true,
-                isError = isInputValid.not(),
-                supportingText = {
-                    Text(
-                        text = "${editableVaultName.length}/${MAX_VAULT_NAME_LENGTH}",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                    )
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { isInputValid = updateVaultName(editableVaultName) }),
-                modifier = Modifier.weight(1f)
+            Text(
+                text = stringResource(R.string.vault_name_change_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Justify
             )
 
-            Button(
-                onClick = { isInputValid = updateVaultName(editableVaultName) },
-                enabled = isVaultNameEdited,
-                modifier = Modifier.height(TextFieldDefaults.MinHeight)
+            Row(
+                horizontalArrangement = spacedBy(MaterialTheme.paddings.medium),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(if (isVaultNameEdited) Icons.Default.Save else Icons.Default.Done, null)
+                var editableVaultName by rememberSaveable(vaultName) { mutableStateOf(vaultName) }
+                var isInputValid by rememberSaveable { mutableStateOf(true) }
+                val isVaultNameEdited by remember(vaultName, editableVaultName) {
+                    derivedStateOf { editableVaultName != vaultName }
+                }
+
+                TextField(
+                    value = editableVaultName,
+                    onValueChange = {
+                        if (it.length <= MAX_VAULT_NAME_LENGTH) {
+                            editableVaultName = it
+                        }
+                    },
+                    label = { Text(stringResource(R.string.vault_name)) },
+                    singleLine = true,
+                    isError = isInputValid.not(),
+                    supportingText = {
+                        Text(
+                            text = "${editableVaultName.length}/${MAX_VAULT_NAME_LENGTH}",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End,
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { isInputValid = updateVaultName(editableVaultName) }),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Button(
+                    onClick = { isInputValid = updateVaultName(editableVaultName) },
+                    enabled = isVaultNameEdited,
+                    modifier = Modifier.height(TextFieldDefaults.MinHeight)
+                ) {
+                    Icon(if (isVaultNameEdited) Icons.Default.Save else Icons.Default.Done, null)
+                }
             }
         }
     }
