@@ -17,9 +17,11 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -38,6 +40,8 @@ import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
 import de.lukaspieper.truvark.ui.views.settings.app.AppSettingsPage
 import de.lukaspieper.truvark.ui.views.settings.licensing.OpenSourceLicensePage
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsPage
+import logcat.LogPriority
+import logcat.logcat
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.activityRetainedScope
 import org.koin.compose.viewmodel.koinViewModel
@@ -46,7 +50,6 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.KoinComponent
 import org.koin.core.parameter.parametersOf
 import org.koin.core.scope.Scope
-import kotlin.collections.lastIndex
 import kotlin.uuid.Uuid
 
 /**
@@ -67,6 +70,14 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
             AppTheme {
                 val backStack = rememberNavBackStack(SinglePaneRoute.Launcher)
 
+                LaunchedEffect(backStack) {
+                    snapshotFlow { backStack.toList() }.collect { stack ->
+                        logcat(LogPriority.DEBUG) {
+                            "NavBackStack: ${stack.joinToString(" > ")}"
+                        }
+                    }
+                }
+
                 // Override the defaults so that there isn't a horizontal space between the panes.
                 // See b/418201867
                 val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
@@ -78,7 +89,6 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                     derivedStateOf { listDetailStrategy.directive.maxHorizontalPartitions > 1 }
                 }
 
-                // TODO: Handle multi-touch navigation conflicts
                 NavDisplay(
                     modifier = Modifier.background(MaterialTheme.colorScheme.background),
                     backStack = backStack,
@@ -100,7 +110,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<SinglePaneRoute.Browser> { route ->
                             BrowserPage(
                                 route = route,
-                                navigateTo = backStack::add,
+                                navigateTo = { route -> backStack.addSingle(route) },
                                 viewModel = koinViewModel(scope = getScope(route.vaultId))
                             )
                         }
@@ -155,6 +165,20 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
     private fun KoinComponent.getScope(scopeId: Uuid): Scope {
         return getKoin().getScope(scopeId.toHexString())
+    }
+
+    /**
+     * Adds the given route to the back stack if no other instance of the same route class is already present at the
+     * top of the back stack. This prevents multitouch navigation conflicts.
+     *
+     * Consider using `dropUnlessResumed` instead.
+     */
+    private fun NavBackStack<NavKey>.addSingle(route: Route) {
+        val current = lastOrNull()
+
+        if (current == null || current::class != route::class) {
+            add(route)
+        }
     }
 
     private fun NavBackStack<NavKey>.goToDetailRoute(route: DetailPaneRoute) {
