@@ -37,11 +37,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -70,8 +72,10 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.Route
+import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
 import de.lukaspieper.truvark.ui.preview.PagePreviews
@@ -85,20 +89,20 @@ import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
-import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 public fun LauncherPage(
-    navigateAndClearBackStack: (Page) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LauncherViewModel = koinViewModel()
+    navigateAndClearBackStack: (Route) -> Unit,
+    navigateTo: (Route) -> Unit,
+    viewModel: LauncherViewModel,
+    modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current!!
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
-            navigateAndClearBackStack(Page.Browser(viewModel.vaultConfig!!.id.toHexString()))
+            navigateAndClearBackStack(SinglePaneRoute.Browser(viewModel.vaultConfig!!.id))
         }
     }
 
@@ -140,6 +144,7 @@ public fun LauncherPage(
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
+        navigateToSettings = { navigateTo(ListPaneRoute.SettingsHome(vaultId = null)) },
         showBiometricPrompt = {
             try {
                 authLauncher.launch(
@@ -175,12 +180,19 @@ private fun LauncherView(
     unlockingErrorText: Int?,
     updateState: (LauncherViewModel.LauncherState) -> Unit,
     unlockVaultWithPassword: (ByteArray) -> Unit,
+    navigateToSettings: () -> Unit,
     showBiometricPrompt: () -> Unit,
     setupDialog: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     SafeDrawingScaffold(
         largeTopAppBarTitle = stringResource(R.string.app_name),
+        largeTopAppBarActions = {
+            IconButton(
+                onClick = navigateToSettings,
+                content = { Icon(Icons.Default.Settings, null) }
+            )
+        },
         modifier = modifier,
     ) { paddingValues ->
         Column(
@@ -429,6 +441,7 @@ private fun NoNotificationPermissionPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )
@@ -446,6 +459,7 @@ private fun NoVaultSelectedPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )
@@ -463,6 +477,7 @@ private fun VaultSelectedPreview() = PreviewHost {
         unlockingErrorText = null,
         updateState = {},
         unlockVaultWithPassword = {},
+        navigateToSettings = {},
         showBiometricPrompt = {},
         setupDialog = {}
     )

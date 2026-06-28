@@ -57,8 +57,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.Route
+import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
@@ -69,15 +71,14 @@ import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
-    parameters: Page.Browser,
-    navigate: (Page) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: BrowserViewModel = koinViewModel()
+    route: SinglePaneRoute.Browser,
+    navigateTo: (Route) -> Unit,
+    viewModel: BrowserViewModel,
+    modifier: Modifier = Modifier
 ) {
     BackHandler(enabled = viewModel.isRootLevel.not()) {
         viewModel.navigateToParentFolder()
@@ -100,13 +101,13 @@ public fun BrowserPage(
         deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
         updateIsListLayout = viewModel::updateIsListLayout,
-        navigateToSettings = { navigate(Page.SettingsHome(parameters.vaultId)) },
+        navigateToSettings = { navigateTo(ListPaneRoute.SettingsHome(route.vaultId)) },
         navigateToFilePresenter = { cipherFileEntity ->
-            navigate(
-                Page.Presenter(
-                    parameters.vaultId,
-                    viewModel.currentFolderHierarchyLevel.folder.id.toHexString(),
-                    cipherFileEntity.id.toHexString()
+            navigateTo(
+                SinglePaneRoute.Presenter(
+                    route.vaultId,
+                    viewModel.currentFolderHierarchyLevel.folder.id,
+                    cipherFileEntity.id
                 )
             )
         },

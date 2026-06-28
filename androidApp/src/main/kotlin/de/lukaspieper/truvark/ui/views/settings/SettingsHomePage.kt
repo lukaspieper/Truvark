@@ -7,14 +7,15 @@
 package de.lukaspieper.truvark.ui.views.settings
 
 import android.content.Intent
-import android.os.Bundle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.plus
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -22,210 +23,148 @@ import androidx.compose.material.icons.filled.AppSettingsAlt
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Copyright
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
-import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.net.toUri
+import de.lukaspieper.truvark.DetailPaneRoute
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.ui.controls.SafeDrawingListDetailPaneScaffold
+import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
-import de.lukaspieper.truvark.ui.views.settings.app.AppSettingsPage
-import de.lukaspieper.truvark.ui.views.settings.licensing.OpenSourceLicensePage
-import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsPage
-import kotlinx.coroutines.launch
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun SettingsHomePage(
+    route: ListPaneRoute.SettingsHome,
+    currentDetailPaneRoute: DetailPaneRoute?,
     navigateBack: () -> Unit,
+    navigateToDetailPane: (DetailPaneRoute) -> Unit,
+    isExpandedLayout: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val settingsMenuItems = mapOf(
-        SettingsMenuItem.Key.VAULT to SettingsMenuItem.Internal(
-            Icons.Default.Lock, R.string.vault, R.string.settings_description_vault
-        ),
-        SettingsMenuItem.Key.APP to SettingsMenuItem.Internal(
-            Icons.Default.AppSettingsAlt, R.string.app, R.string.settings_description_app
-        ),
-        SettingsMenuItem.Key.OSS_LICENSES to SettingsMenuItem.Internal(
-            Icons.Default.Copyright, R.string.settings_licensing
-        ),
-        SettingsMenuItem.Key.SOURCE_CODE to SettingsMenuItem.External(
-            Icons.Default.Code, R.string.source_code, null, "https://github.com/lukaspieper/Truvark".toUri()
-        )
-    )
-
-    val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<SettingsMenuItem.Key>()
-    val selectedMenuItem by remember(scaffoldNavigator.currentDestination) {
-        derivedStateOf { settingsMenuItems[scaffoldNavigator.currentDestination?.contentKey] }
-    }
-
-    LaunchedEffect(scaffoldNavigator) {
-        // Do initial navigation when both panes are visible. Note that primary maps to the detail pane.
-        val detailPaneState = scaffoldNavigator.scaffoldState.currentState.primary
-        if (scaffoldNavigator.currentDestination?.contentKey == null && detailPaneState == PaneAdaptedValue.Expanded) {
-            scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, SettingsMenuItem.Key.VAULT)
+    LaunchedEffect(navigateToDetailPane, isExpandedLayout) {
+        // Do initial navigation when both panes are visible.
+        if (isExpandedLayout && currentDetailPaneRoute == null) {
+            navigateToDetailPane(
+                when {
+                    route.vaultId != null -> DetailPaneRoute.VaultSettings(vaultId = route.vaultId)
+                    else -> DetailPaneRoute.AppSettings
+                }
+            )
         }
     }
 
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    SafeDrawingListDetailPaneScaffold(
-        scaffoldNavigator = scaffoldNavigator,
+    Scaffold(
         modifier = modifier,
-        listPaneTopAppBarTitle = stringResource(R.string.settings),
-        listPaneTopAppBarNavigationIcon = {
-            IconButton(
-                onClick = navigateBack,
-                content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsetsSides.End),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.settings)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = navigateBack,
+                        content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                    )
+                }
             )
         },
-        listPaneContent = { contentPadding ->
-            LazyColumn(
+        content = { contentPadding ->
+            val roundShape = ListItemDefaults.shapes(MaterialTheme.shapes.large)
+            val defaultColors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            val selectedColors = ListItemDefaults.colors(
+                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                disabledLeadingContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                disabledSupportingContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Column(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-                contentPadding = contentPadding,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
             ) {
-                items(
-                    items = settingsMenuItems.keys.toList(),
-                    key = { key -> key }
-                ) { key ->
-                    val settingsMenuItem by remember(key) { derivedStateOf { settingsMenuItems.getValue(key) } }
-                    val isSelected by remember(settingsMenuItem, selectedMenuItem) {
-                        derivedStateOf { settingsMenuItem == selectedMenuItem }
-                    }
-                    val onClick: () -> Unit = {
-                        when (settingsMenuItem) {
-                            is SettingsMenuItem.Internal -> {
-                                coroutineScope.launch {
-                                    scaffoldNavigator.navigateTo(ListDetailPaneScaffoldRole.Detail, key)
-                                }
-                            }
+                val isVaultSettingsSelected = currentDetailPaneRoute is DetailPaneRoute.VaultSettings
+                SegmentedListItem(
+                    onClick = { navigateToDetailPane(DetailPaneRoute.VaultSettings(vaultId = route.vaultId!!)) },
+                    shapes = roundShape,
+                    colors = if (isVaultSettingsSelected) selectedColors else defaultColors,
+                    enabled = !isVaultSettingsSelected && route.vaultId != null,
+                    leadingContent = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    content = { Text(stringResource(R.string.vault)) },
+                    supportingContent = { Text(stringResource(R.string.settings_description_vault)) },
+                )
 
-                            is SettingsMenuItem.External -> {
-                                try {
-                                    val browserIntent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        (settingsMenuItem as SettingsMenuItem.External).uri
-                                    )
-                                    context.startActivity(browserIntent, Bundle.EMPTY)
-                                } catch (e: Exception) {
-                                    logcat("SettingsHomePage", LogPriority.WARN) { e.asLog() }
-                                }
-                            }
+                val isAppSettingsSelected = currentDetailPaneRoute is DetailPaneRoute.AppSettings
+                SegmentedListItem(
+                    onClick = { navigateToDetailPane(DetailPaneRoute.AppSettings) },
+                    shapes = roundShape,
+                    colors = if (isAppSettingsSelected) selectedColors else defaultColors,
+                    enabled = !isAppSettingsSelected,
+                    leadingContent = { Icon(Icons.Default.AppSettingsAlt, contentDescription = null) },
+                    content = { Text(stringResource(R.string.app)) },
+                    supportingContent = { Text(stringResource(R.string.settings_description_app)) },
+                )
+
+                val isLicensesSelected = currentDetailPaneRoute is DetailPaneRoute.Licenses
+                SegmentedListItem(
+                    onClick = { navigateToDetailPane(DetailPaneRoute.Licenses) },
+                    shapes = roundShape,
+                    colors = if (isLicensesSelected) selectedColors else defaultColors,
+                    enabled = !isLicensesSelected,
+                    leadingContent = { Icon(Icons.Default.Copyright, contentDescription = null) },
+                    content = { Text(stringResource(R.string.settings_licensing)) },
+                )
+
+                SegmentedListItem(
+                    onClick = {
+                        try {
+                            val browserIntent =
+                                Intent(Intent.ACTION_VIEW, "https://github.com/lukaspieper/Truvark".toUri())
+                            context.startActivity(browserIntent)
+                        } catch (e: Exception) {
+                            logcat("SettingsHomePage", LogPriority.WARN) { e.asLog() }
                         }
-                    }
-
-                    SettingsButton(
-                        icon = settingsMenuItem.icon,
-                        title = stringResource(settingsMenuItem.title),
-                        description = settingsMenuItem.description?.let { stringResource(it) },
-                        isExternal = settingsMenuItem is SettingsMenuItem.External,
-                        isSelected = isSelected,
-                        onClick = onClick
-                    )
-                }
-            }
-        },
-        detailPaneContent = { contentPadding ->
-            scaffoldNavigator.currentDestination?.contentKey?.let { settingsMenuItem ->
-                when (settingsMenuItem) {
-                    SettingsMenuItem.Key.VAULT -> VaultSettingsPage(modifier = Modifier.padding(contentPadding))
-                    SettingsMenuItem.Key.APP -> AppSettingsPage(modifier = Modifier.padding(contentPadding))
-                    SettingsMenuItem.Key.OSS_LICENSES -> OpenSourceLicensePage(
-                        modifier = Modifier.padding(contentPadding)
-                    )
-
-                    else -> {
-                        // Show nothing.
-                    }
-                }
-            }
-        },
-        detailPaneTopAppBarTitle = selectedMenuItem?.let { stringResource(it.title) } ?: "",
-        detailPaneTopAppBarNavigationIcon = {
-            IconButton(
-                onClick = { coroutineScope.launch { scaffoldNavigator.navigateBack() } },
-                content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
-            )
-        }
-    )
-}
-
-@Composable
-public fun SettingsButton(
-    icon: ImageVector,
-    title: String,
-    description: String?,
-    isExternal: Boolean,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = onClick,
-        enabled = !isSelected,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        shape = CardDefaults.shape,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Icon(icon, null)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = MaterialTheme.paddings.large)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            if (description != null) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    },
+                    shapes = roundShape,
+                    colors = defaultColors,
+                    leadingContent = { Icon(Icons.Default.Code, contentDescription = null) },
+                    content = { Text(stringResource(R.string.source_code)) },
+                    trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                 )
             }
         }
-        if (isExternal) {
-            Icon(Icons.AutoMirrored.Filled.OpenInNew, null)
-        }
-    }
+    )
 }
 
 @PagePreviews
 @Composable
 private fun SettingsViewPreview() = PreviewHost {
-    SettingsHomePage(navigateBack = {})
+    SettingsHomePage(
+        route = ListPaneRoute.SettingsHome(vaultId = null),
+        navigateBack = {},
+        navigateToDetailPane = {},
+        isExpandedLayout = true,
+        currentDetailPaneRoute = DetailPaneRoute.Licenses,
+    )
 }

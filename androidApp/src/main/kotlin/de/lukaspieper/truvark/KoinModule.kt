@@ -56,8 +56,10 @@ public object KoinModule {
         factory<AndroidArgon2>() bind Argon2::class
         factory<VaultFactory>()
 
-        viewModel<LauncherViewModel>()
         worker<UniversalWorker>()
+
+        viewModel<LauncherViewModel>()
+        viewModel<AppSettingsViewModel>()
 
         scope(named(VAULT_SCOPE)) {
 
@@ -85,7 +87,6 @@ public object KoinModule {
             } bind ImageLoader::class
 
             viewModel<BrowserViewModel>()
-            viewModel<AppSettingsViewModel>()
             viewModel<VaultSettingsViewModel>()
             viewModel<PresenterViewModel>()
         }

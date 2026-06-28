@@ -34,25 +34,24 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
 
-    implementation(libs.android.core.splashscreen)
     implementation(libs.google.accompanist.permissions)
     implementation(libs.android.workmanager)
     implementation(libs.google.material)
-    implementation(libs.androidx.navigation.compose)
 
     // Data and storage
     implementation(libs.android.datastore.preferences)
 
     // Dependency Injection
     implementation(project.dependencies.platform(libs.koin.bom))
-    implementation(libs.koin.androidx.compose.navigation)
+    implementation(libs.koin.compose.viewmodel)
+    implementation(libs.koin.compose.navigation3)
     implementation(libs.koin.androidx.workmanager)
     implementation(libs.koin.annotations)
 
-    // Adaptive
-    implementation(libs.android.compose.adaptive)
-    implementation(libs.android.compose.adaptive.layout)
-    implementation(libs.android.compose.adaptive.navigation)
+    // Navigation
+    implementation(libs.android.core.splashscreen)
+    implementation(libs.bundles.androidx.navigation3)
+    implementation(libs.bundles.androidx.adaptive)
 
     // Media
     implementation(libs.telephoto)
@@ -68,7 +67,7 @@ dependencies {
 
 android {
     namespace = "de.lukaspieper.truvark"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 31

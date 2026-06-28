@@ -52,7 +52,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.source.MediaSource
-import de.lukaspieper.truvark.Page
+import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
 import de.lukaspieper.truvark.ui.extensions.safeDrawingTopAppBar
@@ -64,16 +64,14 @@ import de.lukaspieper.truvark.ui.views.presenter.views.FileNotFoundContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.NotSupportedContentView
 import de.lukaspieper.truvark.ui.views.presenter.views.VideoContentView
 import me.saket.telephoto.zoomable.ZoomableImage
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 import kotlin.uuid.Uuid
 
 @Composable
 public fun PresenterPage(
-    parameters: Page.Presenter,
+    route: SinglePaneRoute.Presenter,
     navigateBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: PresenterViewModel = koinViewModel { parametersOf(Uuid.parseHex(parameters.folderId)) }
+    viewModel: PresenterViewModel,
+    modifier: Modifier = Modifier
 ) {
     val itemsData by viewModel.itemsData.collectAsStateWithLifecycle()
     val imagesFitScreen by viewModel.imagesFitScreen.collectAsStateWithLifecycle(true)
@@ -83,7 +81,7 @@ public fun PresenterPage(
         createCipherZoomableImageSource = viewModel::createCipherZoomableImageSource,
         createMediaSource = viewModel::createMediaSource,
         imagesFitScreen = imagesFitScreen,
-        initialFileId = Uuid.parseHex(parameters.fileId),
+        initialFileId = route.fileId,
         navigateBack = navigateBack,
         modifier = modifier
     )
