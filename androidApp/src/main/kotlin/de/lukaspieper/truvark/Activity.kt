@@ -46,6 +46,7 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.KoinComponent
 import org.koin.core.parameter.parametersOf
 import org.koin.core.scope.Scope
+import kotlin.collections.lastIndex
 import kotlin.uuid.Uuid
 
 /**
@@ -64,7 +65,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
         setContent {
             AppTheme {
-                val backStack = rememberNavBackStack(Route.Launcher)
+                val backStack = rememberNavBackStack(SinglePaneRoute.Launcher)
 
                 // Override the defaults so that there isn't a horizontal space between the panes.
                 // See b/418201867
@@ -88,53 +89,51 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         rememberViewModelStoreNavEntryDecorator()
                     ),
                     entryProvider = entryProvider {
-                        entry<Route.Launcher> {
+                        entry<SinglePaneRoute.Launcher> {
                             LauncherPage(
-                                navigateAndClearBackStack = { route -> backStack.goToReplace(route) },
-                                navigateTo = { route -> backStack.add(route) },
+                                navigateAndClearBackStack = { route -> backStack[backStack.lastIndex] = route },
+                                navigateTo = backStack::add,
                                 viewModel = koinViewModel()
                             )
                         }
 
-                        entry<Route.Browser> { route ->
+                        entry<SinglePaneRoute.Browser> { route ->
                             BrowserPage(
                                 route = route,
-                                navigate = { route -> backStack.add(route) },
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString()))
+                                navigateTo = backStack::add,
+                                viewModel = koinViewModel(scope = getScope(route.vaultId))
                             )
                         }
 
-                        entry<Route.Presenter> { route ->
+                        entry<SinglePaneRoute.Presenter> { route ->
                             PresenterPage(
                                 route = route,
                                 navigateBack = backStack::removeLastOrNull,
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString())) {
+                                viewModel = koinViewModel(scope = getScope(route.vaultId)) {
                                     parametersOf(route.folderId)
                                 }
                             )
                         }
 
-                        entry<ListRoute.SettingsHome>(metadata = ListDetailSceneStrategy.listPane()) { route ->
+                        entry<ListPaneRoute.SettingsHome>(metadata = ListDetailSceneStrategy.listPane()) { route ->
                             SettingsHomePage(
                                 route = route,
-                                currentDetailRoute = backStack.lastOrNull() as? DetailRoute,
-                                navigateBack = {
-                                    backStack.goBackTo(Route.Launcher, Route.Browser(route.vaultId ?: Uuid.NIL))
-                                },
-                                navigateTo = { route -> backStack.goToSettingsSubPage(route) },
+                                currentDetailPaneRoute = backStack.lastOrNull() as? DetailPaneRoute,
+                                navigateBack = { backStack.goBackTo<SinglePaneRoute>() },
+                                navigateToDetailPane = { route -> backStack.goToDetailRoute(route) },
                                 isExpandedLayout = isExpandedLayout
                             )
                         }
 
-                        entry<DetailRoute.VaultSettings>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
+                        entry<DetailPaneRoute.VaultSettings>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
                             VaultSettingsPage(
                                 navigateBack = backStack::removeLastOrNull,
-                                viewModel = koinViewModel(scope = getKoin().getScope(route.vaultId.toHexString())),
+                                viewModel = koinViewModel(scope = getScope(route.vaultId)),
                                 isExpandedLayout = isExpandedLayout
                             )
                         }
 
-                        entry<DetailRoute.AppSettings>(metadata = ListDetailSceneStrategy.detailPane()) {
+                        entry<DetailPaneRoute.AppSettings>(metadata = ListDetailSceneStrategy.detailPane()) {
                             AppSettingsPage(
                                 navigateBack = backStack::removeLastOrNull,
                                 isExpandedLayout = isExpandedLayout,
@@ -142,7 +141,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                             )
                         }
 
-                        entry<DetailRoute.Licenses>(metadata = ListDetailSceneStrategy.detailPane()) {
+                        entry<DetailPaneRoute.Licenses>(metadata = ListDetailSceneStrategy.detailPane()) {
                             OpenSourceLicensePage(
                                 navigateBack = backStack::removeLastOrNull,
                                 isExpandedLayout = isExpandedLayout
@@ -153,23 +152,22 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
             }
         }
     }
-}
 
-public fun NavBackStack<NavKey>.goToReplace(destination: Route) {
-    set(lastIndex, destination)
-}
-
-public fun NavBackStack<NavKey>.goToSettingsSubPage(destination: Route) {
-    // Remove all pages from the back stack until we reach the settings home page.
-    while (lastOrNull() !is ListRoute.SettingsHome) {
-        removeLastOrNull()
+    private fun KoinComponent.getScope(scopeId: Uuid): Scope {
+        return getKoin().getScope(scopeId.toHexString())
     }
-    add(destination)
-}
 
-public fun NavBackStack<NavKey>.goBackTo(vararg destinations: Route) {
-    val destination = destinations.lastOrNull { it in this } ?: return
-    while (lastOrNull() != destination) {
-        removeLastOrNull()
+    private fun NavBackStack<NavKey>.goToDetailRoute(route: DetailPaneRoute) {
+        goBackTo<ListPaneRoute>()
+        add(route)
+    }
+
+    private inline fun <reified T : Route> NavBackStack<NavKey>.goBackTo() {
+        val index = indexOfLast { it is T }
+        if (index == -1) return
+
+        while (lastIndex > index) {
+            removeAt(lastIndex)
+        }
     }
 }

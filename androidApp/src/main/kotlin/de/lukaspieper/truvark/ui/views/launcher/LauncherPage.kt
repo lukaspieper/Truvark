@@ -72,9 +72,10 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import de.lukaspieper.truvark.ListRoute
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.Route
+import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
 import de.lukaspieper.truvark.ui.preview.PagePreviews
@@ -101,7 +102,7 @@ public fun LauncherPage(
 
     LaunchedEffect(viewModel.state, navigateAndClearBackStack) {
         if (viewModel.state == DONE) {
-            navigateAndClearBackStack(Route.Browser(viewModel.vaultConfig!!.id))
+            navigateAndClearBackStack(SinglePaneRoute.Browser(viewModel.vaultConfig!!.id))
         }
     }
 
@@ -143,7 +144,7 @@ public fun LauncherPage(
         biometricUnlockingSupported = viewModel.supportsBiometricUnlocking,
         unlockingErrorText = viewModel.unlockingErrorText,
         unlockVaultWithPassword = viewModel::unlockVaultWithPassword,
-        navigateToSettings = { navigateTo(ListRoute.SettingsHome(vaultId = null)) },
+        navigateToSettings = { navigateTo(ListPaneRoute.SettingsHome(vaultId = null)) },
         showBiometricPrompt = {
             try {
                 authLauncher.launch(

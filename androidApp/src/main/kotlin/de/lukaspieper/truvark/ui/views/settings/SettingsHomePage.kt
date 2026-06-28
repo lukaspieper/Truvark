@@ -39,10 +39,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
-import de.lukaspieper.truvark.DetailRoute
-import de.lukaspieper.truvark.ListRoute
+import de.lukaspieper.truvark.DetailPaneRoute
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.Route
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -54,20 +53,20 @@ import logcat.logcat
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun SettingsHomePage(
-    route: ListRoute.SettingsHome,
-    currentDetailRoute: DetailRoute?,
+    route: ListPaneRoute.SettingsHome,
+    currentDetailPaneRoute: DetailPaneRoute?,
     navigateBack: () -> Unit,
-    navigateTo: (Route) -> Unit,
+    navigateToDetailPane: (DetailPaneRoute) -> Unit,
     isExpandedLayout: Boolean,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(navigateTo, isExpandedLayout) {
+    LaunchedEffect(navigateToDetailPane, isExpandedLayout) {
         // Do initial navigation when both panes are visible.
-        if (isExpandedLayout && currentDetailRoute == null) {
-            navigateTo(
+        if (isExpandedLayout && currentDetailPaneRoute == null) {
+            navigateToDetailPane(
                 when {
-                    route.vaultId != null -> DetailRoute.VaultSettings(vaultId = route.vaultId)
-                    else -> DetailRoute.AppSettings
+                    route.vaultId != null -> DetailPaneRoute.VaultSettings(vaultId = route.vaultId)
+                    else -> DetailPaneRoute.AppSettings
                 }
             )
         }
@@ -105,9 +104,9 @@ public fun SettingsHomePage(
                     .verticalScroll(rememberScrollState())
                     .padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
             ) {
-                val isVaultSettingsSelected = currentDetailRoute is DetailRoute.VaultSettings
+                val isVaultSettingsSelected = currentDetailPaneRoute is DetailPaneRoute.VaultSettings
                 SegmentedListItem(
-                    onClick = { navigateTo(DetailRoute.VaultSettings(vaultId = route.vaultId!!)) },
+                    onClick = { navigateToDetailPane(DetailPaneRoute.VaultSettings(vaultId = route.vaultId!!)) },
                     shapes = roundShape,
                     colors = if (isVaultSettingsSelected) selectedColors else defaultColors,
                     enabled = !isVaultSettingsSelected && route.vaultId != null,
@@ -116,9 +115,9 @@ public fun SettingsHomePage(
                     supportingContent = { Text(stringResource(R.string.settings_description_vault)) },
                 )
 
-                val isAppSettingsSelected = currentDetailRoute is DetailRoute.AppSettings
+                val isAppSettingsSelected = currentDetailPaneRoute is DetailPaneRoute.AppSettings
                 SegmentedListItem(
-                    onClick = { navigateTo(DetailRoute.AppSettings) },
+                    onClick = { navigateToDetailPane(DetailPaneRoute.AppSettings) },
                     shapes = roundShape,
                     colors = if (isAppSettingsSelected) selectedColors else defaultColors,
                     enabled = !isAppSettingsSelected,
@@ -127,9 +126,9 @@ public fun SettingsHomePage(
                     supportingContent = { Text(stringResource(R.string.settings_description_app)) },
                 )
 
-                val isLicensesSelected = currentDetailRoute is DetailRoute.Licenses
+                val isLicensesSelected = currentDetailPaneRoute is DetailPaneRoute.Licenses
                 SegmentedListItem(
-                    onClick = { navigateTo(DetailRoute.Licenses) },
+                    onClick = { navigateToDetailPane(DetailPaneRoute.Licenses) },
                     shapes = roundShape,
                     colors = if (isLicensesSelected) selectedColors else defaultColors,
                     enabled = !isLicensesSelected,
@@ -162,10 +161,10 @@ public fun SettingsHomePage(
 @Composable
 private fun SettingsViewPreview() = PreviewHost {
     SettingsHomePage(
-        route = ListRoute.SettingsHome(vaultId = null),
+        route = ListPaneRoute.SettingsHome(vaultId = null),
         navigateBack = {},
-        navigateTo = {},
+        navigateToDetailPane = {},
         isExpandedLayout = true,
-        currentDetailRoute = DetailRoute.Licenses,
+        currentDetailPaneRoute = DetailPaneRoute.Licenses,
     )
 }

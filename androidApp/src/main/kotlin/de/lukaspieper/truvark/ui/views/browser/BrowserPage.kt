@@ -57,9 +57,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
-import de.lukaspieper.truvark.ListRoute
+import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.Route
+import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
@@ -74,8 +75,8 @@ import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
-    route: Route.Browser,
-    navigate: (Route) -> Unit,
+    route: SinglePaneRoute.Browser,
+    navigateTo: (Route) -> Unit,
     viewModel: BrowserViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -100,10 +101,10 @@ public fun BrowserPage(
         deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
         updateIsListLayout = viewModel::updateIsListLayout,
-        navigateToSettings = { navigate(ListRoute.SettingsHome(route.vaultId)) },
+        navigateToSettings = { navigateTo(ListPaneRoute.SettingsHome(route.vaultId)) },
         navigateToFilePresenter = { cipherFileEntity ->
-            navigate(
-                Route.Presenter(
+            navigateTo(
+                SinglePaneRoute.Presenter(
                     route.vaultId,
                     viewModel.currentFolderHierarchyLevel.folder.id,
                     cipherFileEntity.id
