@@ -10,6 +10,9 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -98,6 +101,9 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         rememberSaveableStateHolderNavEntryDecorator(),
                         rememberViewModelStoreNavEntryDecorator()
                     ),
+                    transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+                    popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+                    predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                     entryProvider = entryProvider {
                         entry<SinglePaneRoute.Launcher> {
                             LauncherPage(
