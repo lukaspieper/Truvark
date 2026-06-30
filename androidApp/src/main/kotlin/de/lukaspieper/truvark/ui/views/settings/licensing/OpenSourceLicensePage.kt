@@ -97,7 +97,7 @@ public fun OpenSourceLicenseView(
             TopAppBar(
                 windowInsets = TopAppBarDefaults.windowInsets.exclude(WindowInsetsSides.Start),
                 colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = containerColor),
-                title = { Text(text = stringResource(R.string.settings_licensing)) },
+                title = { Text(text = stringResource(R.string.settings_legal)) },
                 navigationIcon = {
                     if (!isExpandedLayout) {
                         IconButton(onClick = navigateBack) {

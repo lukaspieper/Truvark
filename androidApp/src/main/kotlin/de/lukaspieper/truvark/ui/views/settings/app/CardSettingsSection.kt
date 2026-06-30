@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-package de.lukaspieper.truvark.ui.controls
+package de.lukaspieper.truvark.ui.views.settings.app
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import de.lukaspieper.truvark.ui.theme.paddings
 
 @Composable
-public fun SettingsSectionCard(
+public fun CardSettingsSection(
     title: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit

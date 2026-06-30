@@ -56,11 +56,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
-import de.lukaspieper.truvark.ui.controls.SettingsSectionCard
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
+import de.lukaspieper.truvark.ui.views.settings.app.CardSettingsSection
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
 import kotlinx.coroutines.CompletableDeferred
 
@@ -171,7 +171,7 @@ public fun VaultName(
     updateVaultName: (String) -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    SettingsSectionCard(
+    CardSettingsSection(
         title = stringResource(R.string.vault_name),
         modifier = modifier
     ) {

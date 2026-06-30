@@ -55,12 +55,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="vault_name_change_hint">Note that the vault name is not encrypted so that it can be used to identify the vault before unlocking it.</string>
     <string name="settings_description_vault">Vault name, biometric unlocking</string>
     <string name="settings_description_app">Image scaling, logging</string>
-    <string name="settings_licensing">Licenses and Copyright</string>
+    <string name="settings_legal">Legal information</string>
+    <string name="settings_legal_descriptioin">Licenses, Copyright</string>
     <string name="rename_folder">Rename folder</string>
     <string name="rename">Rename</string>
     <string name="delete_source_files">Delete source files</string>
     <string name="encrypt_files">Encrypt files</string>
     <string name="select">Select</string>
-    <string name="source_code">Source code</string>
+    <string name="settings_repository">GitHub</string>
+    <string name="settings_repository_description">Source code, issue tracker, changelog</string>
     <string name="select_directory">Select directory</string>
 </resources>

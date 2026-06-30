@@ -57,12 +57,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="vault_name_change_hint">Beachte, dass der Tresorname nicht verschlüsselt ist, um bereits vor dem Entsperren angezeigt werden zu können.</string>
     <string name="settings_description_vault">Tresorname, biometrisches Entsperren</string>
     <string name="settings_description_app">Bildskalierung, Protokollierung</string>
-    <string name="settings_licensing">Lizenzen und Copyright</string>
+    <string name="settings_legal">Rechtliche Hinweise</string>
+    <string name="settings_legal_description">izenzen, Copyright</string>
     <string name="rename_folder">Ordner umbenennen</string>
     <string name="rename">Umbenennen</string>
     <string name="delete_source_files">Quelldateien löschen</string>
     <string name="encrypt_files">Dateien verschlüsseln</string>
     <string name="select">Auswählen</string>
-    <string name="source_code">Quellcode</string>
+    <string name="settings_repository">GitHub</string>
+    <string name="settings_repository_description">Quellcode, Issue-Tracker, Changelog</string>
     <string name="select_directory">Verzeichnis auswählen</string>
 </resources>

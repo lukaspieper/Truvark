@@ -98,7 +98,7 @@ public fun SettingsHomePage(
             )
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.large),
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
@@ -126,32 +126,36 @@ public fun SettingsHomePage(
                     supportingContent = { Text(stringResource(R.string.settings_description_app)) },
                 )
 
-                val isLicensesSelected = currentDetailPaneRoute is DetailPaneRoute.Licenses
-                SegmentedListItem(
-                    onClick = { navigateToDetailPane(DetailPaneRoute.Licenses) },
-                    shapes = roundShape,
-                    colors = if (isLicensesSelected) selectedColors else defaultColors,
-                    enabled = !isLicensesSelected,
-                    leadingContent = { Icon(Icons.Default.Copyright, contentDescription = null) },
-                    content = { Text(stringResource(R.string.settings_licensing)) },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                    val isLicensesSelected = currentDetailPaneRoute is DetailPaneRoute.Licenses
+                    SegmentedListItem(
+                        onClick = { navigateToDetailPane(DetailPaneRoute.Licenses) },
+                        shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
+                        colors = if (isLicensesSelected) selectedColors else defaultColors,
+                        enabled = !isLicensesSelected,
+                        leadingContent = { Icon(Icons.Default.Copyright, contentDescription = null) },
+                        content = { Text(stringResource(R.string.settings_legal)) },
+                        supportingContent = { Text(stringResource(R.string.settings_legal_descriptioin)) }
+                    )
 
-                SegmentedListItem(
-                    onClick = {
-                        try {
-                            val browserIntent =
-                                Intent(Intent.ACTION_VIEW, "https://github.com/lukaspieper/Truvark".toUri())
-                            context.startActivity(browserIntent)
-                        } catch (e: Exception) {
-                            logcat("SettingsHomePage", LogPriority.WARN) { e.asLog() }
-                        }
-                    },
-                    shapes = roundShape,
-                    colors = defaultColors,
-                    leadingContent = { Icon(Icons.Default.Code, contentDescription = null) },
-                    content = { Text(stringResource(R.string.source_code)) },
-                    trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
-                )
+                    SegmentedListItem(
+                        onClick = {
+                            try {
+                                val browserIntent =
+                                    Intent(Intent.ACTION_VIEW, "https://github.com/lukaspieper/Truvark".toUri())
+                                context.startActivity(browserIntent)
+                            } catch (e: Exception) {
+                                logcat("SettingsHomePage", LogPriority.WARN) { e.asLog() }
+                            }
+                        },
+                        shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
+                        colors = defaultColors,
+                        leadingContent = { Icon(Icons.Default.Code, contentDescription = null) },
+                        content = { Text(stringResource(R.string.settings_repository)) },
+                        supportingContent = { Text(stringResource(R.string.settings_repository_description)) },
+                        trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+                    )
+                }
             }
         }
     )
@@ -164,7 +168,7 @@ private fun SettingsViewPreview() = PreviewHost {
         route = ListPaneRoute.SettingsHome(vaultId = null),
         navigateBack = {},
         navigateToDetailPane = {},
-        isExpandedLayout = true,
-        currentDetailPaneRoute = DetailPaneRoute.Licenses,
+        isExpandedLayout = false,
+        currentDetailPaneRoute = null
     )
 }
