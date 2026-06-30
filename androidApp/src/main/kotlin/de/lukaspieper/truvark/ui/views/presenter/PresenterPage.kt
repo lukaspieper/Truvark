@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
@@ -45,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -55,6 +53,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
+import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.safeDrawingTopAppBar
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -136,11 +135,7 @@ private fun PresenterView(
                 TopAppBar(
                     windowInsets = WindowInsets.safeDrawingTopAppBar,
                     title = {
-                        Text(
-                            text = topBarTitle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        SingleLineText(text = topBarTitle)
                     },
                     navigationIcon = {
                         IconButton(onClick = navigateBack) {

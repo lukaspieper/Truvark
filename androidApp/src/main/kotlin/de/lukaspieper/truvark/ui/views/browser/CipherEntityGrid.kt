@@ -81,6 +81,7 @@ import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterc
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor.Companion.useThumbnailCache
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
+import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -204,11 +205,7 @@ public fun CipherEntityGrid(
                         }
                     }
 
-                    Text(
-                        text = cipherFolderEntity.displayName,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    SingleLineText(text = cipherFolderEntity.displayName)
                 }
             }
         }
@@ -304,26 +301,18 @@ public fun CipherEntityGrid(
                         }
 
                         Column {
-                            Text(
-                                text = cipherFileEntity.fullName,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            SingleLineText(text = cipherFileEntity.fullName)
 
                             Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.large)) {
-                                Text(
+                                SingleLineText(
                                     text = cipherFileEntity.mimeType,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = MaterialTheme.typography.bodyMedium.fontSize
                                 )
 
                                 cipherFileEntity.mediaDuration?.let { mediaDuration ->
-                                    Text(
+                                    SingleLineText(
                                         text = mediaDuration.roundToSeconds().toString(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
                                         fontStyle = FontStyle.Italic,
                                         fontSize = MaterialTheme.typography.bodyMedium.fontSize
                                     )

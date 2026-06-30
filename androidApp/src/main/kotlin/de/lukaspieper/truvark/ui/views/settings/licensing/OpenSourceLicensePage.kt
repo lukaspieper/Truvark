@@ -42,11 +42,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -178,11 +178,7 @@ private fun LicenseTextDialog(
             Column {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = license.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        SingleLineText(text = license.name)
                     },
                     actions = {
                         IconButton(onClick = dismissRequest) {

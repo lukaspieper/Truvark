@@ -17,13 +17,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.style.TextOverflow
 import de.lukaspieper.truvark.ui.theme.paddings
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,11 +43,7 @@ public fun SafeDrawingScaffold(
         topBar = {
             LargeTopAppBar(
                 title = {
-                    Text(
-                        text = largeTopAppBarTitle,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    SingleLineText(text = largeTopAppBarTitle)
                 },
                 scrollBehavior = scrollBehavior,
                 actions = {

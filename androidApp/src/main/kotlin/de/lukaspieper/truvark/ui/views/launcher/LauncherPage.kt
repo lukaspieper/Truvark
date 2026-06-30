@@ -65,7 +65,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -78,6 +77,7 @@ import de.lukaspieper.truvark.Route
 import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
+import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -342,11 +342,9 @@ private fun VaultUnlockCardView(
             contentDescription = null,
             modifier = Modifier.padding(MaterialTheme.paddings.extraLarge)
         )
-        Text(
+        SingleLineText(
             text = vaultDisplayName,
             modifier = Modifier.padding(end = MaterialTheme.paddings.large),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.headlineLarge
         )

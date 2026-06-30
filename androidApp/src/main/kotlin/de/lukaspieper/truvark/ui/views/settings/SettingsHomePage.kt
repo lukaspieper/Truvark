@@ -42,6 +42,7 @@ import androidx.core.net.toUri
 import de.lukaspieper.truvark.DetailPaneRoute
 import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -112,7 +113,7 @@ public fun SettingsHomePage(
                     enabled = !isVaultSettingsSelected && route.vaultId != null,
                     leadingContent = { Icon(Icons.Default.Lock, contentDescription = null) },
                     content = { Text(stringResource(R.string.vault)) },
-                    supportingContent = { Text(stringResource(R.string.settings_description_vault)) },
+                    supportingContent = { SingleLineText(stringResource(R.string.settings_description_vault)) },
                 )
 
                 val isAppSettingsSelected = currentDetailPaneRoute is DetailPaneRoute.AppSettings
@@ -123,7 +124,7 @@ public fun SettingsHomePage(
                     enabled = !isAppSettingsSelected,
                     leadingContent = { Icon(Icons.Default.AppSettingsAlt, contentDescription = null) },
                     content = { Text(stringResource(R.string.app)) },
-                    supportingContent = { Text(stringResource(R.string.settings_description_app)) },
+                    supportingContent = { SingleLineText(stringResource(R.string.settings_description_app)) },
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
@@ -135,7 +136,7 @@ public fun SettingsHomePage(
                         enabled = !isLicensesSelected,
                         leadingContent = { Icon(Icons.Default.Copyright, contentDescription = null) },
                         content = { Text(stringResource(R.string.settings_legal)) },
-                        supportingContent = { Text(stringResource(R.string.settings_legal_descriptioin)) }
+                        supportingContent = { SingleLineText(stringResource(R.string.settings_legal_descriptioin)) }
                     )
 
                     SegmentedListItem(
@@ -152,7 +153,7 @@ public fun SettingsHomePage(
                         colors = defaultColors,
                         leadingContent = { Icon(Icons.Default.Code, contentDescription = null) },
                         content = { Text(stringResource(R.string.settings_repository)) },
-                        supportingContent = { Text(stringResource(R.string.settings_repository_description)) },
+                        supportingContent = { SingleLineText(stringResource(R.string.settings_repository_description)) },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                     )
                 }
