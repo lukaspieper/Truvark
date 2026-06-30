@@ -153,7 +153,9 @@ public fun SettingsHomePage(
                         colors = defaultColors,
                         leadingContent = { Icon(Icons.Default.Code, contentDescription = null) },
                         content = { Text(stringResource(R.string.settings_repository)) },
-                        supportingContent = { SingleLineText(stringResource(R.string.settings_repository_description)) },
+                        supportingContent = {
+                            SingleLineText(stringResource(R.string.settings_repository_description))
+                        },
                         trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
                     )
                 }

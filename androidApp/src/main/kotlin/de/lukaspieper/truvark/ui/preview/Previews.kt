@@ -16,13 +16,15 @@ import androidx.compose.ui.tooling.preview.Preview
     name = "Phone - Night",
     device = Devices.PIXEL_6,
     showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "de"
 )
 @Preview(
     name = "Tablet - Night",
     device = Devices.PIXEL_TABLET,
     showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "de"
 )
 public annotation class PagePreviews
 
@@ -32,11 +34,13 @@ public annotation class PagePreviews
 @Preview(
     name = "Phone - Night",
     device = Devices.PIXEL_6,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "de"
 )
 @Preview(
     name = "Tablet - Night",
     device = Devices.PIXEL_TABLET,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "de"
 )
 public annotation class ElementPreviews
