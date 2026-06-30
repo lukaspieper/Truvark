@@ -43,8 +43,8 @@ public fun AppSettingsPage(
     viewModel: AppSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
-    val imagesFitScreen = viewModel.imagesFitScreen.collectAsStateWithLifecycle(false)
-    val isLoggingEnabled = viewModel.isLoggingEnabled.collectAsStateWithLifecycle(false)
+    val imagesFitScreen = viewModel.imagesFitScreen.collectAsStateWithLifecycle(null)
+    val isLoggingEnabled = viewModel.isLoggingEnabled.collectAsStateWithLifecycle(null)
 
     AppSettingsView(
         imagesFitScreen = imagesFitScreen.value,
@@ -60,9 +60,9 @@ public fun AppSettingsPage(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AppSettingsView(
-    imagesFitScreen: Boolean,
+    imagesFitScreen: Boolean?,
     updateImagesFitScreen: (Boolean) -> Unit,
-    isLoggingEnabled: Boolean,
+    isLoggingEnabled: Boolean?,
     updateIsLoggingEnabled: (Boolean) -> Unit,
     isExpandedLayout: Boolean,
     navigateBack: () -> Unit,

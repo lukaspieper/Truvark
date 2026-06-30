@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 @Composable
 public fun SegmentedSwitchListItem(
     text: String,
-    checked: Boolean,
+    checked: Boolean?,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -40,18 +40,20 @@ public fun SegmentedSwitchListItem(
     SegmentedListItem(
         modifier = modifier,
         enabled = enabled,
-        onClick = { onCheckedChange(!checked) },
+        onClick = { checked?.let { onCheckedChange(!it) } },
         shapes = shapes,
         colors = colors,
         content = { Text(text = text) },
         supportingContent = supportingText?.let { { SingleLineText(text = it) } },
         trailingContent = {
-            ThumbSwitch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                enabled = enabled,
-                colors = switchColors
-            )
+            checked?.let {
+                ThumbSwitch(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange,
+                    enabled = enabled,
+                    colors = switchColors
+                )
+            }
         },
     )
 }
