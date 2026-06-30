@@ -44,7 +44,7 @@ import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
-import de.lukaspieper.truvark.ui.views.settings.app.CardSettingsSection
+import de.lukaspieper.truvark.ui.views.settings.CardSettingsSection
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsViewModel.BiometricSetupResult
 import kotlinx.coroutines.launch
 

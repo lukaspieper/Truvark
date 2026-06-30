@@ -25,7 +25,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="file_not_supported_info">Dieses Dateiformat wird aktuell noch nicht unterstützt. Bei Bedarf kannst Du die Datei einfach wieder entschlüsseln.</string>
     <string name="create_or_open_vault">Tresor erstellen oder öffnen</string>
     <string name="app">App</string>
-    <string name="logging">Logging (logcat)</string>
+    <string name="logging">Protokollierung</string>
     <string name="settings">Einstellungen</string>
     <string name="vault">Tresor</string>
     <string name="biometric_unlocking">Biometrisches Entsperren</string>
@@ -43,7 +43,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="notification_permission_description">Benachrichtigungen werden benötigt, um im Hintergrund zu ver- und entschlüsseln, sowie den Fortschritt anzuzeigen. Bitte lass die Berechtigung zu, um diese App zu verwenden. Es werden nur Benachrichtigungen mit niedriger Priorität verwendet.</string>
     <string name="grant_permission">Berechtigung zulassen</string>
     <string name="open_app_settings">App-Einstellungen öffnen</string>
-    <string name="fit_images_to_match_screen">Bilder an Display anpassen</string>
+    <string name="fit_images_to_match_screen">Bilder an Displaygröße anpassen</string>
     <string name="create_vault">Tresor erstellen</string>
     <string name="create" >Erstellen</string>
     <string name="error_unlocking_vault">Der Tresor konnte nicht entsperrt werden.</string>
@@ -67,4 +67,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="settings_repository">GitHub</string>
     <string name="settings_repository_description">Quellcode, Issue-Tracker, Changelog</string>
     <string name="select_directory">Verzeichnis auswählen</string>
+    <string name="appearance">Erscheinungsbild</string>
+    <string name="debugging">Fehlersuche</string>
+    <string name="logging_description">Ins Systemprotokoll schreiben („logcat“)</string>
 </resources>

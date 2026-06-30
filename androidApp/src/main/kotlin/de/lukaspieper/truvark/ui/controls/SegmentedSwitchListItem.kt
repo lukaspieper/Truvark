@@ -32,6 +32,7 @@ public fun SegmentedSwitchListItem(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    supportingText: String? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(MaterialTheme.shapes.large),
     colors: ListItemColors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     switchColors: SwitchColors = SwitchDefaults.colors(),
@@ -43,6 +44,7 @@ public fun SegmentedSwitchListItem(
         shapes = shapes,
         colors = colors,
         content = { Text(text = text) },
+        supportingContent = supportingText?.let { { SingleLineText(text = it) } },
         trailingContent = {
             ThumbSwitch(
                 checked = checked,

@@ -136,7 +136,7 @@ public fun SettingsHomePage(
                         enabled = !isLicensesSelected,
                         leadingContent = { Icon(Icons.Default.Copyright, contentDescription = null) },
                         content = { Text(stringResource(R.string.settings_legal)) },
-                        supportingContent = { SingleLineText(stringResource(R.string.settings_legal_descriptioin)) }
+                        supportingContent = { SingleLineText(stringResource(R.string.settings_legal_description)) }
                     )
 
                     SegmentedListItem(

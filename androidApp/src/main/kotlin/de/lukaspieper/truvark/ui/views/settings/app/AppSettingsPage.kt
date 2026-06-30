@@ -34,6 +34,7 @@ import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
+import de.lukaspieper.truvark.ui.views.settings.SettingsSection
 
 @Composable
 public fun AppSettingsPage(
@@ -91,20 +92,25 @@ private fun AppSettingsView(
         }
     ) { contentPadding ->
         Column(
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.large),
             modifier = Modifier.padding(contentPadding + PaddingValues(all = MaterialTheme.paddings.large))
         ) {
-            SegmentedSwitchListItem(
-                text = stringResource(R.string.fit_images_to_match_screen),
-                checked = imagesFitScreen,
-                onCheckedChange = updateImagesFitScreen,
-            )
+            SettingsSection(stringResource(R.string.appearance)) {
+                SegmentedSwitchListItem(
+                    text = stringResource(R.string.fit_images_to_match_screen),
+                    checked = imagesFitScreen,
+                    onCheckedChange = updateImagesFitScreen,
+                )
+            }
 
-            SegmentedSwitchListItem(
-                text = stringResource(R.string.logging),
-                checked = isLoggingEnabled,
-                onCheckedChange = updateIsLoggingEnabled,
-            )
+            SettingsSection(stringResource(R.string.debugging)) {
+                SegmentedSwitchListItem(
+                    text = stringResource(R.string.logging),
+                    supportingText = stringResource(R.string.logging_description),
+                    checked = isLoggingEnabled,
+                    onCheckedChange = updateIsLoggingEnabled,
+                )
+            }
         }
     }
 }
