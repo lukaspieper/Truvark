@@ -7,6 +7,7 @@
 package de.lukaspieper.truvark
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -35,6 +39,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.ui.theme.AppTheme
 import de.lukaspieper.truvark.ui.views.browser.BrowserPage
 import de.lukaspieper.truvark.ui.views.launcher.LauncherPage
@@ -43,6 +48,7 @@ import de.lukaspieper.truvark.ui.views.settings.SettingsHomePage
 import de.lukaspieper.truvark.ui.views.settings.app.AppSettingsPage
 import de.lukaspieper.truvark.ui.views.settings.licensing.OpenSourceLicensePage
 import de.lukaspieper.truvark.ui.views.settings.vault.VaultSettingsPage
+import kotlinx.coroutines.launch
 import logcat.LogPriority
 import logcat.logcat
 import org.koin.android.scope.AndroidScopeComponent
@@ -51,6 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinDelicateAPI
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.scope.Scope
 import kotlin.uuid.Uuid
@@ -60,6 +67,8 @@ import kotlin.uuid.Uuid
  */
 public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponent {
 
+    private val preferences: PersistentPreferences by inject()
+
     override val scope: Scope by activityRetainedScope()
 
     @OptIn(KoinDelicateAPI::class, KoinExperimentalAPI::class, ExperimentalMaterial3AdaptiveApi::class)
@@ -68,6 +77,9 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        window.setHideOverlayWindows(true)
+        collectScreenCapturePreference()
 
         setContent {
             AppTheme {
@@ -166,6 +178,24 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         }
                     }
                 )
+            }
+        }
+    }
+
+    private fun collectScreenCapturePreference() {
+        fun allowScreenCapture(allow: Boolean) {
+            when {
+                allow -> window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                else -> window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+            }
+        }
+
+        // Disable by default before first value becomes available to prevent any leaks.
+        allowScreenCapture(false)
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                preferences.allowScreenCapture.collect(::allowScreenCapture)
             }
         }
     }

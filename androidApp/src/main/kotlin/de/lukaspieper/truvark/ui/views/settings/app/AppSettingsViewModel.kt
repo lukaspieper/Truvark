@@ -17,6 +17,7 @@ public class AppSettingsViewModel(
 ) : ViewModel() {
     public val isLoggingEnabled: Flow<Boolean> = preferences.loggingAllowed
     public val imagesFitScreen: Flow<Boolean> = preferences.imagesFitScreen
+    public val allowScreenCapture: Flow<Boolean> = preferences.allowScreenCapture
 
     public fun applyLogging(enabled: Boolean) {
         runBlocking {
@@ -32,6 +33,12 @@ public class AppSettingsViewModel(
     public fun applyImagesFitScreen(enabled: Boolean) {
         runBlocking {
             preferences.saveImagesFitScreen(enabled)
+        }
+    }
+
+    public fun applyAllowScreenCapture(allowed: Boolean) {
+        runBlocking {
+            preferences.saveAllowScreenCapture(allowed)
         }
     }
 }

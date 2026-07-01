@@ -33,6 +33,7 @@ public class PersistentPreferences(context: Context) {
         val LOGGING_ALLOWED = booleanPreferencesKey("PREF_LOGGING_ALLOWED")
         val IS_LIST_LAYOUT = booleanPreferencesKey("PREF_IS_LIST_LAYOUT")
         val IMAGES_FIT_SCREEN = booleanPreferencesKey("PREF_IMAGES_FIT_SCREEN")
+        val ALLOW_SCREEN_CAPTURE = booleanPreferencesKey("PREF_ALLOW_SCREEN_CAPTURE")
     }
 
     public suspend fun saveLastUsedVaultRootUri(uri: Uri) {
@@ -93,5 +94,15 @@ public class PersistentPreferences(context: Context) {
 
     public val imagesFitScreen: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[IMAGES_FIT_SCREEN] ?: true
+    }
+
+    public suspend fun saveAllowScreenCapture(allowed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ALLOW_SCREEN_CAPTURE] = allowed
+        }
+    }
+
+    public val allowScreenCapture: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[ALLOW_SCREEN_CAPTURE] ?: false
     }
 }
