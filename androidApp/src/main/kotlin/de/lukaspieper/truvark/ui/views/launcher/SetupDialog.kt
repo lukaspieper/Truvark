@@ -33,44 +33,37 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.domain.vault.VaultConfig
 import de.lukaspieper.truvark.ui.controls.MaterialDialog
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.views.ActivityResultContracts
-import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.DIRECTORY_SELECTION
-import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.NONE
-import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.PROCESSING
-import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.VAULT_CREATION
+import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.DirectorySelection
+import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.Processing
+import de.lukaspieper.truvark.ui.views.launcher.LauncherViewModel.LauncherState.VaultCreation
 
 @Composable
 public fun SetupDialog(
     state: LauncherViewModel.LauncherState,
-    updateState: (LauncherViewModel.LauncherState) -> Unit,
+    dismissDialog: () -> Unit,
     inspectDirectory: (Uri) -> Unit,
-    createVault: (ByteArray) -> Unit,
-    modifier: Modifier = Modifier
+    createVault: (ByteArray) -> Unit
 ) {
-    if (state == PROCESSING) {
-        MaterialDialog(
-            isLoadingIndicator = true,
-            modifier = modifier,
-            content = {}
-        )
-    } else if (state == DIRECTORY_SELECTION) {
+    if (state == Processing) {
+        MaterialDialog(isLoadingIndicator = true, content = {})
+    } else if (state == DirectorySelection) {
         val openDocumentTreeLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.OpenDocumentTreeWithFlags()
-        ) { uri ->
-            uri?.let { inspectDirectory(it) }
-        }
+            contract = ActivityResultContracts.OpenDocumentTreeWithFlags(),
+            onResult = { uri -> uri?.let { inspectDirectory(it) } }
+        )
 
         MaterialDialog(
             title = R.string.create_or_open_vault,
-            modifier = modifier,
             dismissButton = {
                 TextButton(
-                    onClick = { updateState(NONE) },
+                    onClick = dismissDialog,
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -98,7 +91,7 @@ public fun SetupDialog(
                 textAlign = TextAlign.Justify
             )
         }
-    } else if (state == VAULT_CREATION) {
+    } else if (state is VaultCreation) {
         val passwordState = remember { TextFieldState() }
         val passwordConfirmationState = remember { TextFieldState() }
         var errorText by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -149,7 +142,11 @@ public fun SetupDialog(
 
 private class LauncherStatePreviewParameterProvider : PreviewParameterProvider<LauncherViewModel.LauncherState> {
     override val values: Sequence<LauncherViewModel.LauncherState>
-        get() = sequenceOf(DIRECTORY_SELECTION, VAULT_CREATION, PROCESSING)
+        get() = sequenceOf(
+            DirectorySelection,
+            VaultCreation(DirectoryInfo(Uri.EMPTY, "Preview"), Uri.EMPTY),
+            Processing
+        )
 }
 
 @PagePreviews
@@ -159,7 +156,7 @@ private fun SetupDialogPreview(
 ) = PreviewHost {
     SetupDialog(
         state = state,
-        updateState = {},
+        dismissDialog = {},
         inspectDirectory = {},
         createVault = {}
     )

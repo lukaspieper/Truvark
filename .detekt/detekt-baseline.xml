@@ -19,10 +19,12 @@
     <ID>ModifierMissing:MainView.kt$PasswordField</ID>
     <ID>ModifierMissing:MainView.kt$VaultCreation</ID>
     <ID>ModifierMissing:MainView.kt$VaultUnlocking</ID>
+    <ID>ModifierMissing:SetupDialog.kt$SetupDialog</ID>
     <ID>ModifierReused:MediaView.kt$PlayPauseButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
     <ID>ModifierReused:MediaView.kt$SeekBackButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
     <ID>ModifierReused:MediaView.kt$SeekForwardButton(player, innerModifier, colors = defaultIconButtonColors)</ID>
     <ID>NestedBlockDepth:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$private fun readFromDiskCache(cacheKey: ByteArray): Bitmap?</ID>
+    <ID>UnstableCollections:LauncherPage.kt$List&lt;LauncherViewModel.RecentVaultInfo&gt;</ID>
     <ID>UnstableCollections:OpenSourceLicensePage.kt$List&lt;LicensedItem&gt;</ID>
     <ID>UnusedPrivateProperty:SchedulerFake.kt$SchedulerFake$i</ID>
     <ID>UseCheckOrError:VaultFactory.kt$VaultFactory$throw IllegalStateException("Vault file not found in directory.")</ID>

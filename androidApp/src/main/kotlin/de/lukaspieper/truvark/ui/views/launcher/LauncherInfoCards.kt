@@ -6,35 +6,25 @@
 
 package de.lukaspieper.truvark.ui.views.launcher
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.CloudUpload
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.InfoCard
 import de.lukaspieper.truvark.ui.controls.InfoCardState
+import de.lukaspieper.truvark.ui.controls.PageIndicator
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -61,32 +51,11 @@ public fun LauncherInfoCardPager(
             InfoCard(infoCardState)
         }
 
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(all = MaterialTheme.paddings.small)
-        ) {
-            repeat(infoCardStates.size) { index ->
-                val isSelected = pagerState.currentPage == index
-                val indicatorSize by animateDpAsState(
-                    targetValue = if (isSelected) 10.dp else 8.dp,
-                    label = "hint-indicator-size"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(indicatorSize)
-                        .clip(MaterialShapes.Circle.toShape())
-                        .background(
-                            when {
-                                isSelected -> MaterialTheme.colorScheme.primary
-                                else -> MaterialTheme.colorScheme.outlineVariant
-                            }
-                        )
-                )
-            }
-        }
+        PageIndicator(
+            pagerState = pagerState,
+            itemSize = infoCardStates.size,
+            modifier = Modifier.padding(all = MaterialTheme.paddings.small).align(Alignment.Start)
+        )
     }
 }
 
