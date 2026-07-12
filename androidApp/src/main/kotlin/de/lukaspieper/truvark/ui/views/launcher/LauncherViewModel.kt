@@ -19,7 +19,7 @@ import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
-import de.lukaspieper.truvark.domain.crypto.BiometricConfig
+import de.lukaspieper.truvark.data.preferences.models.BiometricConfig
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
 import de.lukaspieper.truvark.domain.vault.VaultConfig
 import de.lukaspieper.truvark.domain.vault.VaultFactory
@@ -64,8 +64,9 @@ public class LauncherViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            preferences.lastUsedVaultRootUri.first().let { uri ->
+            preferences.recentVaultRootUris.first().let { uri ->
                 try {
+                    val uri = uri.first()
                     val selectedDirectory = fileSystem.directoryInfo(uri)
                     val vaultFile = fileSystem.findFileOrNull(selectedDirectory, VaultConfig.FILENAME)
                     vaultFactory.tryReadVaultConfig(vaultFile!!)!!.let {
@@ -108,7 +109,7 @@ public class LauncherViewModel(
         if (vaultFile != null) {
             vaultFactory.tryReadVaultConfig(vaultFile)?.let {
                 fileSystem.takePersistableUriPermission(uri)
-                preferences.saveLastUsedVaultRootUri(uri)
+                preferences.addRecentVaultRootUri(uri)
 
                 withContext(Dispatchers.Main) {
                     vaultConfig = it
@@ -142,7 +143,7 @@ public class LauncherViewModel(
             )
 
             fileSystem.takePersistableUriPermission(directoryUri!!)
-            preferences.saveLastUsedVaultRootUri(directoryUri!!)
+            preferences.addRecentVaultRootUri(directoryUri!!)
 
             KoinModule.createUnlockedVaultScopeOrIgnore(vault)
             withContext(Dispatchers.Main) {

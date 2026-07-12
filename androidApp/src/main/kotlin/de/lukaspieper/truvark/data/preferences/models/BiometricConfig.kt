@@ -6,7 +6,7 @@
 
 @file:UseSerializers(UuidByteArraySerializer::class)
 
-package de.lukaspieper.truvark.domain.crypto
+package de.lukaspieper.truvark.data.preferences.models
 
 import de.lukaspieper.truvark.data.serialization.UuidByteArraySerializer
 import kotlinx.serialization.Serializable

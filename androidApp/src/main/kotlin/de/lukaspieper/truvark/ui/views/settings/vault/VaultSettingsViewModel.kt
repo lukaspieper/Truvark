@@ -12,7 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
-import de.lukaspieper.truvark.domain.crypto.BiometricConfig
+import de.lukaspieper.truvark.data.preferences.models.BiometricConfig
 import de.lukaspieper.truvark.domain.crypto.BiometricCryptoProvider
 import de.lukaspieper.truvark.domain.vault.Vault
 import de.lukaspieper.truvark.domain.vault.VaultFactory

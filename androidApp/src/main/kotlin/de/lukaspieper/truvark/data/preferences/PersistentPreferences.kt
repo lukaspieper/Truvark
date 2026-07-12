@@ -10,17 +10,26 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.byteArrayPreferencesKey
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import de.lukaspieper.truvark.domain.crypto.BiometricConfig
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.ALLOW_SCREEN_CAPTURE
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.BIOMETRIC_CONFIG
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.IMAGES_FIT_SCREEN
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.IS_LIST_LAYOUT
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.LOGGING_ALLOWED
+import de.lukaspieper.truvark.data.preferences.PreferencesKeys.RECENT_VAULT_ROOT_URIS
+import de.lukaspieper.truvark.data.preferences.migrations.RecentlyUsedVaultRootUrisMigration
+import de.lukaspieper.truvark.data.preferences.models.BiometricConfig
+import de.lukaspieper.truvark.data.preferences.models.RecentVaultRootUris
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore by preferencesDataStore(name = "AppPreferences")
+private val Context.dataStore by preferencesDataStore(
+    name = "AppPreferences",
+    produceMigrations = { _ -> listOf(RecentlyUsedVaultRootUrisMigration) }
+)
 
 /**
  * Persistent preferences based on [DataStore].
@@ -28,28 +37,26 @@ private val Context.dataStore by preferencesDataStore(name = "AppPreferences")
 public class PersistentPreferences(context: Context) {
     private val dataStore = context.dataStore
 
-    private companion object {
-        val LAST_USED_VAULT_ROOT_URI = stringPreferencesKey("PREF_LAST_USED_VAULT_ROOT_URI")
-        val BIOMETRIC_CONFIG = byteArrayPreferencesKey("PREF_BIOMETRIC_CONFIG")
-        val LOGGING_ALLOWED = booleanPreferencesKey("PREF_LOGGING_ALLOWED")
-        val IS_LIST_LAYOUT = booleanPreferencesKey("PREF_IS_LIST_LAYOUT")
-        val IMAGES_FIT_SCREEN = booleanPreferencesKey("PREF_IMAGES_FIT_SCREEN")
-        val ALLOW_SCREEN_CAPTURE = booleanPreferencesKey("PREF_ALLOW_SCREEN_CAPTURE")
-    }
+    public suspend fun addRecentVaultRootUri(uri: Uri) {
+        if (uri == Uri.EMPTY) return
 
-    public suspend fun saveLastUsedVaultRootUri(uri: Uri) {
         dataStore.edit { preferences ->
-            preferences[LAST_USED_VAULT_ROOT_URI] = uri.toString()
+            val updatedUris = (listOf(uri.toString()) + preferences.readRecentVaultRootUris())
+                .distinct()
+                .take(3)
+
+            preferences[RECENT_VAULT_ROOT_URIS] = RecentVaultRootUris(updatedUris).toByteArray()
         }
     }
 
-    public val lastUsedVaultRootUri: Flow<Uri> = dataStore.data.map { preferences ->
-        val lastUsedVaultRootUri = preferences[LAST_USED_VAULT_ROOT_URI]
-
-        when {
-            lastUsedVaultRootUri.isNullOrBlank() -> Uri.EMPTY
-            else -> lastUsedVaultRootUri.toUri()
+    public suspend fun clearRecentVaultRootUris() {
+        dataStore.edit { preferences ->
+            preferences[RECENT_VAULT_ROOT_URIS] = RecentVaultRootUris(emptyList()).toByteArray()
         }
+    }
+
+    public val recentVaultRootUris: Flow<List<Uri>> = dataStore.data.map { preferences ->
+        preferences.readRecentVaultRootUris().map { it.toUri() }
     }
 
     public suspend fun saveBiometricConfig(config: BiometricConfig) {
@@ -114,5 +121,16 @@ public class PersistentPreferences(context: Context) {
         allowScreenCapture
     ) { loggingAllowed, allowScreenCapture ->
         loggingAllowed || allowScreenCapture
+    }
+
+    // Extension functions
+
+    private fun Preferences.readRecentVaultRootUris(): List<String> {
+        val bytes = this[RECENT_VAULT_ROOT_URIS]
+
+        return when {
+            bytes == null || bytes.isEmpty() -> emptyList()
+            else -> RecentVaultRootUris.fromByteArray(bytes).uris
+        }
     }
 }
