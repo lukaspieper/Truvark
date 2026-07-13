@@ -6,6 +6,8 @@
 
 package de.lukaspieper.truvark.data.preferences.migrations
 
+import android.provider.DocumentsContract
+import androidx.core.net.toUri
 import androidx.datastore.core.DataMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -27,10 +29,22 @@ internal object RecentlyUsedVaultRootUrisMigration : DataMigration<Preferences> 
         }
 
         if (legacyUri.isNotBlank()) {
-            migratedPreferences[RECENT_VAULT_ROOT_URIS] = RecentVaultRootUris(listOf(legacyUri)).toByteArray()
+            val recentVaultRootUri = convertLegacyVaultRootUri(legacyUri)
+            migratedPreferences[RECENT_VAULT_ROOT_URIS] = RecentVaultRootUris(listOf(recentVaultRootUri)).toByteArray()
         }
 
         return migratedPreferences
+    }
+
+    private fun convertLegacyVaultRootUri(legacyUri: String): String {
+        val uri = legacyUri.toUri()
+
+        return if (DocumentsContract.isTreeUri(uri)) {
+            val documentId = DocumentsContract.getTreeDocumentId(uri)
+            DocumentsContract.buildDocumentUriUsingTree(uri, documentId).toString()
+        } else {
+            legacyUri
+        }
     }
 
     override suspend fun cleanUp() {
