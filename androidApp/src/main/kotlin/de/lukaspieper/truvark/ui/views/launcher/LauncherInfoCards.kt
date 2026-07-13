@@ -7,6 +7,7 @@
 package de.lukaspieper.truvark.ui.views.launcher
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -48,7 +49,7 @@ public fun LauncherInfoCardPager(
             pageSpacing = MaterialTheme.paddings.small
         ) { page ->
             val infoCardState = infoCardStates[page]
-            InfoCard(infoCardState)
+            InfoCard(infoCardState, Modifier.fillMaxWidth())
         }
 
         PageIndicator(

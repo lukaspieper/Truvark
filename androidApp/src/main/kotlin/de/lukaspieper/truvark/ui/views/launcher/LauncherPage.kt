@@ -411,6 +411,7 @@ private fun VaultUnlockCardPager(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun VaultUnlockCardView(
     vault: LauncherViewModel.RecentVaultInfo,
@@ -461,17 +462,24 @@ private fun VaultUnlockCardView(
                 PasswordUnlockView(unlockVaultWithPassword, unlockingErrorText)
 
                 if (biometricUnlockingSupported) {
+                    val size = ButtonDefaults.MediumContainerHeight
                     Button(
                         onClick = showBiometricPrompt,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .heightIn(size)
+                            .fillMaxWidth(),
+                        contentPadding = ButtonDefaults.contentPaddingFor(size, hasStartIcon = true),
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Fingerprint,
+                            Icons.Default.Fingerprint,
                             contentDescription = null,
-                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                            modifier = Modifier.size(ButtonDefaults.iconSizeFor(size)),
                         )
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text(text = stringResource(R.string.biometric_unlocking))
+                        Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
+                        Text(
+                            stringResource(R.string.biometric_unlocking),
+                            style = ButtonDefaults.textStyleFor(size)
+                        )
                     }
                 }
             }
