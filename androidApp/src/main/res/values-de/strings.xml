@@ -26,6 +26,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="create_or_open_vault">Tresor erstellen oder öffnen</string>
     <string name="app">App</string>
     <string name="logging">Protokollierung</string>
+    <string name="clear">Leeren</string>
     <string name="settings">Einstellungen</string>
     <string name="vault">Tresor</string>
     <string name="biometric_unlocking">Biometrisches Entsperren</string>

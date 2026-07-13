@@ -192,6 +192,12 @@ public class LauncherViewModel(
         unlockingError.value = recentVaultInfo.config.id to R.string.biometric_unlocking_failed
     }
 
+    public fun clearRecentVaultHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            preferences.clearRecentVaultRootUris()
+        }
+    }
+
     @Immutable
     public data class RecentVaultInfo(
         public val directory: DirectoryInfo,

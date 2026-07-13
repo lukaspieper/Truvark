@@ -51,6 +51,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -182,6 +183,7 @@ public fun LauncherPage(
                 createVault = viewModel::createVault
             )
         },
+        clearRecentVaultHistory = viewModel::clearRecentVaultHistory,
         isAnyDebuggingSettingEnabled = isAnyDebuggingSettingEnabled.value,
         modifier = modifier
     )
@@ -199,7 +201,8 @@ private fun LauncherView(
     showBiometricPrompt: (LauncherViewModel.RecentVaultInfo) -> Unit,
     setupDialog: @Composable () -> Unit,
     isAnyDebuggingSettingEnabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    clearRecentVaultHistory: () -> Unit = {}
 ) {
     SafeDrawingScaffold(
         largeTopAppBarTitle = stringResource(R.string.app_name),
@@ -235,6 +238,7 @@ private fun LauncherView(
                                 vaults = vaults,
                                 unlockVaultWithPassword = unlockVaultWithPassword,
                                 showBiometricPrompt = showBiometricPrompt,
+                                clearRecentVaultHistory = clearRecentVaultHistory,
                                 vaultPreselectionId = (state as? Ready)?.vaultPreselectionId,
                                 modifier = Modifier.sizeIn(maxWidth = 550.dp)
                             )
@@ -354,6 +358,7 @@ private fun VaultUnlockCardPager(
     vaultPreselectionId: Uuid?,
     unlockVaultWithPassword: (LauncherViewModel.RecentVaultInfo, ByteArray) -> Unit,
     showBiometricPrompt: (LauncherViewModel.RecentVaultInfo) -> Unit,
+    clearRecentVaultHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(pageCount = { vaults.size })
@@ -369,11 +374,23 @@ private fun VaultUnlockCardPager(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        PageIndicator(
-            pagerState = pagerState,
-            itemSize = vaults.size,
-            modifier = Modifier.padding(all = MaterialTheme.paddings.small).align(Alignment.End)
-        )
+        Row(
+            modifier = Modifier
+                .padding(all = MaterialTheme.paddings.extraSmall)
+                .align(Alignment.End),
+            horizontalArrangement = spacedBy(MaterialTheme.paddings.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PageIndicator(
+                pagerState = pagerState,
+                itemSize = vaults.size,
+                modifier = Modifier
+            )
+
+            OutlinedButton(onClick = clearRecentVaultHistory,) {
+                Text(stringResource(R.string.clear))
+            }
+        }
 
         HorizontalPager(
             state = pagerState,

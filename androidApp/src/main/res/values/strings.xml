@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="delete">Delete</string>
     <string name="file_not_supported_info">This file format is not yet supported. You can simply decrypt the file on demand.</string>
     <string name="create_or_open_vault">Create or open vault</string>
+    <string name="clear">Clear</string>
     <string name="settings">Settings</string>
     <string name="vault">Vault</string>
     <string name="app">App</string>
