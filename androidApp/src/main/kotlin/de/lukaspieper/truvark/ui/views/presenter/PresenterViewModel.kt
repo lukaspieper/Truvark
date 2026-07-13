@@ -17,7 +17,6 @@ import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import coil3.ImageLoader
-import de.lukaspieper.truvark.data.io.AndroidFileSystem
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.preferences.PersistentPreferences
 import de.lukaspieper.truvark.domain.crypto.decryption.media3.DecryptingDataSource
@@ -38,7 +37,6 @@ import kotlin.uuid.Uuid
 public class PresenterViewModel(
     private val preferences: PersistentPreferences,
     private val vault: Vault,
-    private val fileSystem: AndroidFileSystem,
     private val imageLoader: ImageLoader,
     @InjectedParam private val folderId: Uuid,
 ) : ViewModel() {
@@ -78,8 +76,8 @@ public class PresenterViewModel(
         }
     }
 
-    internal fun createCipherZoomableImageSource(fileInfo: FileInfo, mimeType: String): CipherZoomableImageSource {
-        return CipherZoomableImageSource(fileInfo, imageLoader, mimeType, vault)
+    internal fun createCipherZoomableImageSource(fileInfo: FileInfo): CipherZoomableImageSource {
+        return CipherZoomableImageSource(fileInfo, imageLoader, vault)
     }
 
     internal fun createMediaSource(fileInfo: FileInfo): MediaSource {

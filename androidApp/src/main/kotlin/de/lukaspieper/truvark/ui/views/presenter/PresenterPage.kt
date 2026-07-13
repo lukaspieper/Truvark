@@ -91,7 +91,7 @@ public fun PresenterPage(
 @Composable
 private fun PresenterView(
     itemsData: PresenterViewModel.ItemsData,
-    createCipherZoomableImageSource: (FileInfo, String) -> CipherZoomableImageSource,
+    createCipherZoomableImageSource: (FileInfo) -> CipherZoomableImageSource,
     createMediaSource: (FileInfo) -> MediaSource,
     imagesFitScreen: Boolean,
     initialFileId: Uuid,
@@ -164,7 +164,7 @@ private fun PresenterView(
 @Composable
 private fun CipherFilePager(
     itemsData: PresenterViewModel.ItemsData,
-    createCipherZoomableImageSource: (FileInfo, String) -> CipherZoomableImageSource,
+    createCipherZoomableImageSource: (FileInfo) -> CipherZoomableImageSource,
     createMediaSource: (FileInfo) -> MediaSource,
     initialFileId: Uuid,
     imagesFitScreen: Boolean,
@@ -217,7 +217,7 @@ private fun CipherFilePager(
                             fileName = cipherFileEntity.fullName,
                             mimeType = cipherFileEntity.mimeType,
                             createCipherZoomableImageSource = {
-                                createCipherZoomableImageSource(physicalFile, cipherFileEntity.mimeType)
+                                createCipherZoomableImageSource(physicalFile)
                             },
                             createMediaSource = { createMediaSource(physicalFile) },
                             isTopBarVisible = isTopBarVisible,
@@ -273,7 +273,7 @@ private fun BoxScope.CipherFilePresenter(
 private fun PresenterViewPreview() = PreviewHost {
     PresenterView(
         itemsData = PresenterViewModel.ItemsData(cipherFileEntities = PreviewSampleData.cipherFileEntities),
-        createCipherZoomableImageSource = { _, _ -> error("Not implemented") },
+        createCipherZoomableImageSource = { _ -> error("Not implemented") },
         createMediaSource = { error("Not implemented") },
         imagesFitScreen = true,
         initialFileId = 1.toPreviewUuid(),
