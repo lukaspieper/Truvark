@@ -71,7 +71,7 @@ android {
 
     defaultConfig {
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 203
         versionName = "2.0.3"
 
