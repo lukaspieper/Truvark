@@ -34,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.MaterialDialog
 import de.lukaspieper.truvark.ui.controls.SegmentedSwitchListItem
@@ -125,7 +127,14 @@ public fun RenameFolderDialog(
     modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
-    var editableFolderName by rememberSaveable(folderName) { mutableStateOf(folderName) }
+    var editableFolderName by remember(folderName) {
+        mutableStateOf(
+            TextFieldValue(
+                text = folderName,
+                selection = TextRange(folderName.length)
+            )
+        )
+    }
     var isInputValid by rememberSaveable { mutableStateOf(true) }
 
     MaterialDialog(
@@ -134,7 +143,7 @@ public fun RenameFolderDialog(
         confirmButton = {
             Button(onClick = {
                 GlobalScope.launch {
-                    isInputValid = renameFolder(editableFolderName)
+                    isInputValid = renameFolder(editableFolderName.text)
                     if (isInputValid) hideDialog()
                 }
             }) {
@@ -155,7 +164,7 @@ public fun RenameFolderDialog(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = {
                 GlobalScope.launch {
-                    isInputValid = renameFolder(editableFolderName)
+                    isInputValid = renameFolder(editableFolderName.text)
                     if (isInputValid) hideDialog()
                 }
             }),
