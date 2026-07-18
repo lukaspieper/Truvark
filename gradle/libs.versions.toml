@@ -90,7 +90,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 # Android
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
-google-oss-licenses = { id = "com.google.android.gms.oss-licenses-plugin", version = "0.12.0" }
+google-oss-licenses = { id = "com.google.android.gms.oss-licenses-plugin", version = "0.13.0" }
 
 # Desktop
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
