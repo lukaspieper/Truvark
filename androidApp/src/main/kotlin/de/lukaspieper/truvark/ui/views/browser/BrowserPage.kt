@@ -130,6 +130,11 @@ public fun BrowserPage(
             isVaultLockingConfirmed = false
             navigateTo(ListPaneRoute.SettingsHome(route.vaultId))
         },
+        lockVault = {
+            isVaultLockingConfirmed = false
+            KoinModule.closeUnlockedVaultScope(route.vaultId)
+            navigateBack()
+        },
         navigateToFilePresenter = { cipherFileEntity ->
             isVaultLockingConfirmed = false
             navigateTo(
@@ -162,6 +167,7 @@ private fun BrowserView(
     relocateSelectedCipherEntities: () -> Unit,
     updateIsListLayout: (Boolean) -> Unit,
     navigateToSettings: () -> Unit,
+    lockVault: () -> Unit,
     navigateToFilePresenter: (CipherFileEntity) -> Unit,
     navigateToFolder: (Uuid, CipherFolderEntity) -> Unit,
     navigateToParentFolder: () -> Unit,
@@ -203,6 +209,16 @@ private fun BrowserView(
                 IconButton(
                     onClick = navigateToParentFolder,
                     content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                )
+            } else {
+                IconButton(
+                    onClick = lockVault,
+                    content = {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null
+                        )
+                    }
                 )
             }
         },
@@ -447,6 +463,7 @@ private fun NonRootFolderPreview(
         relocateSelectedCipherEntities = {},
         updateIsListLayout = {},
         navigateToSettings = {},
+        lockVault = {},
         navigateToFilePresenter = {},
         navigateToFolder = { _, _ -> },
         navigateToParentFolder = {},
