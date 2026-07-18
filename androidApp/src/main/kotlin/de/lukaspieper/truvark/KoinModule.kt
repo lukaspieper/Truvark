@@ -41,6 +41,7 @@ import org.koin.plugin.module.dsl.factory
 import org.koin.plugin.module.dsl.single
 import org.koin.plugin.module.dsl.viewModel
 import org.koin.plugin.module.dsl.worker
+import kotlin.uuid.Uuid
 
 public object KoinModule {
 
@@ -109,5 +110,12 @@ public object KoinModule {
                 logcat(DEBUG) { "Scope for vault ${vault.id} already exists, not creating a new one." }
             }
         }
+    }
+
+    public fun closeUnlockedVaultScope(vaultId: Uuid) {
+        val scopeId = vaultId.toHexString()
+        GlobalContext.get().getScopeOrNull(scopeId)?.close()
+
+        logcat(DEBUG) { "Closed scope for vault $vaultId." }
     }
 }

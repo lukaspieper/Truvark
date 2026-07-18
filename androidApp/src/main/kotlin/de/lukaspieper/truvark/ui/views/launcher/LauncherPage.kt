@@ -100,7 +100,6 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 public fun LauncherPage(
-    navigateAndClearBackStack: (Route) -> Unit,
     navigateTo: (Route) -> Unit,
     viewModel: LauncherViewModel,
     modifier: Modifier = Modifier
@@ -112,9 +111,10 @@ public fun LauncherPage(
 
     var biometricVault by remember { mutableStateOf<LauncherViewModel.RecentVaultInfo?>(null) }
 
-    LaunchedEffect(launcherState, navigateAndClearBackStack) {
+    LaunchedEffect(launcherState, navigateTo) {
         (launcherState as? VaultUnlocked)?.let { state ->
-            navigateAndClearBackStack(SinglePaneRoute.Browser(state.vaultId))
+            navigateTo(SinglePaneRoute.Browser(state.vaultId))
+            viewModel.state.value = Ready(state.vaultId)
         }
     }
 
@@ -387,7 +387,7 @@ private fun VaultUnlockCardPager(
                 modifier = Modifier
             )
 
-            OutlinedButton(onClick = clearRecentVaultHistory,) {
+            OutlinedButton(onClick = clearRecentVaultHistory) {
                 Text(stringResource(R.string.clear))
             }
         }

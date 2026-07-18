@@ -48,6 +48,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="create_vault">Create vault</string>
     <string name="create">Create</string>
     <string name="error_unlocking_vault">Vault could not be unlocked.</string>
+    <string name="confirm_lock_vault">Repeat to lock the vault.</string>
     <string name="decrypted_files">File decryption finished</string>
     <string name="open_directory">Open directory</string>
     <string name="relocating_files">Moving files</string>

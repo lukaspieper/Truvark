@@ -50,6 +50,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="create_vault">Tresor erstellen</string>
     <string name="create">Erstellen</string>
     <string name="error_unlocking_vault">Der Tresor konnte nicht entsperrt werden.</string>
+    <string name="confirm_lock_vault">Zum Sperren wiederholen.</string>
     <string name="decrypted_files">Entschlüsselung abgeschlossen</string>
     <string name="open_directory">Ordner öffnen</string>
     <string name="relocating_files">Verschiebe Dateien</string>
@@ -61,7 +62,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="settings_description_vault">Tresorname, biometrisches Entsperren</string>
     <string name="settings_description_app">Erscheinungsbild, Fehlersuche</string>
     <string name="settings_legal">Rechtliche Hinweise</string>
-    <string name="settings_legal_description">izenzen, Copyright</string>
+    <string name="settings_legal_description">Lizenzen, Copyright</string>
     <string name="rename_folder">Ordner umbenennen</string>
     <string name="rename">Umbenennen</string>
     <string name="delete_source_files">Quelldateien löschen</string>

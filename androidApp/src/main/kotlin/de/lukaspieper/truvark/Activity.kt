@@ -119,7 +119,6 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                     entryProvider = entryProvider {
                         entry<SinglePaneRoute.Launcher> {
                             LauncherPage(
-                                navigateAndClearBackStack = { route -> backStack[backStack.lastIndex] = route },
                                 navigateTo = backStack::add,
                                 viewModel = koinViewModel()
                             )
@@ -129,6 +128,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                             BrowserPage(
                                 route = route,
                                 navigateTo = { route -> backStack.addSingle(route) },
+                                navigateBack = backStack::removeLastOrNull,
                                 viewModel = koinViewModel(scope = getScope(route.vaultId))
                             )
                         }

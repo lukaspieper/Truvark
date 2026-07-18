@@ -7,6 +7,7 @@
 package de.lukaspieper.truvark.ui.views.browser
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -57,6 +58,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
+import de.lukaspieper.truvark.KoinModule
 import de.lukaspieper.truvark.ListPaneRoute
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.Route
@@ -69,19 +71,42 @@ import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
 @Composable
 public fun BrowserPage(
     route: SinglePaneRoute.Browser,
     navigateTo: (Route) -> Unit,
+    navigateBack: () -> Unit,
     viewModel: BrowserViewModel,
     modifier: Modifier = Modifier
 ) {
-    BackHandler(enabled = viewModel.isRootLevel.not()) {
-        viewModel.navigateToParentFolder()
+    val context = LocalContext.current
+    var isVaultLockingConfirmed by rememberSaveable { mutableStateOf(false) }
+
+    BackHandler {
+        if (viewModel.isRootLevel.not()) {
+            viewModel.navigateToParentFolder()
+        } else if (isVaultLockingConfirmed) {
+            isVaultLockingConfirmed = false
+            KoinModule.closeUnlockedVaultScope(route.vaultId)
+            navigateBack()
+        } else {
+            isVaultLockingConfirmed = true
+            // TODO: Replace Toast with Snackbar.
+            Toast.makeText(context, R.string.confirm_lock_vault, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(isVaultLockingConfirmed) {
+        if (isVaultLockingConfirmed) {
+            delay(2.seconds)
+            isVaultLockingConfirmed = false
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -101,8 +126,12 @@ public fun BrowserPage(
         deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
         updateIsListLayout = viewModel::updateIsListLayout,
-        navigateToSettings = { navigateTo(ListPaneRoute.SettingsHome(route.vaultId)) },
+        navigateToSettings = {
+            isVaultLockingConfirmed = false
+            navigateTo(ListPaneRoute.SettingsHome(route.vaultId))
+        },
         navigateToFilePresenter = { cipherFileEntity ->
+            isVaultLockingConfirmed = false
             navigateTo(
                 SinglePaneRoute.Presenter(
                     route.vaultId,
