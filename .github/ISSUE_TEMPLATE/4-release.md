@@ -44,6 +44,11 @@ cover the most important features.
 - [ ] Media duration is displayed
 - [ ] Settings UI is adaptive
 - [ ] Show open source licenses
+- [ ] Enable and verify screen capture prevention
+- [ ] Open a vault from the recent vaults list on the launcher
+- [ ] Clear recent vault history
+- [ ] Lock the vault manually and by pressing back
+- [ ] Verify a warning is shown when any debugging feature is enabled
 
 ### Notifications
 - [ ] Show notifications for all background operations
