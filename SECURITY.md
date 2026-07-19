@@ -17,3 +17,7 @@ Please report any potential vulnerabilities privately using the **Security** tab
 
 > [!CAUTION]
 > Do not disclose a vulnerability through a public issue, discussion, pull request, or the like.
+
+## Threat Model
+
+It is recommended to review the project's [threat model](docs/threat-model.md) before reporting a potential vulnerability. The document outlines the security objectives, considered threats, and residual risks, which helps determine whether an issue falls within the project's security boundary.

@@ -43,6 +43,7 @@ As you can see, there are already plenty of reasons to give Truvark a try!
   like *privacy by default* and *security by design*.
 * [FAQ](docs/faq.md): Answers to frequently asked questions about the app like vault locking, decrypted file location
   and backup procedures.
+* [Threat model](docs/threat-model.md): Security objectives, assets, assumptions, considered threats, and residual risks.
 
 ## Expectations and Scope
 
