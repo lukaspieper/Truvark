@@ -1,0 +1,9 @@
+- Manuelles Tresor-Sperren hinzugefügt; kehrt zum Launcher zurück
+- Mehr zuletzt verwendete Tresore im Launcher, mit Löschen-Button
+- Einstellungen und Launcher neu gestaltet (Material 3 Expressive)
+- Option zum Verhindern von Screenshots
+- Einstellungen vom Launcher öffnen
+- Zielversion auf Android 17 erhöht
+- Unnötige Berechtigung ACCESS_NETWORK_STATE entfernt
+- Wiedergabe animierter WebP-Bilder korrigiert
+- Cursor-Position im Umbenennen-Dialog korrigiert

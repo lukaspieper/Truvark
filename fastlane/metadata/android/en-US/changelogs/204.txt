@@ -1,0 +1,9 @@
+- Added manual vault locking; returns to launcher
+- Shows more recently used vaults on the launcher, with a button to clear history
+- Redesigned settings and launcher screens (Material 3 Expressive)
+- Added option to prevent screen capture
+- Add button to open settings from launcher
+- Target Android 17
+- Removed unused ACCESS_NETWORK_STATE permission
+- Fixed animated WebP playback
+- Fixed rename folder dialog cursor position
