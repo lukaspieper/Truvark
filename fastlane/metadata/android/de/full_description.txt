@@ -1,0 +1,16 @@
+Vielleicht fragst du dich, warum du einer eher unbekannten App zur Dateiverschlüsselung eine Chance geben solltest – gerade bei einer App, bei der Vertrauen so wichtig ist?
+
+Im Vergleich zu vielen anderen beliebten Alternativen bietet Truvark ...
+
+<ul>
+<li>Unterstützung für mehrere Tresore auf einem Gerät</li>
+<li>Unterstützung für tief verschachtelte Ordnerstrukturen (Unterordner)</li>
+<li>Entschlüsselung gängiger Mediendateien (Bilder, Videos und Audiodateien) direkt in der App</li>
+<li>vollständige Offline-Nutzung, ohne Internetzugriff oder entsprechende Berechtigung</li>
+<li>keine gefährlichen Berechtigungen wie den vollständigen Zugriff auf Speicher oder Mediendateien</li>
+<li>keine Werbung, keine Telemetrie und keine sonstige Erfassung von Nutzerdaten</li>
+<li>Verschlüsselung aller Indizes und Vorschaubilder</li>
+<li>sicheres Entsperren per Biometrie (z. B. Fingerabdruck)</li>
+</ul>
+
+Wie du siehst, gibt es bereits viele gute Gründe, Truvark auszuprobieren!
