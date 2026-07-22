@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+SPDX-FileCopyrightText: 2026 nemoXdev
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+<resources>
+    <string name="enter_password">أدخل كلمة المرور</string>
+    <string name="incorrect_password">كلمة المرور غير صحيحة.</string>
+    <string name="choose_vault_root_dir">اختر المجلد</string>
+    <string name="storage_location_text">لإنشاء خزنة جديدة، اختر مجلداً فارغاً على جهازك أو بطاقة SD. لفتح خزنة موجودة، اختر مجلداً موجوداً.</string>
+    <string name="set_password">تعيين كلمة المرور</string>
+    <string name="setup_password_text">التشفير يعتمد على كلمة المرور. تأكد من تذكر كلمة المرور، لأنه في حال فقدانها لا توجد طريقة لاستعادة ملفاتك.</string>
+    <string name="repeat_password">أعد إدخال كلمة المرور</string>
+    <string name="inputs_do_not_match">المدخلات غير متطابقة.</string>
+    <string name="password_length">يجب أن تتكون كلمة المرور من %d أحرف على الأقل.</string>
+    <string name="foreground_service">خدمات المقدمة</string>
+    <string name="encrypting_files">تشفير الملفات</string>
+    <string name="decrypting_files">فك تشفير الملفات</string>
+    <string name="deleting_files">حذف الملفات</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete">حذف</string>
+    <string name="file_not_supported_info">هذا التنسيق غير مدعوم بعد. يمكنك ببساطة فك تشفير الملف عند الحاجة.</string>
+    <string name="create_or_open_vault">إنشاء أو فتح خزنة</string>
+    <string name="clear">مسح</string>
+    <string name="settings">الإعدادات</string>
+    <string name="vault">الخزنة</string>
+    <string name="app">التطبيق</string>
+    <string name="logging">التسجيل</string>
+    <string name="biometric_unlocking">فتح القفل بالبصمة</string>
+    <string name="setup_biometrics">إعداد البصمة</string>
+    <string name="confirm_vaults_password">تأكيد كلمة مرور الخزنة</string>
+    <string name="setup_biometrics_description">يمكن فتح خزنة واحدة فقط بالبصمة. إذا بدأت إعداد البصمة لخزنة أخرى، ستتم إزالتها تلقائياً من الخزنة السابقة.</string>
+    <string name="vault_using_biometric_unlocking">هذه الخزنة مهيأة لفتح القفل بالبصمة.</string>
+    <string name="create_new_folder">إنشاء مجلد جديد</string>
+    <string name="folder_name">اسم المجلد</string>
+    <string name="no_existing_vault_info">أنشئ خزنة جديدة أو افتح خزنة موجودة للبدء.</string>
+    <string name="no_vault_found_title">لم يتم العثور على خزنة</string>
+    <string name="biometric_unlocking_failed">فشل فتح القفل بالبصمة! الرجاء استخدام كلمة المرور لفتح الخزنة.</string>
+    <string name="delete_warning">أنت على وشك حذف الملفات والمجلدات المحددة. لا يمكن التراجع عن هذا!</string>
+    <string name="confirm_deletion">تأكيد الحذف</string>
+    <string name="encrypted_file_not_found">الملف المشفر غير موجود!</string>
+    <string name="notification_permission_description">مطلوب للتشفير وفك التشفير في الخلفية. يتم عرض إشعارات تقدم منخفضة الأولوية فقط.</string>
+    <string name="notification_permission_title">الإشعارات مطلوبة</string>
+    <string name="grant_permission">منح الإذن</string>
+    <string name="open_app_settings">فتح إعدادات التطبيق</string>
+    <string name="fit_images_to_match_screen">ضبط الصور لتناسب حجم الشاشة</string>
+    <string name="create_vault">إنشاء خزنة</string>
+    <string name="create">إنشاء</string>
+    <string name="error_unlocking_vault">تعذر فتح الخزنة.</string>
+    <string name="confirm_lock_vault">أعد الإدخال لقفل الخزنة.</string>
+    <string name="decrypted_files">تم الانتهاء من فك تشفير الملفات</string>
+    <string name="open_directory">فتح المجلد</string>
+    <string name="relocating_files">نقل الملفات</string>
+    <string name="move_here">انقل إلى هنا</string>
+    <string name="note_relocate_files_to_root">لاحظ أنه لا يمكن نقل الملفات إلى جذر الخزنة.</string>
+    <string name="folders_and_files_selected">تم تحديد %1$s مجلد و %2$s ملف</string>
+    <string name="vault_name">اسم الخزنة</string>
+    <string name="vault_name_change_hint">لاحظ أن اسم الخزنة غير مشفر بحيث يمكن استخدامه لتحديد الخزنة قبل فتحها.</string>
+    <string name="settings_description_vault">اسم الخزنة، فتح القفل بالبصمة</string>
+    <string name="settings_description_app">المظهر، التصحيح</string>
+    <string name="settings_legal">معلومات قانونية</string>
+    <string name="settings_legal_description">التراخيص، حقوق النشر</string>
+    <string name="rename_folder">إعادة تسمية المجلد</string>
+    <string name="rename">إعادة تسمية</string>
+    <string name="delete_source_files">حذف الملفات المصدرية</string>
+    <string name="encrypt_files">تشفير الملفات</string>
+    <string name="select">تحديد</string>
+    <string name="settings_repository">GitHub</string>
+    <string name="settings_repository_description">الكود المصدري، متتبع المشكلات، سجل التغييرات</string>
+    <string name="select_directory">اختر المجلد</string>
+    <string name="appearance">المظهر</string>
+    <string name="debugging">التصحيح</string>
+    <string name="logging_description">الكتابة إلى سجل النظام (logcat)</string>
+    <string name="allow_screen_capture">السماح بالتقاط الشاشة</string>
+    <string name="allow_screen_capture_description">يسمح بالتقاط الصور والفيديو للشاشة</string>
+    <string name="info_card_debugging_title">وظيفة التصحيح مفعلة</string>
+    <string name="info_card_debugging_description">تم تفعيل إعداد تصحيح واحد على الأقل. إذا لم يكن ذلك مقصوداً، قم بتعطيله قبل إنشاء أو فتح خزنة.</string>
+    <string name="info_card_backup_title">هل لديك نسخة احتياطية؟</string>
+    <string name="info_card_backup_description">وجود نسخة احتياطية أمر ضروري! فقط انسخ مجلد الخزنة الذي اخترته إلى وحدة تخزين أخرى أو سحابة.</string>
+    <string name="info_card_feedback_title">هل أعجبك Truvark؟</string>
+    <string name="info_card_feedback_description">المشاركة أو وضع نجمة على GitHub محل تقدير كبير. شكراً!</string>
+</resources>
