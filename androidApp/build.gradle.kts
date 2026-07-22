@@ -72,8 +72,8 @@ android {
     defaultConfig {
         minSdk = 31
         targetSdk = 37
-        versionCode = 203
-        versionName = "2.0.3"
+        versionCode = 204
+        versionName = "2.1.0"
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
