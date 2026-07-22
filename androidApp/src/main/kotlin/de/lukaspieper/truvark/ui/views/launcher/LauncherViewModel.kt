@@ -53,7 +53,13 @@ public class LauncherViewModel(
 ) : ViewModel() {
     private val unlockingError = MutableStateFlow<Pair<Uuid, Int>?>(null)
 
-    private val recentlyUsedVaults = preferences.recentVaultRootUris
+    // TODO: Replace this workaround to handle vault renaming.
+    private val vaultEntriesRefreshGeneration = MutableStateFlow(0)
+
+    private val recentlyUsedVaults = combine(
+        preferences.recentVaultRootUris,
+        vaultEntriesRefreshGeneration
+    ) { uris, _ -> uris }
         .map { uris ->
             uris.mapNotNull { uri ->
                 try {
@@ -93,6 +99,10 @@ public class LauncherViewModel(
             recentlyUsedVaults.first { it != null }
             state.value = LauncherState.Ready()
         }
+    }
+
+    public fun refreshVaultEntries() {
+        vaultEntriesRefreshGeneration.value++
     }
 
     public fun inspectDirectory(uri: Uri) {

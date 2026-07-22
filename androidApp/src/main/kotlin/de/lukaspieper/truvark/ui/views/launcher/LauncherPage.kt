@@ -70,6 +70,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -108,6 +110,10 @@ public fun LauncherPage(
 
     val vaults by viewModel.vaultEntries.collectAsStateWithLifecycle()
     val launcherState by viewModel.state.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshVaultEntries()
+    }
 
     var biometricVault by remember { mutableStateOf<LauncherViewModel.RecentVaultInfo?>(null) }
 
