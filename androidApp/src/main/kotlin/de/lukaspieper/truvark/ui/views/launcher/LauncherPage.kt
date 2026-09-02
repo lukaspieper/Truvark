@@ -45,7 +45,6 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -189,7 +188,7 @@ public fun LauncherPage(
     )
 }
 
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun LauncherView(
     notificationPermissionState: PermissionState?,
@@ -411,7 +410,6 @@ private fun VaultUnlockCardPager(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun VaultUnlockCardView(
     vault: LauncherViewModel.RecentVaultInfo,

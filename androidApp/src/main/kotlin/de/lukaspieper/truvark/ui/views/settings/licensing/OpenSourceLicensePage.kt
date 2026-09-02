@@ -28,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -53,7 +52,6 @@ import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.licensing.License.GeneralPublicLicenseV30OrLater
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun OpenSourceLicensePage(
     navigateBack: () -> Unit,
@@ -73,7 +71,6 @@ public fun OpenSourceLicensePage(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun OpenSourceLicenseView(
     licensedItems: List<LicensedItem>,
@@ -208,7 +205,6 @@ private fun LicenseTextDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @PagePreviews
 @Composable
 private fun OpenSourceLicenseViewPreview() = PreviewHost {
