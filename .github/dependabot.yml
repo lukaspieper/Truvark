@@ -3,21 +3,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 version: 2
+
 # https://github.com/dependabot/dependabot-core/issues/6888
 registries:
   maven-google:
     type: maven-repository
     url: "https://dl.google.com/dl/android/maven2/"
+  gradle-plugin-portal:
+    type: maven-repository
+    url: "https://plugins.gradle.org/m2"
 
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
+    ignore:
+      - dependency-name: "gradle-wrapper"
+      - dependency-name: "com.android.application"
     schedule:
       interval: "monthly"
     registries: "*"
     open-pull-requests-limit: 99
-    cooldown:
-      default-days: 7
 
   - package-ecosystem: "github-actions"
     directories:
@@ -26,5 +31,3 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 99
-    cooldown:
-      default-days: 7
