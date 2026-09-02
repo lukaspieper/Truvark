@@ -76,13 +76,15 @@ public class VaultFactory(
         val encryptedStreamingAeadKeyset = TinkProtoKeysetFormat.serializeEncryptedKeyset(
             KeysetHandle.generateNew(PredefinedStreamingAeadParameters.AES256_GCM_HKDF_1MB),
             passwordBasedKey,
-            vaultId.toByteArray() + StreamingAeadAssociatedDataSuffix
+            vaultId.toByteArray() + StreamingAeadAssociatedDataSuffix,
+            RegistryConfiguration.get()
         )
 
         val encryptedPrfKeyset = TinkProtoKeysetFormat.serializeEncryptedKeyset(
             KeysetHandle.generateNew(PredefinedPrfParameters.HMAC_SHA256_PRF),
             passwordBasedKey,
-            vaultId.toByteArray() + PrfAssociatedDataSuffix
+            vaultId.toByteArray() + PrfAssociatedDataSuffix,
+            RegistryConfiguration.get()
         )
 
         return VaultConfig(
@@ -126,13 +128,15 @@ public class VaultFactory(
         val streamingAeadKeyset = TinkProtoKeysetFormat.parseEncryptedKeyset(
             vaultConfig.encryptedStreamingAeadKeyset,
             passwordBasedKey,
-            vaultConfig.id.toByteArray() + StreamingAeadAssociatedDataSuffix
+            vaultConfig.id.toByteArray() + StreamingAeadAssociatedDataSuffix,
+            RegistryConfiguration.get()
         )
 
         val prfKeyset = TinkProtoKeysetFormat.parseEncryptedKeyset(
             vaultConfig.encryptedPrfKeyset,
             passwordBasedKey,
-            vaultConfig.id.toByteArray() + PrfAssociatedDataSuffix
+            vaultConfig.id.toByteArray() + PrfAssociatedDataSuffix,
+            RegistryConfiguration.get()
         )
 
         return Pair(
