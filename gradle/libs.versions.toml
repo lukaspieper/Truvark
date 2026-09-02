@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [versions]
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 composeMultiplatform = "1.11.1"
 
 # Android
