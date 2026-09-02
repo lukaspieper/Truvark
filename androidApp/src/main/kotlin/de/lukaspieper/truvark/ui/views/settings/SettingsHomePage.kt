@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.AppSettingsAlt
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Copyright
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -53,7 +52,6 @@ import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 public fun SettingsHomePage(
     route: ListPaneRoute.SettingsHome,
