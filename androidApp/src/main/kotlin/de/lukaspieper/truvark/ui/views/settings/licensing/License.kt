@@ -18,7 +18,8 @@ public sealed class License(
             "http://www.apache.org/licenses/LICENSE-2.0.txt" to ApacheLicenseV20,
             "https://www.apache.org/licenses/LICENSE-2.0.txt" to ApacheLicenseV20,
             "https://opensource.org/licenses/BSD-3-Clause" to Bsd3License,
-            "https://github.com/lambdapioneer/argon2kt/blob/master/LICENSE" to MitLicense
+            "https://github.com/lambdapioneer/argon2kt/blob/master/LICENSE" to MitLicense,
+            "http://opensource.org/licenses/MIT" to MitLicense,
         )
 
         public fun getByUri(uri: String): License {
