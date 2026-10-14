@@ -28,10 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.domain.vault.VaultConfig.Companion.MAX_VAULT_NAME_LENGTH
 import de.lukaspieper.truvark.ui.extensions.exclude
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -137,7 +134,7 @@ public fun VaultSettingsSections(
                 navigationIcon = {
                     if (!isExpandedLayout) {
                         IconButton(onClick = navigateBack) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                            Icon(imageVector = MaterialSymbols.ArrowBack, null)
                         }
                     }
                 }
@@ -221,7 +218,7 @@ public fun VaultName(
                     enabled = isVaultNameEdited,
                     modifier = Modifier.height(TextFieldDefaults.MinHeight)
                 ) {
-                    Icon(if (isVaultNameEdited) Icons.Default.Save else Icons.Default.Done, null)
+                    Icon(if (isVaultNameEdited) MaterialSymbols.Save else MaterialSymbols.Done, null)
                 }
             }
         }

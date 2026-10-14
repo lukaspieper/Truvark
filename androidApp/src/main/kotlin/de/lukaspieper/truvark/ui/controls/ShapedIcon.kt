@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
 
@@ -89,7 +88,7 @@ private fun ShapedIconPreview() = PreviewHost(Modifier) {
         modifier = Modifier.padding(MaterialTheme.paddings.medium)
     ) {
         ShapedIcon(
-            imageVector = Icons.Default.Settings,
+            imageVector = MaterialSymbols.Settings,
             tint = MaterialTheme.colorScheme.primary,
             shape = MaterialShapes.Sunny
         )

@@ -21,19 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DriveFileMove
-import androidx.compose.material.icons.automirrored.filled.ViewList
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ViewModule
-import androidx.compose.material.icons.outlined.CreateNewFolder
-import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
@@ -68,6 +55,7 @@ import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -187,9 +175,9 @@ private fun BrowserView(
                 onClick = { updateIsListLayout(isListLayout.not()) },
                 content = {
                     if (isListLayout) {
-                        Icon(Icons.Default.ViewModule, null)
+                        Icon(MaterialSymbols.ViewModule, null)
                     } else {
-                        Icon(Icons.AutoMirrored.Default.ViewList, null)
+                        Icon(MaterialSymbols.ViewList, null)
                     }
                 }
             )
@@ -197,12 +185,12 @@ private fun BrowserView(
             if (isRootLevel) {
                 IconButton(
                     onClick = navigateToSettings,
-                    content = { Icon(Icons.Default.Settings, null) }
+                    content = { Icon(MaterialSymbols.Settings, null) }
                 )
             } else {
                 IconButton(
                     onClick = { visibleDialog = BrowserDialogs.RENAME_FOLDER },
-                    content = { Icon(Icons.Default.Edit, null) }
+                    content = { Icon(MaterialSymbols.Edit, null) }
                 )
             }
         },
@@ -210,14 +198,14 @@ private fun BrowserView(
             if (!isRootLevel) {
                 IconButton(
                     onClick = navigateToParentFolder,
-                    content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                    content = { Icon(MaterialSymbols.ArrowBack, null) }
                 )
             } else {
                 IconButton(
                     onClick = lockVault,
                     content = {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = MaterialSymbols.Close,
                             contentDescription = null
                         )
                     }
@@ -253,7 +241,7 @@ private fun BrowserView(
                     // files to the root of the vault. The root only supports folders.
                     val isRelocationAllowed = remember(isRootLevel, selectionState, folderHierarchyLevel) {
                         folderHierarchyLevel.folder != selectionState.relocationSourceFolder &&
-                                (!isRootLevel || selectionState.selectedFiles.isEmpty())
+                            (!isRootLevel || selectionState.selectedFiles.isEmpty())
                     }
 
                     RelocationModeBar(
@@ -321,12 +309,12 @@ private fun FloatingActionsButtons(
     ) {
         FloatingActionButton(
             onClick = showEncryptFilesDialog,
-            content = { Icon(Icons.Outlined.FileOpen, null) }
+            content = { Icon(MaterialSymbols.FileOpen, null) }
         )
 
         FloatingActionButton(
             onClick = showNewFolderDialog,
-            content = { Icon(Icons.Outlined.CreateNewFolder, null) }
+            content = { Icon(MaterialSymbols.CreateNewFolder, null) }
         )
     }
 }
@@ -355,26 +343,26 @@ private fun SelectionModeBar(
         ) {
             IconButton(
                 onClick = disableSelectionMode,
-                content = { Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.primary) },
+                content = { Icon(MaterialSymbols.Close, null, tint = MaterialTheme.colorScheme.primary) },
             )
             Text(
                 text = "$numberOfSelections/$numberOfCipherEntities"
             )
             IconButton(
                 onClick = selectAll,
-                content = { Icon(Icons.Default.SelectAll, null) }
+                content = { Icon(MaterialSymbols.SelectAll, null) }
             )
             IconButton(
                 onClick = decryptSelectedCipherEntities,
-                content = { Icon(Icons.Default.LockOpen, null) }
+                content = { Icon(MaterialSymbols.LockOpen, null) }
             )
             IconButton(
                 onClick = enableRelocationMode,
-                content = { Icon(Icons.AutoMirrored.Filled.DriveFileMove, null) }
+                content = { Icon(MaterialSymbols.DriveFileMove, null) }
             )
             IconButton(
                 onClick = showDeleteSelectionDialog,
-                content = { Icon(Icons.Default.Delete, null) }
+                content = { Icon(MaterialSymbols.Delete, null) }
             )
         }
     }
@@ -405,7 +393,7 @@ public fun RelocationModeBar(
             ) {
                 IconButton(
                     onClick = disableSelectionMode,
-                    content = { Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.primary) },
+                    content = { Icon(MaterialSymbols.Close, null, tint = MaterialTheme.colorScheme.primary) },
                 )
 
                 Text(

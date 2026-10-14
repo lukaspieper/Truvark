@@ -16,13 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.AppSettingsAlt
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Copyright
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -45,6 +38,7 @@ import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.ShapedIcon
 import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.exclude
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -83,7 +77,7 @@ public fun SettingsHomePage(
                 navigationIcon = {
                     IconButton(
                         onClick = navigateBack,
-                        content = { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                        content = { Icon(MaterialSymbols.ArrowBack, null) }
                     )
                 }
             )
@@ -113,7 +107,7 @@ public fun SettingsHomePage(
                     enabled = !isVaultSettingsSelected && route.vaultId != null,
                     leadingContent = {
                         ShapedIcon(
-                            imageVector = Icons.Default.Lock,
+                            imageVector = MaterialSymbols.Lock,
                             tint = MaterialTheme.colorScheme.primary,
                             size = 42.dp
                         )
@@ -130,7 +124,7 @@ public fun SettingsHomePage(
                     enabled = !isAppSettingsSelected,
                     leadingContent = {
                         ShapedIcon(
-                            imageVector = Icons.Default.AppSettingsAlt,
+                            imageVector = MaterialSymbols.AppSettingsAlt,
                             tint = MaterialTheme.colorScheme.primary,
                             size = 42.dp
                         )
@@ -148,7 +142,7 @@ public fun SettingsHomePage(
                         enabled = !isLicensesSelected,
                         leadingContent = {
                             ShapedIcon(
-                                imageVector = Icons.Default.Copyright,
+                                imageVector = MaterialSymbols.Copyright,
                                 tint = MaterialTheme.colorScheme.tertiary,
                                 size = 42.dp
                             )
@@ -171,7 +165,7 @@ public fun SettingsHomePage(
                         colors = defaultColors,
                         leadingContent = {
                             ShapedIcon(
-                                imageVector = Icons.Default.Code,
+                                imageVector = MaterialSymbols.Code,
                                 tint = MaterialTheme.colorScheme.tertiary,
                                 size = 42.dp
                             )
@@ -180,7 +174,7 @@ public fun SettingsHomePage(
                         supportingContent = {
                             SingleLineText(stringResource(R.string.settings_repository_description))
                         },
-                        trailingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+                        trailingContent = { Icon(MaterialSymbols.OpenInNew, contentDescription = null) },
                     )
                 }
             }

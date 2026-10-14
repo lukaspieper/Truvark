@@ -16,9 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,6 +43,7 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.ShapedIcon
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.theme.paddings
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -78,7 +76,7 @@ internal fun NotificationPermissionView(notificationPermissionState: PermissionS
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 ShapedIcon(
-                    imageVector = Icons.Default.Notifications,
+                    imageVector = MaterialSymbols.Notifications,
                     tint = MaterialTheme.colorScheme.primary,
                     shape = MaterialShapes.Sunny
                 )
@@ -118,7 +116,10 @@ internal fun NotificationPermissionView(notificationPermissionState: PermissionS
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        imageVector = if (navigateToSettings) Icons.Default.Settings else Icons.Default.Notifications,
+                        imageVector = when {
+                            navigateToSettings -> MaterialSymbols.Settings
+                            else -> MaterialSymbols.Notifications
+                        },
                         contentDescription = null,
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )

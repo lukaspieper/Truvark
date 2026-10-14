@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
@@ -31,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.SegmentedSwitchListItem
 import de.lukaspieper.truvark.ui.extensions.exclude
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -88,7 +87,7 @@ private fun AppSettingsView(
                 navigationIcon = {
                     if (!isExpandedLayout) {
                         IconButton(onClick = navigateBack) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                            Icon(imageVector = MaterialSymbols.ArrowBack, null)
                         }
                     }
                 }

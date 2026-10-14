@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -55,6 +53,7 @@ import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.telephoto.CipherZoomableImageSource
 import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.safeDrawingTopAppBar
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.preview.PreviewSampleData
@@ -139,7 +138,7 @@ private fun PresenterView(
                     },
                     navigationIcon = {
                         IconButton(onClick = navigateBack) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                            Icon(imageVector = MaterialSymbols.ArrowBack, contentDescription = null)
                         }
                     }
                 )

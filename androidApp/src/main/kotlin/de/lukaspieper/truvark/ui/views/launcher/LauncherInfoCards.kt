@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -26,6 +22,7 @@ import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.InfoCard
 import de.lukaspieper.truvark.ui.controls.InfoCardState
 import de.lukaspieper.truvark.ui.controls.PageIndicator
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -77,7 +74,7 @@ private fun rememberLauncherInfoCardStates(
                     InfoCardState(
                         title = R.string.info_card_debugging_title,
                         description = R.string.info_card_debugging_description,
-                        icon = Icons.Default.Warning,
+                        icon = MaterialSymbols.Warning,
                         containerColor = colors.errorContainer,
                         contentColor = colors.onErrorContainer
                     )
@@ -89,7 +86,7 @@ private fun rememberLauncherInfoCardStates(
                     InfoCardState(
                         title = R.string.info_card_backup_title,
                         description = R.string.info_card_backup_description,
-                        icon = Icons.Outlined.CloudUpload,
+                        icon = MaterialSymbols.CloudUpload,
                         containerColor = colors.primaryContainer,
                         contentColor = colors.onPrimaryContainer
                     )
@@ -99,7 +96,7 @@ private fun rememberLauncherInfoCardStates(
                     InfoCardState(
                         title = R.string.info_card_feedback_title,
                         description = R.string.info_card_feedback_description,
-                        icon = Icons.Default.StarBorder,
+                        icon = MaterialSymbols.StarBorder,
                         containerColor = colors.secondaryContainer,
                         contentColor = colors.onSecondaryContainer
                     )

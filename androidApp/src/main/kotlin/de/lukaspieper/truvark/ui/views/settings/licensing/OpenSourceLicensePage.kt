@@ -24,9 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +44,7 @@ import androidx.compose.ui.window.DialogProperties
 import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.extensions.exclude
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -98,7 +96,7 @@ public fun OpenSourceLicenseView(
                 navigationIcon = {
                     if (!isExpandedLayout) {
                         IconButton(onClick = navigateBack) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, null)
+                            Icon(imageVector = MaterialSymbols.ArrowBack, null)
                         }
                     }
                 }
@@ -179,7 +177,7 @@ private fun LicenseTextDialog(
                     },
                     actions = {
                         IconButton(onClick = dismissRequest) {
-                            Icon(Icons.Default.Close, contentDescription = null)
+                            Icon(MaterialSymbols.Close, contentDescription = null)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(

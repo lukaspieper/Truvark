@@ -7,9 +7,6 @@
 package de.lukaspieper.truvark.ui.controls
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -22,6 +19,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 
 @Composable
 public fun SegmentedSwitchListItem(
@@ -72,7 +70,7 @@ private fun ThumbSwitch(
         modifier = modifier,
         thumbContent = {
             Icon(
-                imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,
+                imageVector = if (checked) MaterialSymbols.Check else MaterialSymbols.Close,
                 contentDescription = null,
                 modifier = Modifier.size(SwitchDefaults.IconSize),
             )

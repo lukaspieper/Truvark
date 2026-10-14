@@ -32,10 +32,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -82,6 +78,7 @@ import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterc
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.controls.SingleLineText
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
@@ -198,7 +195,7 @@ public fun CipherEntityGrid(
                                 .padding(MaterialTheme.paddings.extraSmall)
                         ) {
                             Icon(
-                                if (isSelected) Icons.Default.CheckCircle else Icons.Default.Folder,
+                                if (isSelected) MaterialSymbols.CheckCircle else MaterialSymbols.Folder,
                                 contentDescription = null,
                                 modifier = Modifier.requiredSize(28.dp)
                             )
@@ -292,7 +289,10 @@ public fun CipherEntityGrid(
                                         .padding(MaterialTheme.paddings.extraSmall)
                                 ) {
                                     Icon(
-                                        if (isSelected) Icons.Default.CheckCircle else Icons.AutoMirrored.Default.InsertDriveFile,
+                                        when {
+                                            isSelected -> MaterialSymbols.CheckCircle
+                                            else -> MaterialSymbols.InsertDriveFile
+                                        },
                                         contentDescription = null,
                                         modifier = Modifier.requiredSize(28.dp)
                                     )
@@ -337,7 +337,7 @@ public fun CipherEntityGrid(
                                         .padding(MaterialTheme.paddings.large)
                                 ) {
                                     Icon(
-                                        Icons.AutoMirrored.Default.InsertDriveFile,
+                                        MaterialSymbols.InsertDriveFile,
                                         contentDescription = null,
                                         modifier = Modifier.defaultMinSize(64.dp, 64.dp)
                                     )
@@ -366,7 +366,7 @@ public fun CipherEntityGrid(
                                         .padding(MaterialTheme.paddings.extraSmall)
                                 ) {
                                     Icon(
-                                        Icons.Default.CheckCircle,
+                                        MaterialSymbols.CheckCircle,
                                         contentDescription = null,
                                         modifier = Modifier.requiredSize(28.dp)
                                     )

@@ -37,11 +37,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -85,6 +80,7 @@ import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
 import de.lukaspieper.truvark.ui.controls.ShapedImage
 import de.lukaspieper.truvark.ui.controls.SingleLineText
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -214,7 +210,7 @@ private fun LauncherView(
         largeTopAppBarActions = {
             IconButton(
                 onClick = navigateToSettings,
-                content = { Icon(Icons.Default.Settings, null) }
+                content = { Icon(MaterialSymbols.Settings, null) }
             )
         },
         modifier = modifier,
@@ -260,7 +256,7 @@ private fun LauncherView(
                             contentPadding = ButtonDefaults.contentPaddingFor(size, hasStartIcon = true),
                         ) {
                             Icon(
-                                Icons.Outlined.FolderOpen,
+                                MaterialSymbols.FolderOpen,
                                 contentDescription = null,
                                 modifier = Modifier.size(ButtonDefaults.iconSizeFor(size)),
                             )
@@ -475,7 +471,7 @@ private fun VaultUnlockCardView(
                         contentPadding = ButtonDefaults.contentPaddingFor(size, hasStartIcon = true),
                     ) {
                         Icon(
-                            Icons.Default.Fingerprint,
+                            MaterialSymbols.Fingerprint,
                             contentDescription = null,
                             modifier = Modifier.size(ButtonDefaults.iconSizeFor(size)),
                         )
@@ -535,7 +531,7 @@ private fun PasswordUnlockView(
                 .align(Alignment.CenterVertically)
                 .height(TextFieldDefaults.MinHeight)
         ) {
-            Icon(Icons.Default.LockOpen, null)
+            Icon(MaterialSymbols.LockOpen, null)
         }
     }
 }

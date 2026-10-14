@@ -10,9 +10,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.TextObfuscationMode
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SecureTextField
@@ -25,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 
 @Composable
 public fun PasswordField(
@@ -50,7 +48,7 @@ public fun PasswordField(
         onKeyboardAction = onKeyboardDone,
         trailingIcon = {
             IconButton(onClick = { showPassword = !showPassword }) {
-                val visibilityIcon = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                val visibilityIcon = if (showPassword) MaterialSymbols.VisibilityOff else MaterialSymbols.Visibility
                 Icon(imageVector = visibilityIcon, contentDescription = null)
             }
         }

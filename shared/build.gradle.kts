@@ -40,7 +40,6 @@ kotlin {
             implementation(libs.compose.runtime)
 
             api(libs.compose.material3)
-            api("org.jetbrains.compose.material:material-icons-extended:1.7.3")
 
             api(libs.tink.android)
             api(libs.logcat)

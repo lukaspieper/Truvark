@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +35,7 @@ import de.lukaspieper.truvark.R
 import de.lukaspieper.truvark.ui.controls.InfoCard
 import de.lukaspieper.truvark.ui.controls.InfoCardState
 import de.lukaspieper.truvark.ui.controls.PasswordField
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.theme.paddings
@@ -60,7 +58,7 @@ public fun BiometricsView(
                     InfoCard(
                         state = InfoCardState(
                             title = R.string.vault_using_biometric_unlocking,
-                            icon = Icons.Outlined.Check,
+                            icon = MaterialSymbols.Check,
                             iconSize = 32.dp,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                             containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -129,7 +127,7 @@ private fun SetupBiometricUnlockingView(
             },
             modifier = Modifier.height(TextFieldDefaults.MinHeight)
         ) {
-            Icon(Icons.Default.LockOpen, null)
+            Icon(MaterialSymbols.LockOpen, null)
         }
     }
 }

@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -43,6 +39,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import javax.swing.JFileChooser
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +61,7 @@ public fun MainView(viewModel: MainViewModel) {
                 actions = {
                     IconButton(onClick = { /*TODO*/ }) {
                         Icon(
-                            imageVector = Icons.Filled.Settings,
+                            imageVector = MaterialSymbols.Settings,
                             contentDescription = null
                         )
                     }
@@ -183,7 +180,7 @@ public fun PasswordField(value: String, onValueChange: (String) -> Unit, label: 
         trailingIcon = {
             IconButton(onClick = { passwordHidden = !passwordHidden }) {
                 val visibilityIcon =
-                    if (passwordHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    if (passwordHidden) MaterialSymbols.Visibility else MaterialSymbols.VisibilityOff
                 // Please provide localized description for accessibility services
                 val description = if (passwordHidden) "Show password" else "Hide password"
                 Icon(imageVector = visibilityIcon, contentDescription = description)

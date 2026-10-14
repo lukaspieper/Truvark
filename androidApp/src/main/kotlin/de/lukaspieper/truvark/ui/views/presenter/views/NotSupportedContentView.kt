@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -27,6 +25,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.lukaspieper.truvark.R
+import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 
@@ -41,7 +40,7 @@ public fun NotSupportedContentView(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Default.ImageNotSupported,
+            imageVector = MaterialSymbols.ImageNotSupported,
             contentDescription = null,
             modifier = Modifier
                 .requiredSize(100.dp)
