@@ -55,15 +55,10 @@ public fun SettingsHomePage(
     isExpandedLayout: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // Avoid blank detail pane after screen rotation.
     LaunchedEffect(navigateToDetailPane, isExpandedLayout) {
-        // Do initial navigation when both panes are visible.
         if (isExpandedLayout && currentDetailPaneRoute == null) {
-            navigateToDetailPane(
-                when {
-                    route.vaultId != null -> DetailPaneRoute.VaultSettings(vaultId = route.vaultId)
-                    else -> DetailPaneRoute.AppSettings
-                }
-            )
+            navigateToDetailPane(route.defaultDetailPaneRoute)
         }
     }
 

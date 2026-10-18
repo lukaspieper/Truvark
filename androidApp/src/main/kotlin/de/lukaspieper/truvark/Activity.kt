@@ -54,8 +54,6 @@ import logcat.logcat
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.activityRetainedScope
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinDelicateAPI
-import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -71,7 +69,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
     override val scope: Scope by activityRetainedScope()
 
-    @OptIn(KoinDelicateAPI::class, KoinExperimentalAPI::class, ExperimentalMaterial3AdaptiveApi::class)
+    @OptIn(ExperimentalMaterial3AdaptiveApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         // Calling before onCreate because of this exception: https://stackoverflow.com/a/73129726
         installSplashScreen()
@@ -119,7 +117,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                     entryProvider = entryProvider {
                         entry<SinglePaneRoute.Launcher> {
                             LauncherPage(
-                                navigateTo = backStack::add,
+                                navigateTo = { route -> backStack.goToRoute(route, isExpandedLayout) },
                                 viewModel = koinViewModel()
                             )
                         }
@@ -127,7 +125,7 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<SinglePaneRoute.Browser> { route ->
                             BrowserPage(
                                 route = route,
-                                navigateTo = { route -> backStack.addSingle(route) },
+                                navigateTo = { route -> backStack.goToRoute(route, isExpandedLayout) },
                                 navigateBack = backStack::removeLastOrNull,
                                 viewModel = koinViewModel(scope = getScope(route.vaultId))
                             )
@@ -146,9 +144,13 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
                         entry<ListPaneRoute.SettingsHome>(metadata = ListDetailSceneStrategy.listPane()) { route ->
                             SettingsHomePage(
                                 route = route,
-                                currentDetailPaneRoute = backStack.lastOrNull() as? DetailPaneRoute,
+                                // Returning only in expanded layout avoids highlighting the menu item for a moment.
+                                currentDetailPaneRoute = when {
+                                    isExpandedLayout -> backStack.lastOrNull() as? DetailPaneRoute
+                                    else -> null
+                                },
                                 navigateBack = { backStack.goBackTo<SinglePaneRoute>() },
-                                navigateToDetailPane = { route -> backStack.goToDetailRoute(route) },
+                                navigateToDetailPane = { route -> backStack.goToRoute(route, isExpandedLayout) },
                                 isExpandedLayout = isExpandedLayout
                             )
                         }
@@ -205,22 +207,27 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
     }
 
     /**
-     * Adds the given route to the back stack if no other instance of the same route class is already present at the
-     * top of the back stack. This prevents multitouch navigation conflicts.
+     * Pushes the given route onto the back stack, skipping it if the top entry has the same route class. This guards
+     * against double taps opening the same screen twice (e.g. a presenter). Only the top entry is checked. Detail routes
+     * are exempt: they replace the current detail pane by popping back to the list pane first, so the last tap wins.
+     * In expanded layout, a list pane route also pushes its default detail route.
      *
-     * Consider using `dropUnlessResumed` instead.
+     * Maybe consider using `dropUnlessResumed` instead for some cases?
      */
-    private fun NavBackStack<NavKey>.addSingle(route: Route) {
+    private fun NavBackStack<NavKey>.goToRoute(route: Route, isExpandedLayout: Boolean) {
+        if (route is DetailPaneRoute) {
+            goBackTo<ListPaneRoute>()
+        }
+
         val current = lastOrNull()
 
         if (current == null || current::class != route::class) {
             add(route)
-        }
-    }
 
-    private fun NavBackStack<NavKey>.goToDetailRoute(route: DetailPaneRoute) {
-        goBackTo<ListPaneRoute>()
-        add(route)
+            if (route is ListPaneRoute && isExpandedLayout) {
+                add(route.defaultDetailPaneRoute)
+            }
+        }
     }
 
     private inline fun <reified T : Route> NavBackStack<NavKey>.goBackTo() {

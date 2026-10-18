@@ -28,8 +28,15 @@ public sealed interface SinglePaneRoute : Route {
 
 @Immutable
 public sealed interface ListPaneRoute : Route {
+
+    public val defaultDetailPaneRoute: DetailPaneRoute
+
     @Serializable
-    public data class SettingsHome(val vaultId: Uuid?) : ListPaneRoute
+    public data class SettingsHome(val vaultId: Uuid?) : ListPaneRoute {
+
+        public override val defaultDetailPaneRoute: DetailPaneRoute
+            get() = if (vaultId == null) DetailPaneRoute.AppSettings else DetailPaneRoute.VaultSettings(vaultId)
+    }
 }
 
 @Immutable
