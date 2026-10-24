@@ -208,9 +208,9 @@ public class Activity : AppCompatActivity(), AndroidScopeComponent, KoinComponen
 
     /**
      * Pushes the given route onto the back stack, skipping it if the top entry has the same route class. This guards
-     * against double taps opening the same screen twice (e.g. a presenter). Only the top entry is checked. Detail routes
-     * are exempt: they replace the current detail pane by popping back to the list pane first, so the last tap wins.
-     * In expanded layout, a list pane route also pushes its default detail route.
+     * against double taps opening the same screen twice (e.g. a presenter). Only the top entry is checked. Detail
+     * routes are exempt: they replace the current detail pane by popping back to the list pane first, so the last tap
+     * wins. In expanded layout, a list pane route also pushes its default detail route.
      *
      * Maybe consider using `dropUnlessResumed` instead for some cases?
      */
