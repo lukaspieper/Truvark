@@ -9,6 +9,7 @@ package de.lukaspieper.truvark.domain.vault
 import de.lukaspieper.truvark.data.io.DirectoryInfo
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.data.io.FileSystem
+import de.lukaspieper.truvark.data.io.MediaProperties
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
@@ -127,6 +128,10 @@ public class VaultFileSystem private constructor(
 
     public fun openOutputStream(fileInfo: FileInfo): OutputStream {
         return fileSystem.openOutputStream(fileInfo)
+    }
+
+    public fun readMediaProperties(fileInfo: FileInfo): MediaProperties {
+        return fileSystem.readMediaProperties(fileInfo)
     }
 
     //endregion

@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.telephoto)
     implementation(libs.google.accompanist.drawablepainter)
     implementation(libs.bundles.coil)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui.compose)
 

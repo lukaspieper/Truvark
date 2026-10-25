@@ -10,8 +10,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.media.MediaMetadataRetriever
-import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME
@@ -21,21 +19,17 @@ import android.provider.DocumentsContract.Document.COLUMN_SIZE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import logcat.LogPriority
-import logcat.asLog
-import logcat.logcat
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.OutputStream
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A [FileSystem] implementation for Android's Storage Access Framework (content:// URIs).
  */
 public class AndroidFileSystem(private val context: Context) : FileSystem() {
+    private val mediaPropertiesReader = MediaPropertiesReader(context)
 
     public fun appFilesDir(): File {
         return context.filesDir
@@ -57,16 +51,12 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
             uri,
             arrayOf(COLUMN_DISPLAY_NAME, COLUMN_MIME_TYPE, COLUMN_SIZE)
         ) { cursor ->
-            if (cursor?.moveToFirst() == true && cursor.getString(COLUMN_MIME_TYPE) != MIME_TYPE_DIR) {
+            if (cursor?.moveToFirst() == true) {
                 val mimeType = cursor.getString(COLUMN_MIME_TYPE)
 
-                return FileInfo(
-                    uri = uri,
-                    fullName = cursor.getString(COLUMN_DISPLAY_NAME),
-                    mimeType = mimeType,
-                    size = cursor.getLong(COLUMN_SIZE),
-                    mediaDuration = extractMediaDuration(uri, mimeType)
-                )
+                if (mimeType != MIME_TYPE_DIR) {
+                    return cursor.toFileInfo(uri, mimeType)
+                }
             }
         }
 
@@ -150,15 +140,7 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
                 if (mimeType == MIME_TYPE_DIR) continue
 
                 val uri = DocumentsContract.buildDocumentUriUsingTree(uri, cursor.getString(COLUMN_DOCUMENT_ID))
-                emit(
-                    FileInfo(
-                        uri = uri,
-                        fullName = cursor.getString(COLUMN_DISPLAY_NAME),
-                        size = cursor.getLong(COLUMN_SIZE),
-                        mimeType = mimeType,
-                        mediaDuration = extractMediaDuration(uri, mimeType)
-                    )
-                )
+                emit(cursor.toFileInfo(uri, mimeType))
             }
         }
     }
@@ -235,20 +217,8 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
         return context.contentResolver.openOutputStream(uri, "rwt") ?: throw FileNotFoundException()
     }
 
-    private fun extractMediaDuration(uri: Uri, mimeType: String): Duration? {
-        if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) {
-            val retriever = MediaMetadataRetriever()
-            try {
-                retriever.setDataSource(context, uri)
-                return retriever.extractMetadata(METADATA_KEY_DURATION)?.toLongOrNull()?.milliseconds
-            } catch (e: Exception) {
-                logcat(LogPriority.WARN) { e.asLog() }
-            } finally {
-                retriever.release()
-            }
-        }
-
-        return null
+    override fun readMediaProperties(fileInfo: FileInfo): MediaProperties {
+        return mediaPropertiesReader.read(fileInfo)
     }
 
     //region Extension methods
@@ -269,6 +239,15 @@ public class AndroidFileSystem(private val context: Context) : FileSystem() {
     @Throws(IllegalArgumentException::class)
     private fun Cursor.getLong(columnName: String): Long {
         return getLong(getColumnIndexOrThrow(columnName))
+    }
+
+    private fun Cursor.toFileInfo(uri: Uri, mimeType: String): FileInfo {
+        return FileInfo(
+            uri = uri,
+            fullName = getString(COLUMN_DISPLAY_NAME),
+            mimeType = mimeType,
+            size = getLong(COLUMN_SIZE)
+        )
     }
 
     //endregion

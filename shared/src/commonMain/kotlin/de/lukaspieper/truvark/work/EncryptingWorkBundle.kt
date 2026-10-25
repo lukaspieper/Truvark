@@ -47,15 +47,18 @@ internal class EncryptingWorkBundle(
         creationInstant: Instant
     ): CipherFileEntity {
         val destinationFile = vault.fileSystem.createFileInCipherDirectory(destinationFolder.id, Uuid.random())
+        val mediaProperties = vault.fileSystem.readMediaProperties(source)
 
         val cipherFileEntity = CipherFileEntity(
             id = Uuid.parseHex(destinationFile.fullName),
             fullName = source.fullName,
             mimeType = source.mimeType.lowercase(Locale.getDefault()),
             fileSize = source.size,
-            mediaDuration = source.mediaDuration,
             creationTimestamp = creationInstant,
-            folderId = destinationFolder.id
+            folderId = destinationFolder.id,
+            mediaDuration = mediaProperties.duration,
+            mediaWidth = mediaProperties.width,
+            mediaHeight = mediaProperties.height
         )
 
         val digest = writeFile(source, destinationFile, cipherFileEntity)

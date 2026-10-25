@@ -32,11 +32,17 @@ public data class CipherFileEntity private constructor(
     @ProtoNumber(4)
     public val fileSize: Long,
 
+    @ProtoNumber(6)
+    public val creationTimestamp: Instant,
+
     @ProtoNumber(5)
     public val mediaDuration: Duration?,
 
-    @ProtoNumber(6)
-    public val creationTimestamp: Instant
+    @ProtoNumber(8)
+    public val mediaWidth: Int? = null,
+
+    @ProtoNumber(9)
+    public val mediaHeight: Int? = null
 ) {
     @ProtoNumber(7)
     public lateinit var sha256Digest: ByteArray
@@ -49,16 +55,20 @@ public data class CipherFileEntity private constructor(
         fullName: String,
         mimeType: String,
         fileSize: Long,
-        mediaDuration: Duration?,
         creationTimestamp: Instant,
-        folderId: Uuid
+        folderId: Uuid,
+        mediaDuration: Duration?,
+        mediaWidth: Int? = null,
+        mediaHeight: Int? = null
     ) : this(
         id = id,
         fullName = fullName,
         mimeType = mimeType,
         fileSize = fileSize,
+        creationTimestamp = creationTimestamp,
         mediaDuration = mediaDuration,
-        creationTimestamp = creationTimestamp
+        mediaWidth = mediaWidth,
+        mediaHeight = mediaHeight
     ) {
         this.folderId = folderId
     }
@@ -69,6 +79,8 @@ public data class CipherFileEntity private constructor(
         require(mimeType.isNotBlank())
         require(fileSize >= 0L)
         require(mediaDuration == null || mediaDuration >= Duration.ZERO)
+        require((mediaWidth == null) == (mediaHeight == null))
+        require((mediaWidth ?: 1) > 0 && (mediaHeight ?: 1) > 0)
     }
 
     public fun toOriginalFileMetadata(): OriginalFileMetadata {
@@ -83,6 +95,8 @@ public data class CipherFileEntity private constructor(
         other as CipherFileEntity
 
         if (fileSize != other.fileSize) return false
+        if (mediaWidth != other.mediaWidth) return false
+        if (mediaHeight != other.mediaHeight) return false
         if (id != other.id) return false
         if (fullName != other.fullName) return false
         if (mimeType != other.mimeType) return false
@@ -97,10 +111,12 @@ public data class CipherFileEntity private constructor(
     // Generated
     override fun hashCode(): Int {
         var result = fileSize.hashCode()
+        result = 31 * result + mediaWidth.hashCode()
+        result = 31 * result + mediaHeight.hashCode()
         result = 31 * result + id.hashCode()
         result = 31 * result + fullName.hashCode()
         result = 31 * result + mimeType.hashCode()
-        result = 31 * result + (mediaDuration?.hashCode() ?: 0)
+        result = 31 * result + mediaDuration.hashCode()
         result = 31 * result + creationTimestamp.hashCode()
         result = 31 * result + sha256Digest.contentHashCode()
         result = 31 * result + folderId.hashCode()
@@ -109,6 +125,6 @@ public data class CipherFileEntity private constructor(
 
     // Generated
     override fun toString(): String {
-        return "CipherFileEntity(id=$id, fullName='$fullName', mimeType='$mimeType', fileSize=$fileSize, mediaDuration=$mediaDuration, creationTimestamp=$creationTimestamp, sha256Digest=${sha256Digest.contentToString()}, folderId=$folderId)"
+        return "CipherFileEntity(id=$id, fullName='$fullName', mimeType='$mimeType', fileSize=$fileSize, mediaDuration=$mediaDuration, mediaWidth=$mediaWidth, mediaHeight=$mediaHeight, creationTimestamp=$creationTimestamp, sha256Digest=${sha256Digest.contentToString()}, folderId=$folderId)"
     }
 }

@@ -65,4 +65,7 @@ public abstract class FileSystem {
 
     @Throws(FileNotFoundException::class)
     public abstract fun openOutputStream(fileInfo: FileInfo): OutputStream
+
+    @Throws(Exception::class)
+    public abstract fun readMediaProperties(fileInfo: FileInfo): MediaProperties
 }

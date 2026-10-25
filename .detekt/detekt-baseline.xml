@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>Indentation:BrowserPage.kt$ </ID>
     <ID>MagicNumber:Argon2.kt$Argon2$3</ID>
     <ID>MagicNumber:Argon2.kt$Argon2$4</ID>
     <ID>MagicNumber:JvmArgon2.kt$JvmArgon2$0x10</ID>
@@ -10,9 +9,7 @@
     <ID>MagicNumber:PersistentPreferences.kt$PersistentPreferences$3</ID>
     <ID>MagicNumber:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$32</ID>
     <ID>MagicNumber:ThumbnailCacheInterceptor.kt$ThumbnailCacheInterceptor$80</ID>
-    <ID>MaxLineLength:CipherEntityGrid.kt$if (isSelected) Icons.Default.CheckCircle else Icons.AutoMirrored.Default.InsertDriveFile</ID>
-    <ID>MaxLineLength:CipherFileEntity.kt$CipherFileEntity$return "CipherFileEntity(id=$id, fullName='$fullName', mimeType='$mimeType', fileSize=$fileSize, mediaDuration=$mediaDuration, creationTimestamp=$creationTimestamp, sha256Digest=${sha256Digest.contentToString()}, folderId=$folderId)"</ID>
-    <ID>MaximumLineLength:CipherEntityGrid.kt$ </ID>
+    <ID>MaxLineLength:CipherFileEntity.kt$CipherFileEntity$return "CipherFileEntity(id=$id, fullName='$fullName', mimeType='$mimeType', fileSize=$fileSize, mediaDuration=$mediaDuration, mediaWidth=$mediaWidth, mediaHeight=$mediaHeight, creationTimestamp=$creationTimestamp, sha256Digest=${sha256Digest.contentToString()}, folderId=$folderId)"</ID>
     <ID>MaximumLineLength:CipherFileEntity.kt$CipherFileEntity$ </ID>
     <ID>ModifierMissing:MainView.kt$DirectorySelection</ID>
     <ID>ModifierMissing:MainView.kt$MainView</ID>

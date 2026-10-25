@@ -103,4 +103,8 @@ public class JavaFileSystem : FileSystem() {
     override fun openOutputStream(fileInfo: FileInfo): OutputStream {
         return (fileInfo.uri as File).outputStream()
     }
+
+    override fun readMediaProperties(fileInfo: FileInfo): MediaProperties {
+        return MediaProperties()
+    }
 }
