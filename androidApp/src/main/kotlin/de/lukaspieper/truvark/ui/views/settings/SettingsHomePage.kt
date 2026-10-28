@@ -41,6 +41,7 @@ import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
+import de.lukaspieper.truvark.ui.theme.defaultListItemColors
 import de.lukaspieper.truvark.ui.theme.paddings
 import logcat.LogPriority
 import logcat.asLog
@@ -79,7 +80,7 @@ public fun SettingsHomePage(
         },
         content = { contentPadding ->
             val roundShape = ListItemDefaults.shapes(MaterialTheme.shapes.large)
-            val defaultColors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+            val defaultColors = MaterialTheme.defaultListItemColors
             val selectedColors = ListItemDefaults.colors(
                 disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
                 disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer,

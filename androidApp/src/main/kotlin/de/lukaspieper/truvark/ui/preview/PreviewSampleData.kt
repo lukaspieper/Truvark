@@ -9,6 +9,7 @@ package de.lukaspieper.truvark.ui.preview
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
 import de.lukaspieper.truvark.ui.views.browser.BrowserViewModel
+import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
@@ -30,15 +31,22 @@ public object PreviewSampleData {
     }
 
     public val cipherFileEntities: List<CipherFileEntity> = (1..<30).map { index ->
+        val hasMediaDuration = index % 5 == 0
+        val hasMediaDimensions = index % 3 == 0
+
         CipherFileEntity(
             id = index.toPreviewUuid(),
-            fullName = "Top Secret File $index.file",
+            fullName = "$index -${" secret".repeat(Random.nextInt(1, 6))}.file",
             mimeType = "application/octet-stream",
-            fileSize = 0L,
-            mediaDuration = if (index % 7 == 0) 62.seconds else null,
+            fileSize = Random.nextLong(100, 5_000_000),
             creationTimestamp = Clock.System.now(),
-            folderId = Uuid.NIL // Usually files cannot be in the root folder.
-        )
+            folderId = Uuid.NIL, // Usually files cannot be in the root folder.
+            mediaDuration = if (hasMediaDuration) Random.nextInt(1, 900).seconds else null,
+            mediaWidth = if (hasMediaDimensions) Random.nextInt(480, 1920) else null,
+            mediaHeight = if (hasMediaDimensions) Random.nextInt(480, 1920) else null
+        ).apply {
+            sha256Digest = ByteArray(32)
+        }
     }
 
     public val folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel = BrowserViewModel.FolderHierarchyLevel(

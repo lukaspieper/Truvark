@@ -47,6 +47,7 @@ import de.lukaspieper.truvark.ui.extensions.exclude
 import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
+import de.lukaspieper.truvark.ui.theme.defaultListItemColors
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.settings.licensing.License.GeneralPublicLicenseV30OrLater
 
@@ -136,7 +137,7 @@ public fun OpenSourceLicenseView(
                 SegmentedListItem(
                     enabled = licenseItem.license != License.UnknownLicense,
                     onClick = { selectLicense(licenseItem.license) },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    colors = MaterialTheme.defaultListItemColors,
                     shapes = ListItemDefaults.segmentedShapes(index = index, count = licensedItems.size),
                     content = { Text(text = licenseItem.id) },
                     supportingContent = { Text(text = licenseItem.license.name) }

@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -78,7 +79,7 @@ import de.lukaspieper.truvark.SinglePaneRoute
 import de.lukaspieper.truvark.ui.controls.PageIndicator
 import de.lukaspieper.truvark.ui.controls.PasswordField
 import de.lukaspieper.truvark.ui.controls.SafeDrawingScaffold
-import de.lukaspieper.truvark.ui.controls.ShapedImage
+import de.lukaspieper.truvark.ui.controls.ShapedIcon
 import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.PagePreviews
@@ -327,10 +328,13 @@ private fun NoVaultCardView(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(MaterialTheme.paddings.large)
         ) {
-            ShapedImage(
+            ShapedIcon(
                 painter = painterResource(R.drawable.ic_locker),
+                tint = Color.Unspecified,
                 background = MaterialTheme.colorScheme.primaryContainer,
-                shape = MaterialShapes.Cookie12Sided
+                shape = MaterialShapes.Cookie12Sided,
+                size = 80.dp,
+                iconSize = 48.dp
             )
 
             Column(
@@ -436,10 +440,13 @@ private fun VaultUnlockCardView(
                     .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(MaterialTheme.paddings.extraLarge)
             ) {
-                ShapedImage(
+                ShapedIcon(
                     painter = painterResource(R.drawable.ic_locker),
+                    tint = Color.Unspecified,
                     background = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialShapes.Cookie12Sided
+                    shape = MaterialShapes.Cookie12Sided,
+                    size = 80.dp,
+                    iconSize = 48.dp
                 )
                 Spacer(Modifier.width(MaterialTheme.paddings.large))
                 SingleLineText(

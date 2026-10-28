@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import de.lukaspieper.truvark.ui.icons.MaterialSymbols
+import de.lukaspieper.truvark.ui.theme.defaultListItemColors
 
 @Composable
 public fun SegmentedSwitchListItem(
@@ -30,7 +31,7 @@ public fun SegmentedSwitchListItem(
     enabled: Boolean = true,
     supportingText: String? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(MaterialTheme.shapes.large),
-    colors: ListItemColors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    colors: ListItemColors = MaterialTheme.defaultListItemColors,
     switchColors: SwitchColors = SwitchDefaults.colors(),
 ) {
     SegmentedListItem(

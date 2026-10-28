@@ -6,7 +6,10 @@
 
 package de.lukaspieper.truvark.ui.views.browser
 
+import android.content.ContentResolver
 import android.media.MediaMetadataRetriever
+import android.text.format.Formatter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
@@ -14,15 +17,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -30,14 +31,17 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemInfo
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -51,15 +55,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
@@ -72,17 +78,20 @@ import coil3.request.allowConversionToBitmap
 import coil3.video.preferVideoFrameEmbeddedThumbnailKey
 import coil3.video.videoFrameOption
 import coil3.video.videoFramePercent
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import de.lukaspieper.truvark.data.io.FileInfo
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor
 import de.lukaspieper.truvark.domain.crypto.decryption.coil.ThumbnailCacheInterceptor.Companion.useThumbnailCache
 import de.lukaspieper.truvark.domain.entities.CipherFileEntity
 import de.lukaspieper.truvark.domain.entities.CipherFolderEntity
+import de.lukaspieper.truvark.ui.controls.ShapedIcon
 import de.lukaspieper.truvark.ui.controls.SingleLineText
 import de.lukaspieper.truvark.ui.icons.MaterialSymbols
 import de.lukaspieper.truvark.ui.preview.BooleanPreviewParameterProvider
 import de.lukaspieper.truvark.ui.preview.ElementPreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.preview.PreviewSampleData
+import de.lukaspieper.truvark.ui.theme.defaultListItemColors
 import de.lukaspieper.truvark.ui.theme.paddings
 import de.lukaspieper.truvark.ui.views.browser.SelectionState.SelectionMode
 import kotlinx.coroutines.delay
@@ -105,12 +114,13 @@ public fun CipherEntityGrid(
     imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
+
     val gridState = rememberLazyGridState()
     val gridCells = remember(isListLayout) {
         if (isListLayout) GridCells.Fixed(1) else GridCells.Adaptive(minSize = 150.dp)
     }
-
-    val context = LocalContext.current
 
     var isDragging by remember { mutableStateOf(false) }
     val autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() }
@@ -139,7 +149,9 @@ public fun CipherEntityGrid(
         state = gridState,
         columns = gridCells,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
+        verticalArrangement = Arrangement.spacedBy(
+            if (isListLayout) ListItemDefaults.SegmentedGap else MaterialTheme.paddings.small
+        ),
         contentPadding = verticalContentPadding,
         modifier = modifier
             .fillMaxSize()
@@ -153,66 +165,56 @@ public fun CipherEntityGrid(
                 updateIsDragging = { isDragging = it }
             )
     ) {
-        items(folderHierarchyLevel.folders, key = { it.id }) { cipherFolderEntity ->
+        itemsIndexed(folderHierarchyLevel.folders, key = { _, item -> item.id }) { index, cipherFolderEntity ->
             val isSelected by remember(selectionState.selectedFolders) {
                 derivedStateOf { selectionState.selectedFolders.contains(cipherFolderEntity) }
             }
 
-            // cipherFolderEntity may got updated (e.g. renamed)
-            val clickableModifier = remember(selectionState.mode, isDragging, isSelected, cipherFolderEntity) {
-                if (isDragging) return@remember Modifier
-                // User should not be able to select subfolder of selected folder as destination.
-                if (isSelected && selectionState.mode == SelectionMode.RELOCATION) return@remember Modifier
-
-                Modifier.clickable {
-                    when (selectionState.mode) {
-                        SelectionMode.SELECTION -> selectionState.switchFolderSelection(cipherFolderEntity)
-                        else -> onFolderClick(folderHierarchyLevel.folder.id, cipherFolderEntity)
-                    }
-                }
-            }
-
-            Card(
-                modifier = Modifier
-                    .requiredHeight(56.dp)
-                    .animateItem()
-                    .clip(CardDefaults.shape)
-                    .then(clickableModifier)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.aspectRatio(1F)
-                    ) {
-                        Surface(
-                            shape = CardDefaults.shape,
-                            color = if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(MaterialTheme.paddings.extraSmall)
-                        ) {
-                            Icon(
-                                if (isSelected) MaterialSymbols.CheckCircle else MaterialSymbols.Folder,
-                                contentDescription = null,
-                                modifier = Modifier.requiredSize(28.dp)
-                            )
+            SegmentedListItem(
+                modifier = Modifier.animateItem(),
+                onClick = {
+                    if (!isDragging) {
+                        when (selectionState.mode) {
+                            SelectionMode.SELECTION -> selectionState.switchFolderSelection(cipherFolderEntity)
+                            else -> onFolderClick(folderHierarchyLevel.folder.id, cipherFolderEntity)
                         }
                     }
+                },
+                enabled = !(isSelected && selectionState.mode == SelectionMode.RELOCATION),
+                shapes = when {
+                    isListLayout -> ListItemDefaults.segmentedShapes(index, folderHierarchyLevel.folders.size)
+                    else -> ListItemDefaults.shapes(MaterialTheme.shapes.large)
+                },
+                colors = MaterialTheme.defaultListItemColors,
+                leadingContent = {
+                    ShapedIcon(
+                        imageVector = if (isSelected) MaterialSymbols.Check else MaterialSymbols.Folder,
+                        tint = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.primary,
+                        shape = if (isSelected) MaterialShapes.Circle else MaterialShapes.Square,
+                        size = if (isListLayout) 48.dp else 40.dp,
+                        background = when {
+                            isSelected -> colorScheme.primaryContainer
+                            else -> colorScheme.primary.copy(alpha = 0.16f)
+                        }
+                    )
+                },
+                content = { SingleLineText(text = cipherFolderEntity.displayName) }
+            )
+        }
 
-                    SingleLineText(text = cipherFolderEntity.displayName)
-                }
+        if (folderHierarchyLevel.folders.isNotEmpty() && folderHierarchyLevel.files.isNotEmpty()) {
+            item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(MaterialTheme.paddings.large))
             }
         }
 
-        item(span = { GridItemSpan(currentLineSpan = maxCurrentLineSpan) }) {
-        }
-
-        items(folderHierarchyLevel.files, key = { it.id }) { cipherFileEntity ->
+        itemsIndexed(folderHierarchyLevel.files, key = { _, item -> item.id }) { index, cipherFileEntity ->
             val isSelected by remember(selectionState.selectedFiles) {
                 derivedStateOf { selectionState.selectedFiles.contains(cipherFileEntity) }
+            }
+            val configuration = LocalConfiguration.current
+            val mimeTypeInfo = remember(context, configuration, cipherFileEntity.mimeType) {
+                context.contentResolver.getTypeInfo(cipherFileEntity.mimeType)
             }
 
             val clickableModifier = remember(selectionState.mode, isDragging) {
@@ -254,149 +256,179 @@ public fun CipherEntityGrid(
                     .build()
             }
 
-            Card(
-                modifier = Modifier
-                    .animateItem()
-                    .clip(CardDefaults.shape)
-                    .then(clickableModifier)
-                    .then(if (isListLayout) Modifier else Modifier.aspectRatio(1F))
-            ) {
-                if (isListLayout) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.small),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        var isError by remember { mutableStateOf(false) }
+            if (isListLayout) {
+                SegmentedListItem(
+                    modifier = Modifier
+                        .animateItem()
+                        .then(clickableModifier),
+                    enabled = !(isSelected && selectionState.mode == SelectionMode.RELOCATION),
+                    shapes = ListItemDefaults.segmentedShapes(index, folderHierarchyLevel.files.size),
+                    colors = MaterialTheme.defaultListItemColors,
+                    leadingContent = {
+                        when {
+                            isSelected -> ShapedIcon(
+                                imageVector = MaterialSymbols.Check,
+                                tint = colorScheme.onPrimaryContainer,
+                                shape = MaterialShapes.Circle,
+                                background = colorScheme.primaryContainer
+                            )
 
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.requiredSize(56.dp)
-                        ) {
-                            SubcomposeAsyncImage(
+                            else -> SubcomposeAsyncImage(
                                 model = thumbnail,
                                 imageLoader = imageLoader,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                onError = { isError = true }
-                            )
-
-                            if (isError || isSelected) {
-                                Surface(
-                                    shape = CardDefaults.shape,
-                                    color = if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(MaterialTheme.paddings.extraSmall)
-                                ) {
-                                    Icon(
-                                        when {
-                                            isSelected -> MaterialSymbols.CheckCircle
-                                            else -> MaterialSymbols.InsertDriveFile
-                                        },
-                                        contentDescription = null,
-                                        modifier = Modifier.requiredSize(28.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        Column {
-                            SingleLineText(text = cipherFileEntity.fullName)
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.paddings.large)) {
-                                SingleLineText(
-                                    text = cipherFileEntity.mimeType,
-                                    fontStyle = FontStyle.Italic,
-                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                )
-
-                                cipherFileEntity.mediaDuration?.let { mediaDuration ->
-                                    SingleLineText(
-                                        text = mediaDuration.roundToSeconds().toString(),
-                                        fontStyle = FontStyle.Italic,
-                                        fontSize = MaterialTheme.typography.bodyMedium.fontSize
-                                    )
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Box {
-                        SubcomposeAsyncImage(
-                            model = thumbnail,
-                            imageLoader = imageLoader,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                            error = {
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(MaterialTheme.paddings.large)
-                                ) {
-                                    Icon(
-                                        MaterialSymbols.InsertDriveFile,
-                                        contentDescription = null,
-                                        modifier = Modifier.defaultMinSize(64.dp, 64.dp)
-                                    )
-                                    Spacer(modifier = Modifier.size(MaterialTheme.paddings.medium))
-
-                                    Text(
-                                        text = cipherFileEntity.fullName,
-                                        maxLines = 3,
-                                        overflow = TextOverflow.Ellipsis,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        )
-
-                        if (isSelected) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.requiredSize(56.dp)
-                            ) {
-                                Surface(
-                                    shape = CardDefaults.shape,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(MaterialTheme.paddings.extraSmall)
-                                ) {
-                                    Icon(
-                                        MaterialSymbols.CheckCircle,
-                                        contentDescription = null,
-                                        modifier = Modifier.requiredSize(28.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        cipherFileEntity.mediaDuration?.let { mediaDuration ->
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                                ),
+                                error = { MimeTypeIcon(mimeTypeInfo) },
                                 modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(
-                                        bottom = MaterialTheme.paddings.extraSmall,
-                                        end = MaterialTheme.paddings.extraSmall
-                                    )
-                            ) {
-                                Text(
-                                    text = mediaDuration.roundToSeconds().toString(),
-                                    modifier = Modifier.padding(MaterialTheme.paddings.extraSmall)
-                                )
-                            }
+                                    .requiredSize(48.dp)
+                                    .clip(MaterialShapes.Square.toShape())
+                            )
                         }
+                    },
+                    content = { SingleLineText(text = cipherFileEntity.fullName) },
+                    supportingContent = {
+                        val supportingText = listOfNotNull(
+                            mimeTypeInfo.label.toString(),
+                            Formatter.formatFileSize(context, cipherFileEntity.fileSize),
+                            cipherFileEntity.mediaDuration?.roundToSeconds()?.toString()
+                        ).joinToString(" · ")
+
+                        SingleLineText(
+                            text = supportingText,
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                        )
                     }
-                }
+                )
+            } else {
+                CipherFileGridTile(
+                    cipherFileEntity = cipherFileEntity,
+                    mimeTypeInfo = mimeTypeInfo,
+                    thumbnail = thumbnail,
+                    imageLoader = imageLoader,
+                    isSelected = isSelected,
+                    isRelocation = selectionState.mode == SelectionMode.RELOCATION,
+                    modifier = Modifier
+                        .animateItem()
+                        .clip(if (isSelected) MaterialTheme.shapes.extraExtraLarge else MaterialTheme.shapes.large)
+                        .then(clickableModifier)
+                )
             }
         }
     }
+}
+
+@Composable
+private fun CipherFileGridTile(
+    cipherFileEntity: CipherFileEntity,
+    mimeTypeInfo: ContentResolver.MimeTypeInfo,
+    thumbnail: ImageRequest,
+    imageLoader: ImageLoader,
+    isSelected: Boolean,
+    isRelocation: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        modifier = modifier.aspectRatio(1F)
+    ) {
+        Box {
+            SubcomposeAsyncImage(
+                model = thumbnail,
+                imageLoader = imageLoader,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                error = {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                horizontal = MaterialTheme.paddings.large,
+                                vertical = MaterialTheme.paddings.medium
+                            )
+                    ) {
+                        MimeTypeIcon(mimeTypeInfo = mimeTypeInfo, size = 64.dp)
+                        Spacer(modifier = Modifier.size(MaterialTheme.paddings.medium))
+                        Text(
+                            text = cipherFileEntity.fullName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            minLines = 2,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            )
+
+            cipherFileEntity.mediaDuration?.let { mediaDuration ->
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(MaterialTheme.paddings.small)
+                ) {
+                    Text(
+                        text = mediaDuration.roundToSeconds().toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(
+                            horizontal = MaterialTheme.paddings.small,
+                            vertical = MaterialTheme.paddings.extraSmall
+                        )
+                    )
+                }
+            }
+
+            if (isRelocation && isSelected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
+                )
+            }
+
+            if (isSelected) {
+                ShapedIcon(
+                    imageVector = MaterialSymbols.Check,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = MaterialShapes.Circle,
+                    size = 40.dp,
+                    background = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.padding(MaterialTheme.paddings.large)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MimeTypeIcon(
+    mimeTypeInfo: ContentResolver.MimeTypeInfo,
+    size: Dp = 48.dp
+) {
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val drawable = remember(context, configuration, mimeTypeInfo) {
+        mimeTypeInfo.icon.loadDrawable(context)
+    }
+
+    ShapedIcon(
+        painter = when {
+            drawable != null -> rememberDrawablePainter(drawable)
+            else -> rememberVectorPainter(MaterialSymbols.InsertDriveFile)
+        },
+        tint = if (drawable != null) Color.Unspecified else MaterialTheme.colorScheme.tertiary,
+        shape = MaterialShapes.Square,
+        size = size,
+        background = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.16f)
+    )
 }
 
 @Suppress("UNCHECKED_CAST")
