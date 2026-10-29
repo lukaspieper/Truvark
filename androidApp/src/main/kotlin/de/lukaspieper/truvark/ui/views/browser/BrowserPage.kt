@@ -15,16 +15,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -330,24 +330,22 @@ private fun SelectionModeBar(
     decryptSelectedCipherEntities: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        shape = FloatingActionButtonDefaults.shape,
-        modifier = modifier.requiredHeight(56.dp)
-    ) {
-        Row(
-            horizontalArrangement = spacedBy(MaterialTheme.paddings.extraSmall),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(horizontal = MaterialTheme.paddings.extraSmall)
-        ) {
-            IconButton(
+    HorizontalFloatingToolbar(
+        expanded = true,
+        modifier = modifier,
+        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+        floatingActionButton = {
+            FloatingToolbarDefaults.VibrantFloatingActionButton(
                 onClick = disableSelectionMode,
-                content = { Icon(MaterialSymbols.Close, null, tint = MaterialTheme.colorScheme.primary) },
+                content = { Icon(MaterialSymbols.Close, null) }
             )
+        },
+        content = {
             Text(
-                text = "$numberOfSelections/$numberOfCipherEntities"
+                text = "$numberOfSelections/$numberOfCipherEntities",
+                modifier = Modifier.padding(horizontal = MaterialTheme.paddings.medium)
             )
+
             IconButton(
                 onClick = selectAll,
                 content = { Icon(MaterialSymbols.SelectAll, null) }
@@ -365,7 +363,7 @@ private fun SelectionModeBar(
                 content = { Icon(MaterialSymbols.Delete, null) }
             )
         }
-    }
+    )
 }
 
 @Composable
