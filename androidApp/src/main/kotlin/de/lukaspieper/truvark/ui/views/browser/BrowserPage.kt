@@ -9,38 +9,39 @@ package de.lukaspieper.truvark.ui.views.browser
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -237,17 +238,22 @@ private fun BrowserView(
                 }
 
                 SelectionState.SelectionMode.RELOCATION -> {
-                    // User should not be able to move entities to their current location and must not be able to move
-                    // files to the root of the vault. The root only supports folders.
-                    val isRelocationAllowed = remember(isRootLevel, selectionState, folderHierarchyLevel) {
-                        folderHierarchyLevel.folder != selectionState.relocationSourceFolder &&
-                            (!isRootLevel || selectionState.selectedFiles.isEmpty())
+                    val destinationMessage = when {
+                        folderHierarchyLevel.folder.id == selectionState.relocationSourceFolder?.id -> {
+                            R.string.relocation_same_folder
+                        }
+
+                        isRootLevel && selectionState.selectedFiles.isNotEmpty() -> {
+                            R.string.note_relocate_files_to_root
+                        }
+
+                        else -> null
                     }
 
                     RelocationModeBar(
                         numberOfSelectedFolders = selectionState.selectedFolders.size,
                         numberOfSelectedFiles = selectionState.selectedFiles.size,
-                        isRelocationAllowed = isRelocationAllowed,
+                        destinationMessage = destinationMessage,
                         disableSelectionMode = selectionState::disableSelectionMode,
                         relocateSelectedCipherEntities = relocateSelectedCipherEntities
                     )
@@ -367,67 +373,90 @@ private fun SelectionModeBar(
 }
 
 @Composable
-public fun RelocationModeBar(
+private fun RelocationModeBar(
     numberOfSelectedFolders: Int,
     numberOfSelectedFiles: Int,
-    isRelocationAllowed: Boolean,
+    @StringRes destinationMessage: Int?,
     disableSelectionMode: () -> Unit,
     relocateSelectedCipherEntities: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        shape = FloatingActionButtonDefaults.shape,
-        modifier = modifier
-            .sizeIn(maxWidth = 450.dp)
-            .width(IntrinsicSize.Max)
+    HorizontalFloatingToolbar(
+        expanded = true,
+        modifier = modifier.sizeIn(maxWidth = 450.dp),
+        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+        floatingActionButton = {
+            FloatingToolbarDefaults.VibrantFloatingActionButton(
+                onClick = disableSelectionMode,
+                content = { Icon(MaterialSymbols.Close, null) }
+            )
+        },
+        content = {
+            RelocationSelectionCount(
+                icon = MaterialSymbols.Folder,
+                count = numberOfSelectedFolders
+            )
+
+            RelocationSelectionCount(
+                icon = MaterialSymbols.InsertDriveFile,
+                count = numberOfSelectedFiles
+            )
+
+            RelocationMoveButton(
+                destinationMessage = destinationMessage,
+                onClick = relocateSelectedCipherEntities,
+                modifier = Modifier.padding(start = MaterialTheme.paddings.medium)
+            )
+        }
+    )
+}
+
+@Composable
+private fun RelocationSelectionCount(
+    icon: ImageVector,
+    count: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = spacedBy(MaterialTheme.paddings.extraSmall),
+        modifier = modifier.padding(start = MaterialTheme.paddings.small)
     ) {
-        Column(
-            modifier = Modifier.padding(MaterialTheme.paddings.extraSmall)
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(
-                    onClick = disableSelectionMode,
-                    content = { Icon(MaterialSymbols.Close, null, tint = MaterialTheme.colorScheme.primary) },
-                )
+        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelLarge
+        )
+    }
+}
 
-                Text(
-                    text = stringResource(
-                        R.string.folders_and_files_selected,
-                        numberOfSelectedFolders,
-                        numberOfSelectedFiles
-                    ),
-                    modifier = Modifier.padding(end = MaterialTheme.paddings.extraSmall)
-                )
-            }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RelocationMoveButton(
+    @StringRes destinationMessage: Int?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tooltipState = key(destinationMessage != null) {
+        rememberTooltipState(initialIsVisible = destinationMessage != null, isPersistent = true)
+    }
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (numberOfSelectedFiles > 0) {
-                    Text(
-                        text = stringResource(R.string.note_relocate_files_to_root),
-                        fontStyle = FontStyle.Italic,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                        modifier = Modifier
-                            .padding(start = MaterialTheme.paddings.medium, end = MaterialTheme.paddings.extraSmall)
-                            .weight(1f)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = {
+            if (destinationMessage != null) {
+                PlainTooltip(caretShape = TooltipDefaults.caretShape()) {
+                    Text(stringResource(destinationMessage))
                 }
-
-                Button(
-                    enabled = isRelocationAllowed,
-                    onClick = relocateSelectedCipherEntities,
-                    content = { Text(stringResource(R.string.move_here)) }
-                )
             }
+        },
+        state = tooltipState,
+        modifier = modifier,
+        onDismissRequest = {},
+        enableUserInput = false
+    ) {
+        Button(onClick = onClick, enabled = destinationMessage == null) {
+            Text(stringResource(R.string.move_here))
         }
     }
 }

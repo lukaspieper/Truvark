@@ -53,8 +53,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="open_directory">Open directory</string>
     <string name="relocating_files">Moving files</string>
     <string name="move_here">Move here</string>
-    <string name="note_relocate_files_to_root">Note that files cannot be moved to the root of the vault.</string>
-    <string name="folders_and_files_selected">%1$s folder(s) and %2$s file(s) selected</string>
+    <string name="note_relocate_files_to_root">Files can\'t be moved to the vault root.</string>
+    <string name="relocation_same_folder">Already in this folder.</string>
     <string name="vault_name">Vault name</string>
     <string name="vault_name_change_hint">Note that the vault name is not encrypted so that it can be used to identify the vault before unlocking it.</string>
     <string name="settings_description_vault">Vault name, biometric unlocking</string>

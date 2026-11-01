@@ -55,8 +55,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="open_directory">Ordner öffnen</string>
     <string name="relocating_files">Verschiebe Dateien</string>
     <string name="move_here">Verschieben</string>
-    <string name="note_relocate_files_to_root">Beachte, dass Dateien nicht in das Wurzelverzeichnis verschoben werden können.</string>
-    <string name="folders_and_files_selected">%1$s Ordner und %2$s Datei(en) ausgewählt</string>
+    <string name="note_relocate_files_to_root">Dateien können nicht im Stammverzeichnis des Tresors abgelegt werden.</string>
+    <string name="relocation_same_folder">Bereits in diesem Ordner.</string>
     <string name="vault_name">Tresorname</string>
     <string name="vault_name_change_hint">Beachte, dass der Tresorname nicht verschlüsselt ist, um bereits vor dem Entsperren angezeigt werden zu können.</string>
     <string name="settings_description_vault">Tresorname, biometrisches Entsperren</string>
