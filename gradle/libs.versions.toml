@@ -4,7 +4,7 @@
 
 [versions]
 kotlin = "2.4.21"
-composeMultiplatform = "1.12.1"
+composeMultiplatform = "1.12.2"
 
 # Android
 agp = "9.3.1"
