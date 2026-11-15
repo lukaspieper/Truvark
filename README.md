@@ -65,6 +65,12 @@ introduces and its long-term maintenance cost. As a result, some requests may no
 useful to some users. The goal is not to build the most feature-rich vault application, but to build one that can remain
 secure, dependable, and maintainable over time.
 
+## Signing certificate hash (SHA-256)
+
+```
+a57207c9e2019e2e9db387304ef0b5fddc764f9bdb07330a57a62813b612473d
+```
+
 ## License
 
 This app is licensed under [*GPL-3.0-or-later*](LICENSES/GPL-3.0-or-later.txt).
