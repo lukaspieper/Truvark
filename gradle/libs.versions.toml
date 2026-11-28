@@ -25,7 +25,7 @@ compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.re
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version = "1.13.0-alpha01" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 
-kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version = "1.11.0" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version = "1.12.0" }
 logcat = { module = "com.squareup.logcat:logcat", version = "0.4" }
 tink-android = { module = "com.google.crypto.tink:tink-android", version = "1.23.0" }
 okio = { module = "com.squareup.okio:okio", version = "3.18.2" }
@@ -67,7 +67,7 @@ argon2-android = { module = "com.lambdapioneer.argon2kt:argon2kt", version = "1.
 
 # Desktop
 argon2-jvm = { module = "de.mkammerer:argon2-jvm", version = "2.12" }
-kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version = "1.11.0" }
+kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version = "1.12.0" }
 
 # Tooling
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
