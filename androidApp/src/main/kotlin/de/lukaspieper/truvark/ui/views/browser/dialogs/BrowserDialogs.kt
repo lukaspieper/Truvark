@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 Lukas Pieper
+ * SPDX-FileCopyrightText: 2026 Lukas Pieper
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -7,44 +7,11 @@
 package de.lukaspieper.truvark.ui.views.browser.dialogs
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
-import de.lukaspieper.truvark.R
-import de.lukaspieper.truvark.ui.controls.MaterialDialog
-import de.lukaspieper.truvark.ui.controls.SegmentedSwitchListItem
-import de.lukaspieper.truvark.ui.preview.PagePreviews
-import de.lukaspieper.truvark.ui.preview.PreviewHost
-import de.lukaspieper.truvark.ui.views.ActivityResultContracts
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import de.lukaspieper.truvark.ui.views.browser.BrowserLayout
+import de.lukaspieper.truvark.ui.views.browser.BrowserSortCriterion
+import de.lukaspieper.truvark.ui.views.browser.BrowserSortDirection
+import de.lukaspieper.truvark.ui.views.browser.BrowserSortState
 
 internal enum class BrowserDialogs {
     NONE,
@@ -55,267 +22,56 @@ internal enum class BrowserDialogs {
     DELETE_SELECTION
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 @Composable
-public fun NewFolderDialog(
+internal fun BrowserDialogHost(
+    visibleDialog: BrowserDialogs,
     hideDialog: () -> Unit,
-    createFolder: suspend (String) -> Boolean,
-    modifier: Modifier = Modifier
-) {
-    val focusRequester = remember { FocusRequester() }
-    var folderName by rememberSaveable { mutableStateOf("") }
-    var isInputValid by rememberSaveable { mutableStateOf(true) }
-
-    MaterialDialog(
-        modifier = modifier,
-        onDismissRequest = { hideDialog() },
-        confirmButton = {
-            Button(onClick = {
-                GlobalScope.launch {
-                    isInputValid = createFolder(folderName)
-                    if (isInputValid) hideDialog()
-                }
-            }) {
-                Text(text = stringResource(R.string.create))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { hideDialog() }) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        },
-        title = R.string.create_new_folder
-    ) {
-        OutlinedTextField(
-            value = folderName,
-            onValueChange = { folderName = it },
-            label = { Text(stringResource(R.string.folder_name)) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                GlobalScope.launch {
-                    isInputValid = createFolder(folderName)
-                    if (isInputValid) hideDialog()
-                }
-            }),
-            isError = isInputValid.not(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
-        )
-
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-    }
-}
-
-@PagePreviews
-@Composable
-private fun NewFolderDialogPreview() = PreviewHost {
-    NewFolderDialog(
-        hideDialog = {},
-        createFolder = { true }
-    )
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-@Composable
-public fun RenameFolderDialog(
-    hideDialog: () -> Unit,
+    layout: BrowserLayout,
     folderName: String,
+    isRootLevel: Boolean,
+    createFolder: suspend (String) -> Boolean,
     renameFolder: suspend (String) -> Boolean,
-    modifier: Modifier = Modifier
-) {
-    val focusRequester = remember { FocusRequester() }
-    var editableFolderName by remember(folderName) {
-        mutableStateOf(
-            TextFieldValue(
-                text = folderName,
-                selection = TextRange(folderName.length)
-            )
-        )
-    }
-    var isInputValid by rememberSaveable { mutableStateOf(true) }
-
-    MaterialDialog(
-        modifier = modifier,
-        onDismissRequest = { hideDialog() },
-        confirmButton = {
-            Button(onClick = {
-                GlobalScope.launch {
-                    isInputValid = renameFolder(editableFolderName.text)
-                    if (isInputValid) hideDialog()
-                }
-            }) {
-                Text(text = stringResource(R.string.rename))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { hideDialog() }) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        },
-        title = R.string.rename_folder
-    ) {
-        OutlinedTextField(
-            value = editableFolderName,
-            onValueChange = { editableFolderName = it },
-            label = { Text(stringResource(R.string.folder_name)) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                GlobalScope.launch {
-                    isInputValid = renameFolder(editableFolderName.text)
-                    if (isInputValid) hideDialog()
-                }
-            }),
-            isError = isInputValid.not(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester)
-        )
-
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-    }
-}
-
-@PagePreviews
-@Composable
-private fun RenameFolderDialogPreview() = PreviewHost {
-    RenameFolderDialog(
-        hideDialog = {},
-        folderName = "Preview Folder",
-        renameFolder = { true }
-    )
-}
-
-@Composable
-public fun EncryptFilesDialog(
-    hideDialog: () -> Unit,
     encryptFiles: (List<Uri>, Boolean) -> Unit,
     encryptDirectory: (Uri, Boolean) -> Unit,
-    forceDirectoryEncryption: Boolean,
-    modifier: Modifier = Modifier
-) {
-    var deleteSourceFiles by rememberSaveable { mutableStateOf(false) }
-    var selectDirectory by rememberSaveable { mutableStateOf(forceDirectoryEncryption) }
-
-    val selectFilesLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenMultipleDocumentsWithFlags(),
-        onResult = { uris ->
-            hideDialog()
-            encryptFiles(uris, deleteSourceFiles)
-        }
-    )
-    val selectDirectoryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTreeWithFlags(),
-        onResult = { uri ->
-            hideDialog()
-
-            if (uri != null) {
-                encryptDirectory(uri, deleteSourceFiles)
-            }
-        }
-    )
-
-    MaterialDialog(
-        modifier = modifier,
-        onDismissRequest = { hideDialog() },
-        title = R.string.encrypt_files,
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (selectDirectory) {
-                        selectDirectoryLauncher.launch(null)
-                    } else {
-                        selectFilesLauncher.launch(emptyArray())
-                    }
-                },
-                content = { Text(stringResource(R.string.select)) }
-            )
-        },
-        dismissButton = {
-            OutlinedButton(
-                onClick = { hideDialog() },
-                content = { Text(stringResource(R.string.cancel)) }
-            )
-        }
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-            SegmentedSwitchListItem(
-                text = stringResource(R.string.select_directory),
-                checked = selectDirectory,
-                onCheckedChange = { selectDirectory = it },
-                enabled = forceDirectoryEncryption.not(),
-                shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
-            )
-
-            SegmentedSwitchListItem(
-                text = stringResource(R.string.delete_source_files),
-                checked = deleteSourceFiles,
-                onCheckedChange = { deleteSourceFiles = it },
-                shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
-                switchColors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onErrorContainer,
-                    checkedTrackColor = MaterialTheme.colorScheme.errorContainer,
-                    checkedIconColor = MaterialTheme.colorScheme.errorContainer
-                )
-            )
-        }
-    }
-}
-
-@PagePreviews
-@Composable
-private fun EncryptFilesDialogPreview() = PreviewHost {
-    EncryptFilesDialog(
-        hideDialog = {},
-        encryptFiles = { _, _ -> },
-        encryptDirectory = { _, _ -> },
-        forceDirectoryEncryption = false
-    )
-}
-
-@Composable
-public fun DeleteSelectionDialog(
-    hideDialog: () -> Unit,
     deleteSelectedCipherEntities: () -> Unit,
-    modifier: Modifier = Modifier
+    updateLayout: (BrowserLayout) -> Unit,
+    sortState: BrowserSortState,
+    updateSortCriterion: (BrowserSortCriterion) -> Unit,
+    updateSortDirection: (BrowserSortDirection) -> Unit,
 ) {
-    MaterialDialog(
-        modifier = modifier,
-        onDismissRequest = { hideDialog() },
-        title = R.string.confirm_deletion,
-        confirmButton = {
-            Button(
-                onClick = {
-                    deleteSelectedCipherEntities()
-                    hideDialog()
-                },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                ),
-                content = { Text(stringResource(R.string.delete)) }
-            )
-        },
-        dismissButton = {
-            OutlinedButton(
-                onClick = { hideDialog() },
-                content = { Text(stringResource(R.string.cancel)) }
-            )
-        }
-    ) {
-        Text(stringResource(R.string.delete_warning))
-    }
-}
+    when (visibleDialog) {
+        BrowserDialogs.NONE -> Unit
 
-@PagePreviews
-@Composable
-private fun DeleteSelectionDialogPreview() = PreviewHost {
-    DeleteSelectionDialog(
-        hideDialog = {},
-        deleteSelectedCipherEntities = {}
-    )
+        BrowserDialogs.BROWSER_OPTIONS -> BrowserOptionsDialog(
+            hideDialog = hideDialog,
+            layout = layout,
+            updateLayout = updateLayout,
+            sortState = sortState,
+            updateSortCriterion = updateSortCriterion,
+            updateSortDirection = updateSortDirection,
+        )
+
+        BrowserDialogs.NEW_FOLDER -> NewFolderDialog(
+            hideDialog = hideDialog,
+            createFolder = createFolder,
+        )
+
+        BrowserDialogs.RENAME_FOLDER -> RenameFolderDialog(
+            hideDialog = hideDialog,
+            folderName = folderName,
+            renameFolder = renameFolder,
+        )
+
+        BrowserDialogs.ENCRYPT -> EncryptFilesDialog(
+            hideDialog = hideDialog,
+            encryptFiles = encryptFiles,
+            encryptDirectory = encryptDirectory,
+            forceDirectoryEncryption = isRootLevel,
+        )
+
+        BrowserDialogs.DELETE_SELECTION -> DeleteSelectionDialog(
+            hideDialog = hideDialog,
+            deleteSelectedCipherEntities = deleteSelectedCipherEntities,
+        )
+    }
 }
