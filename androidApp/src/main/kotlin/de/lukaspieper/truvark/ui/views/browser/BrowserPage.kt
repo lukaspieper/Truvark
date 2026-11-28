@@ -6,7 +6,6 @@
 
 package de.lukaspieper.truvark.ui.views.browser
 
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
@@ -62,9 +61,9 @@ import de.lukaspieper.truvark.ui.preview.PagePreviews
 import de.lukaspieper.truvark.ui.preview.PreviewHost
 import de.lukaspieper.truvark.ui.preview.PreviewSampleData
 import de.lukaspieper.truvark.ui.theme.paddings
+import de.lukaspieper.truvark.ui.views.browser.dialogs.BrowserDialogHost
+import de.lukaspieper.truvark.ui.views.browser.dialogs.BrowserDialogs
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
@@ -77,6 +76,8 @@ public fun BrowserPage(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val layout by viewModel.layout.collectAsStateWithLifecycle(BrowserLayout.GRID)
+    var visibleDialog by rememberSaveable { mutableStateOf(BrowserDialogs.NONE) }
     var isVaultLockingConfirmed by rememberSaveable { mutableStateOf(false) }
 
     BackHandler {
@@ -105,18 +106,13 @@ public fun BrowserPage(
     }
 
     BrowserView(
-        folderHierarchyLevel = viewModel.currentFolderHierarchyLevel,
+        folderHierarchyLevel = viewModel.sortedCurrentFolderHierarchyLevel,
         selectionState = viewModel.selectionState,
         isRootLevel = viewModel.isRootLevel,
-        isListLayoutState = viewModel.isListLayout,
-        createFolder = viewModel::createCipherFolderEntity,
-        renameFolder = viewModel::renameCipherFolderEntity,
-        encryptFiles = viewModel::encryptFiles,
-        encryptDirectory = viewModel::encryptDirectory,
+        layout = layout,
         decryptSelectedCipherEntities = viewModel::decryptSelectedCipherEntities,
-        deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
         relocateSelectedCipherEntities = viewModel::relocateSelectedCipherEntities,
-        updateIsListLayout = viewModel::updateIsListLayout,
+        showDialog = { visibleDialog = it },
         navigateToSettings = {
             isVaultLockingConfirmed = false
             navigateTo(ListPaneRoute.SettingsHome(route.vaultId))
@@ -131,7 +127,7 @@ public fun BrowserPage(
             navigateTo(
                 SinglePaneRoute.Presenter(
                     route.vaultId,
-                    viewModel.currentFolderHierarchyLevel.folder.id,
+                    viewModel.sortedCurrentFolderHierarchyLevel.folder.id,
                     cipherFileEntity.id
                 )
             )
@@ -141,6 +137,23 @@ public fun BrowserPage(
         imageLoader = viewModel.imageLoader,
         modifier = modifier,
     )
+
+    BrowserDialogHost(
+        visibleDialog = visibleDialog,
+        hideDialog = { visibleDialog = BrowserDialogs.NONE },
+        layout = layout,
+        folderName = viewModel.sortedCurrentFolderHierarchyLevel.folder.displayName,
+        isRootLevel = viewModel.isRootLevel,
+        createFolder = viewModel::createCipherFolderEntity,
+        renameFolder = viewModel::renameCipherFolderEntity,
+        encryptFiles = viewModel::encryptFiles,
+        encryptDirectory = viewModel::encryptDirectory,
+        deleteSelectedCipherEntities = viewModel::deleteSelectedCipherEntities,
+        updateLayout = viewModel::updateLayout,
+        sortState = viewModel.browserSortState,
+        updateSortCriterion = viewModel::updateSortCriterion,
+        updateSortDirection = viewModel::updateSortDirection,
+    )
 }
 
 @Composable
@@ -148,15 +161,10 @@ private fun BrowserView(
     folderHierarchyLevel: BrowserViewModel.FolderHierarchyLevel,
     selectionState: SelectionState,
     isRootLevel: Boolean,
-    isListLayoutState: Flow<Boolean>,
-    createFolder: suspend (String) -> Boolean,
-    renameFolder: suspend (String) -> Boolean,
-    encryptFiles: (List<Uri>, Boolean) -> Unit,
-    encryptDirectory: (Uri, Boolean) -> Unit,
+    layout: BrowserLayout,
     decryptSelectedCipherEntities: () -> Unit,
-    deleteSelectedCipherEntities: () -> Unit,
     relocateSelectedCipherEntities: () -> Unit,
-    updateIsListLayout: (Boolean) -> Unit,
+    showDialog: (BrowserDialogs) -> Unit,
     navigateToSettings: () -> Unit,
     lockVault: () -> Unit,
     navigateToFilePresenter: (CipherFileEntity) -> Unit,
@@ -165,22 +173,13 @@ private fun BrowserView(
     imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
-    val isListLayout by isListLayoutState.collectAsStateWithLifecycle(false)
-    var visibleDialog by rememberSaveable { mutableStateOf(BrowserDialogs.NONE) }
-
     SafeDrawingScaffold(
         modifier = modifier,
         largeTopAppBarTitle = folderHierarchyLevel.folder.displayName,
         largeTopAppBarActions = {
             IconButton(
-                onClick = { updateIsListLayout(isListLayout.not()) },
-                content = {
-                    if (isListLayout) {
-                        Icon(MaterialSymbols.ViewModule, null)
-                    } else {
-                        Icon(MaterialSymbols.ViewList, null)
-                    }
-                }
+                onClick = { showDialog(BrowserDialogs.BROWSER_OPTIONS) },
+                content = { Icon(MaterialSymbols.Sort, null) }
             )
 
             if (isRootLevel) {
@@ -190,7 +189,7 @@ private fun BrowserView(
                 )
             } else {
                 IconButton(
-                    onClick = { visibleDialog = BrowserDialogs.RENAME_FOLDER },
+                    onClick = { showDialog(BrowserDialogs.RENAME_FOLDER) },
                     content = { Icon(MaterialSymbols.Edit, null) }
                 )
             }
@@ -217,8 +216,8 @@ private fun BrowserView(
             when (selectionState.mode) {
                 SelectionState.SelectionMode.NONE -> {
                     FloatingActionsButtons(
-                        showEncryptFilesDialog = { visibleDialog = BrowserDialogs.ENCRYPT },
-                        showNewFolderDialog = { visibleDialog = BrowserDialogs.NEW_FOLDER }
+                        showEncryptFilesDialog = { showDialog(BrowserDialogs.ENCRYPT) },
+                        showNewFolderDialog = { showDialog(BrowserDialogs.NEW_FOLDER) }
                     )
                 }
 
@@ -232,7 +231,7 @@ private fun BrowserView(
                             selectionState.selectFolders(folderHierarchyLevel.folders)
                             selectionState.selectFiles(folderHierarchyLevel.files)
                         },
-                        showDeleteSelectionDialog = { visibleDialog = BrowserDialogs.DELETE_SELECTION },
+                        showDeleteSelectionDialog = { showDialog(BrowserDialogs.DELETE_SELECTION) },
                         decryptSelectedCipherEntities = decryptSelectedCipherEntities
                     )
                 }
@@ -264,40 +263,11 @@ private fun BrowserView(
         CipherEntityGrid(
             folderHierarchyLevel = folderHierarchyLevel,
             selectionState = selectionState,
-            isListLayout = isListLayout,
+            isListLayout = layout == BrowserLayout.LIST,
             onFileClick = navigateToFilePresenter,
             onFolderClick = navigateToFolder,
             contentPadding = paddingValues,
             imageLoader = imageLoader
-        )
-    }
-
-    when (visibleDialog) {
-        BrowserDialogs.NONE -> {
-            // Show nothing.
-        }
-
-        BrowserDialogs.NEW_FOLDER -> NewFolderDialog(
-            hideDialog = { visibleDialog = BrowserDialogs.NONE },
-            createFolder = createFolder
-        )
-
-        BrowserDialogs.RENAME_FOLDER -> RenameFolderDialog(
-            hideDialog = { visibleDialog = BrowserDialogs.NONE },
-            folderName = folderHierarchyLevel.folder.displayName,
-            renameFolder = renameFolder
-        )
-
-        BrowserDialogs.ENCRYPT -> EncryptFilesDialog(
-            hideDialog = { visibleDialog = BrowserDialogs.NONE },
-            encryptFiles = encryptFiles,
-            encryptDirectory = encryptDirectory,
-            forceDirectoryEncryption = isRootLevel
-        )
-
-        BrowserDialogs.DELETE_SELECTION -> DeleteSelectionDialog(
-            hideDialog = { visibleDialog = BrowserDialogs.NONE },
-            deleteSelectedCipherEntities = deleteSelectedCipherEntities
         )
     }
 }
@@ -470,15 +440,10 @@ private fun NonRootFolderPreview(
         folderHierarchyLevel = PreviewSampleData.folderHierarchyLevel,
         selectionState = SelectionState(),
         isRootLevel = false,
-        isListLayoutState = flowOf(isListLayout),
-        createFolder = { false },
-        renameFolder = { false },
-        encryptFiles = { _, _ -> },
-        encryptDirectory = { _, _ -> },
+        layout = if (isListLayout) BrowserLayout.LIST else BrowserLayout.GRID,
         decryptSelectedCipherEntities = {},
-        deleteSelectedCipherEntities = {},
         relocateSelectedCipherEntities = {},
-        updateIsListLayout = {},
+        showDialog = {},
         navigateToSettings = {},
         lockVault = {},
         navigateToFilePresenter = {},

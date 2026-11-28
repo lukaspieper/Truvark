@@ -80,4 +80,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="info_card_backup_description">Having a backup is crucial! Simply copy the vault folder you chose to another storage or cloud.</string>
     <string name="info_card_feedback_title">Enjoying Truvark?</string>
     <string name="info_card_feedback_description">Spreading the word or considering starring it on GitHub is very much appreciated. Thanks!</string>
+    <string name="browser_list_view">List</string>
+    <string name="browser_grid_view">Grid</string>
+    <string name="browser_sort_name">Name</string>
+    <string name="browser_sort_creation_timestamp">Date added</string>
+    <string name="browser_sort_ascending">Ascending</string>
+    <string name="browser_sort_descending">Descending</string>
+    <string name="browser_options_title">View</string>
+    <string name="browser_options_layout">Layout</string>
+    <string name="browser_options_sort_by">Sort by</string>
 </resources>

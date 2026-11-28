@@ -82,4 +82,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <string name="info_card_backup_description">Eine Sicherungskopie ist unverzichtbar! Kopiere einfach den ausgewählten Ordner an einen anderen Speicherort oder in die Cloud.</string>
     <string name="info_card_feedback_title">Gefällt dir Truvark?</string>
     <string name="info_card_feedback_description">Das Weiterverbreiten oder ein Sternchen auf GitHub wäre sehr nett. Danke!</string>
+    <string name="browser_list_view">Liste</string>
+    <string name="browser_grid_view">Raster</string>
+    <string name="browser_sort_name">Name</string>
+    <string name="browser_sort_creation_timestamp">Hinzugefügt am</string>
+    <string name="browser_sort_ascending">Aufsteigend</string>
+    <string name="browser_sort_descending">Absteigend</string>
+    <string name="browser_options_title">Ansicht</string>
+    <string name="browser_options_layout">Layout</string>
+    <string name="browser_options_sort_by">Sortieren nach</string>
 </resources>

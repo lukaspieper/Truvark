@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ public fun MaterialDialog(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit = {},
     @StringRes title: Int? = null,
+    titleAction: @Composable (() -> Unit)? = null,
     confirmButton: @Composable (() -> Unit)? = null,
     dismissButton: @Composable (() -> Unit)? = null,
     isLoadingIndicator: Boolean = false,
@@ -57,12 +59,24 @@ public fun MaterialDialog(
                     .padding(MaterialTheme.paddings.extraLarge)
                     .verticalScroll(rememberScrollState())
             ) {
-                if (title != null) {
-                    Text(
-                        text = stringResource(title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = MaterialTheme.paddings.large)
-                    )
+                if ((title != null) || (titleAction != null)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = MaterialTheme.paddings.large),
+                    ) {
+                        if (title != null) {
+                            Text(
+                                text = stringResource(title),
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        titleAction?.invoke()
+                    }
                 }
 
                 if (isLoadingIndicator) {
@@ -78,15 +92,11 @@ public fun MaterialDialog(
                             .fillMaxWidth()
                             .padding(top = MaterialTheme.paddings.extraLarge)
                     ) {
-                        if (dismissButton != null) {
-                            dismissButton()
-                        }
+                        dismissButton?.invoke()
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        if (confirmButton != null) {
-                            confirmButton()
-                        }
+                        confirmButton?.invoke()
                     }
                 }
             }

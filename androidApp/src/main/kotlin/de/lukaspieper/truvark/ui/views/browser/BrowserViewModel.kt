@@ -12,6 +12,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.ImageLoader
@@ -31,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transform
@@ -50,9 +53,21 @@ public class BrowserViewModel(
     private val backstack = mutableStateListOf(FolderHierarchyLevel(vault.rootFolder))
     private var updateFolderHierarchyLevelJob: Job
 
-    public val currentFolderHierarchyLevel: FolderHierarchyLevel by derivedStateOf { backstack.last() }
+    private val currentFolderHierarchyLevel: FolderHierarchyLevel by derivedStateOf { backstack.last() }
     public val isRootLevel: Boolean by derivedStateOf { currentFolderHierarchyLevel.folder.id == vault.rootFolder.id }
-    public val isListLayout: Flow<Boolean> = preferences.isListLayout
+    public val layout: Flow<BrowserLayout> = preferences.isListLayout.map { isListLayout ->
+        if (isListLayout) BrowserLayout.LIST else BrowserLayout.GRID
+    }
+
+    internal var browserSortState: BrowserSortState by mutableStateOf(BrowserSortState())
+        private set
+
+    internal val sortedCurrentFolderHierarchyLevel: FolderHierarchyLevel by derivedStateOf {
+        currentFolderHierarchyLevel.copy(
+            folders = currentFolderHierarchyLevel.folders.sortedWith(browserSortState.folderComparator),
+            files = currentFolderHierarchyLevel.files.sortedWith(browserSortState.fileComparator)
+        )
+    }
 
     public val selectionState: SelectionState = SelectionState()
 
@@ -259,10 +274,18 @@ public class BrowserViewModel(
         }
     }
 
-    public fun updateIsListLayout(isListLayout: Boolean) {
+    public fun updateLayout(layout: BrowserLayout) {
         viewModelScope.launch {
-            preferences.saveIsListLayout(isListLayout)
+            preferences.saveIsListLayout(layout == BrowserLayout.LIST)
         }
+    }
+
+    internal fun updateSortCriterion(criterion: BrowserSortCriterion) {
+        browserSortState = browserSortState.copy(criterion = criterion)
+    }
+
+    internal fun updateSortDirection(direction: BrowserSortDirection) {
+        browserSortState = browserSortState.copy(direction = direction)
     }
 
     @Immutable

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-package de.lukaspieper.truvark.ui.views.browser
+package de.lukaspieper.truvark.ui.views.browser.dialogs
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -46,8 +46,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-public enum class BrowserDialogs {
+internal enum class BrowserDialogs {
     NONE,
+    BROWSER_OPTIONS,
     NEW_FOLDER,
     RENAME_FOLDER,
     ENCRYPT,

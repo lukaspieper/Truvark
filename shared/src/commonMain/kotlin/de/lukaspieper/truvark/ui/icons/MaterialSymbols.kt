@@ -20,6 +20,12 @@ public object MaterialSymbols {
     public val ArrowBack: ImageVector
         get() = arrow_back
 
+    public val ArrowDropDown: ImageVector
+        get() = arrow_drop_down
+
+    public val CalendarToday: ImageVector
+        get() = calendar_today
+
     public val Check: ImageVector
         get() = check
 
@@ -77,6 +83,9 @@ public object MaterialSymbols {
     public val LockOpen: ImageVector
         get() = lock_open
 
+    public val ListArrow: ImageVector
+        get() = list_arrow
+
     public val ManageSearch: ImageVector
         get() = manage_search
 
@@ -95,8 +104,14 @@ public object MaterialSymbols {
     public val Settings: ImageVector
         get() = settings
 
+    public val Sort: ImageVector
+        get() = sort
+
     public val StarBorder: ImageVector
         get() = star
+
+    public val TextFields: ImageVector
+        get() = text_fields
 
     public val ViewList: ImageVector
         get() = view_list
